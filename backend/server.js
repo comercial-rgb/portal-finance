@@ -122,25 +122,6 @@ app.get('/', (req, res) => {
     }
   });
 });
-  const memoryUsage = process.memoryUsage();
-  const { rateLimiter } = require('./middleware/rateLimit');
-  const { cacheManager } = require('./middleware/cache');
-  
-  res.json({ 
-    status: 'ok', 
-    message: 'Sistema Financeiro - InstaSolutions API',
-    uptime: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m`,
-    memory: {
-      heapUsed: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)}MB`,
-      heapTotal: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)}MB`
-    },
-    cache: {
-      size: cacheManager.size()
-    },
-    rateLimit: rateLimiter.getStats(),
-    timestamp: new Date().toISOString()
-  });
-});
 
 // Rota para resetar rate limiting (apenas desenvolvimento)
 app.post('/api/dev/reset-rate-limit', (req, res) => {

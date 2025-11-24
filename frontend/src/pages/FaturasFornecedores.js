@@ -295,23 +295,23 @@ function FaturasFornecedores() {
     const calcularImpostosRetencoes = (ordem, cliente, fornecedor) => {
     // Verificação de segurança mais robusta
     if (!impostos || typeof impostos !== 'object') {
-      console.warn('Impostos não carregados');
+      console.warn('⚠️ Impostos não carregados ou configurados');
       return { total: 0, detalhamento: [] };
     }
     
-    if (!cliente?.tipoImposto || !Array.isArray(cliente.tipoImposto)) {
-      console.warn('Cliente sem tipo de imposto configurado');
+    if (!cliente?.tipoImposto || !Array.isArray(cliente.tipoImposto) || cliente.tipoImposto.length === 0) {
+      console.warn(`⚠️ Cliente ${cliente?.razaoSocial || 'sem nome'} sem tipos de imposto configurados`);
       return { total: 0, detalhamento: [] };
     }
     
     // VERIFICAÇÃO CRÍTICA: Só calcular se fornecedor é NÃO OPTANTE
     if (!fornecedor?.naoOptanteSimples) {
-      console.log(`✗ Fornecedor ${fornecedor?.razaoSocial || fornecedor?.nomeFantasia} é OPTANTE - não aplicar impostos`);
+      console.log(`✗ Fornecedor ${fornecedor?.razaoSocial || fornecedor?.nomeFantasia || 'sem nome'} é OPTANTE pelo Simples Nacional - não aplicar impostos/retenções`);
       return { total: 0, detalhamento: [] };
     }
 
-    console.log(`✓ APLICANDO IMPOSTOS - Fornecedor NÃO OPTANTE: ${fornecedor.razaoSocial || fornecedor.nomeFantasia}`);
-    console.log('Cliente tipos de imposto:', cliente.tipoImposto);
+    console.log(`✓ APLICANDO IMPOSTOS E RETENÇÕES - Fornecedor NÃO OPTANTE: ${fornecedor.razaoSocial || fornecedor.nomeFantasia}`);
+    console.log('Cliente tipos de imposto configurados:', cliente.tipoImposto);
 
     const valorPecas = ordem.valorPecasComDesconto || 0;
     const valorServico = ordem.valorServicoComDesconto || 0;
@@ -661,9 +661,18 @@ function FaturasFornecedores() {
       doc.setFont(undefined, 'normal');
     }
     
-    // Taxa de Operação
+    // Taxa de Operação - calcular porcentagem correta
+    let taxaPercent = 0;
+    if (clienteTaxaInfo?.tipoTaxa === 'operacao') {
+      taxaPercent = clienteTaxaInfo.taxaOperacao || 15;
+    } else if (clienteTaxaInfo?.tipoTaxa === 'antecipacao_variavel' && tipoPagamento) {
+      if (tipoPagamento === 'aVista') taxaPercent = clienteTaxaInfo.taxasAntecipacao?.aVista || 15;
+      else if (tipoPagamento === 'aposFechamento') taxaPercent = clienteTaxaInfo.taxasAntecipacao?.aposFechamento || 13;
+      else if (tipoPagamento === 'aprazado') taxaPercent = clienteTaxaInfo.taxasAntecipacao?.aprazado || 0;
+    }
+    
     doc.setTextColor(200, 0, 0);
-    doc.text(`(-) Taxa de Operação (${impostos?.taxasOperacao?.taxaFixa || 0}%):`, 25, finalY);
+    doc.text(`(-) Taxa de Operação (${taxaPercent.toFixed(2)}%):`, 25, finalY);
     doc.text(`R$ ${taxaOperacao.toFixed(2)}`, 185, finalY, { align: 'right' });
     doc.setDrawColor(0, 91, 237);
     doc.setLineWidth(1);
@@ -1116,7 +1125,17 @@ function FaturasFornecedores() {
                         </>
                       )}
                       <div className="resumo-linha destaque-negativo">
-                        <span>(-) Taxa de Operação ({impostos?.taxasOperacao?.taxaFixa || 0}%):</span>
+                        <span>(-) Taxa de Operação ({
+                          clienteTaxaInfo?.tipoTaxa === 'operacao' 
+                            ? (clienteTaxaInfo.taxaOperacao || 15) 
+                            : clienteTaxaInfo?.tipoTaxa === 'antecipacao_variavel' && tipoPagamento
+                              ? (
+                                  tipoPagamento === 'aVista' ? (clienteTaxaInfo.taxasAntecipacao?.aVista || 15) :
+                                  tipoPagamento === 'aposFechamento' ? (clienteTaxaInfo.taxasAntecipacao?.aposFechamento || 13) :
+                                  tipoPagamento === 'aprazado' ? (clienteTaxaInfo.taxasAntecipacao?.aprazado || 0) : 0
+                                )
+                              : 0
+                        }%):</span>
                         <span>{formatCurrency(taxaOperacao)}</span>
                       </div>
                       <div className="resumo-linha destaque">

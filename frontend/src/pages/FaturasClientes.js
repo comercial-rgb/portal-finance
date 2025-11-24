@@ -189,17 +189,18 @@ function FaturasClientes() {
     
     // REGRA CORRIGIDA: Calcular impostos SOMENTE para ordens de fornecedores NÃO OPTANTES
     // Não usar valorPecas/valorServico totais - calcular por ordem individual
-    if (ordensParaFatura && Array.isArray(ordensParaFatura) && impostos && cliente?.tipoImposto) {
-      console.log('=== CALCULANDO IMPOSTOS POR ORDEM ===');
+    if (ordensParaFatura && Array.isArray(ordensParaFatura) && impostos && cliente?.tipoImposto && Array.isArray(cliente.tipoImposto) && cliente.tipoImposto.length > 0) {
+      console.log('=== CALCULANDO IMPOSTOS POR ORDEM (FATURA CLIENTE) ===');
       console.log('Tipo de Fatura:', tipoFatura);
-      console.log('Cliente tem tipos de imposto:', cliente.tipoImposto);
+      console.log('Cliente tem tipos de imposto configurados:', cliente.tipoImposto);
+      console.log('Total de ordens:', ordensParaFatura.length);
       
       ordensParaFatura.forEach(ordem => {
         const fornecedor = ordem.fornecedor;
         
         // VERIFICAÇÃO CRÍTICA: Só aplicar se fornecedor é NÃO OPTANTE
         if (fornecedor?.naoOptanteSimples) {
-          console.log(`✓ Aplicando impostos - Fornecedor NÃO OPTANTE: ${fornecedor.razaoSocial || fornecedor.nomeFantasia}`);
+          console.log(`✓ Aplicando impostos - Fornecedor NÃO OPTANTE: ${fornecedor.razaoSocial || fornecedor.nomeFantasia} (OS: ${ordem.codigo || ordem.numeroOrdemServico})`);
           
           // Valores DESTA ORDEM específica - CONSIDERAR TIPO DE FATURA
           let valorPecasOrdem = 0;
@@ -287,9 +288,23 @@ function FaturasClientes() {
             }
           });
         } else {
-          console.log(`✗ Ignorando - Fornecedor OPTANTE: ${fornecedor?.razaoSocial || fornecedor?.nomeFantasia}`);
+          console.log(`✗ Ignorando - Fornecedor OPTANTE pelo Simples Nacional: ${fornecedor?.razaoSocial || fornecedor?.nomeFantasia} (OS: ${ordem.codigo || ordem.numeroOrdemServico})`);
         }
       });
+      
+      if (total === 0) {
+        console.log('ℹ️ Nenhum imposto calculado. Motivos possíveis:');
+        console.log('  - Todos os fornecedores são OPTANTES pelo Simples Nacional');
+        console.log('  - Cliente não possui tipos de imposto configurados');
+        console.log('  - Impostos e Retenções não foram configurados no sistema');
+      }
+    } else {
+      console.warn('⚠️ Não foi possível calcular impostos:');
+      if (!ordensParaFatura || !Array.isArray(ordensParaFatura)) console.warn('  - Ordens para fatura inválidas');
+      if (!impostos) console.warn('  - Impostos não configurados no sistema');
+      if (!cliente?.tipoImposto || !Array.isArray(cliente.tipoImposto) || cliente.tipoImposto.length === 0) {
+        console.warn(`  - Cliente ${cliente?.razaoSocial || 'sem nome'} não possui tipos de imposto configurados`);
+      }
     }
     
     return { total, detalhamento };

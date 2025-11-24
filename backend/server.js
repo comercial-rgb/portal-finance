@@ -98,6 +98,30 @@ app.use('/api/notificacoes', notificacaoRoutes);
 // Rota de teste e health check
 app.get('/api/health', (req, res) => {
   const uptime = process.uptime();
+  res.json({
+    status: 'OK',
+    uptime: `${Math.floor(uptime / 60)} minutos`,
+    timestamp: new Date().toISOString(),
+    mongodb: mongoose.connection.readyState === 1 ? 'Conectado' : 'Desconectado'
+  });
+});
+
+// Rota raiz
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Portal Finance API - InstaSolutions',
+    version: '1.0.0',
+    status: 'online',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      fornecedores: '/api/fornecedores',
+      clientes: '/api/clientes',
+      ordensServico: '/api/ordens-servico',
+      faturas: '/api/faturas'
+    }
+  });
+});
   const memoryUsage = process.memoryUsage();
   const { rateLimiter } = require('./middleware/rateLimit');
   const { cacheManager } = require('./middleware/cache');

@@ -26,6 +26,7 @@ import FaturadoDetalhes from './pages/FaturadoDetalhes';
 import Configuracoes from './pages/Configuracoes';
 import Usuarios from './pages/Usuarios';
 import ImpostosRetencoes from './pages/ImpostosRetencoes';
+import Relatorios from './pages/Relatorios';
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {

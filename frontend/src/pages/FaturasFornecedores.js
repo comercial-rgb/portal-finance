@@ -1079,6 +1079,8 @@ function FaturasFornecedores() {
                   console.log('=== DEBUG FATURA FORNECEDOR MODAL ===');
                   console.log('Fornecedor Fatura:', fornecedorFatura);
                   console.log('naoOptanteSimples:', fornecedorFatura?.naoOptanteSimples);
+                  console.log('Cliente Taxa Info:', clienteTaxaInfo);
+                  console.log('Tipo Pagamento:', tipoPagamento);
                   
                   if (fornecedorFatura?.naoOptanteSimples) {
                     console.log('✓ Fornecedor é NÃO OPTANTE - calculando impostos no modal');
@@ -1100,6 +1102,22 @@ function FaturasFornecedores() {
                   const taxaOperacao = calcularTaxaOperacao(valorTotalAposDesconto);
                   const valorAposImpostos = valorTotalAposDesconto - totalImpostos;
                   const valorDevido = valorAposImpostos - taxaOperacao;
+                  
+                  // Calcular porcentagem da taxa de operação para exibição
+                  let taxaPercentual = 0;
+                  if (clienteTaxaInfo?.tipoTaxa === 'operacao') {
+                    taxaPercentual = clienteTaxaInfo.taxaOperacao || 15;
+                  } else if (clienteTaxaInfo?.tipoTaxa === 'antecipacao_variavel' && tipoPagamento) {
+                    if (tipoPagamento === 'aVista') {
+                      taxaPercentual = clienteTaxaInfo.taxasAntecipacao?.aVista || 15;
+                    } else if (tipoPagamento === 'aposFechamento') {
+                      taxaPercentual = clienteTaxaInfo.taxasAntecipacao?.aposFechamento || 13;
+                    } else if (tipoPagamento === 'aprazado') {
+                      taxaPercentual = clienteTaxaInfo.taxasAntecipacao?.aprazado || 0;
+                    }
+                  }
+                  
+                  console.log('Taxa Percentual Calculada:', taxaPercentual);
 
                   return (
                     <>
@@ -1125,17 +1143,7 @@ function FaturasFornecedores() {
                         </>
                       )}
                       <div className="resumo-linha destaque-negativo">
-                        <span>(-) Taxa de Operação ({
-                          clienteTaxaInfo?.tipoTaxa === 'operacao' 
-                            ? (clienteTaxaInfo.taxaOperacao || 15) 
-                            : clienteTaxaInfo?.tipoTaxa === 'antecipacao_variavel' && tipoPagamento
-                              ? (
-                                  tipoPagamento === 'aVista' ? (clienteTaxaInfo.taxasAntecipacao?.aVista || 15) :
-                                  tipoPagamento === 'aposFechamento' ? (clienteTaxaInfo.taxasAntecipacao?.aposFechamento || 13) :
-                                  tipoPagamento === 'aprazado' ? (clienteTaxaInfo.taxasAntecipacao?.aprazado || 0) : 0
-                                )
-                              : 0
-                        }%):</span>
+                        <span>(-) Taxa de Operação ({taxaPercentual.toFixed(2)}%):</span>
                         <span>{formatCurrency(taxaOperacao)}</span>
                       </div>
                       <div className="resumo-linha destaque">

@@ -1,0 +1,227 @@
+.faturas-vencidas-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.faturas-vencidas-alert {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  max-width: 700px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.alert-header {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.alert-header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.btn-close:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.alert-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.alert-message {
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+  color: #333;
+  font-weight: 500;
+}
+
+.faturas-vencidas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.fatura-vencida-item {
+  border: 2px solid #e74c3c;
+  border-radius: 8px;
+  padding: 15px;
+  background: #fff5f5;
+  transition: all 0.2s;
+}
+
+.fatura-vencida-item:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.2);
+}
+
+.fatura-info {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.fatura-info strong {
+  color: #e74c3c;
+  font-size: 1.1rem;
+}
+
+.cliente-nome {
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.fatura-valores {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.valor-devido {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #c0392b;
+}
+
+.dias-atraso {
+  color: #e74c3c;
+  font-size: 0.95rem;
+}
+
+.dias-atraso strong {
+  font-size: 1.1rem;
+}
+
+.data-vencimento {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.alert-footer {
+  padding: 20px;
+  background: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn-dismiss,
+.btn-view {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.btn-dismiss {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-dismiss:hover {
+  background-color: #5a6268;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-view {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+}
+
+.btn-view:hover {
+  background: linear-gradient(135deg, #c0392b, #a93226);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+@media (max-width: 768px) {
+  .faturas-vencidas-alert {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  .alert-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .fatura-vencida-item {
+    padding: 12px;
+  }
+
+  .valor-devido {
+    font-size: 1.1rem;
+  }
+
+  .alert-footer {
+    flex-direction: column;
+  }
+
+  .btn-dismiss,
+  .btn-view {
+    width: 100%;
+  }
+}

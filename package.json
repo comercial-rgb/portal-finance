@@ -1,0 +1,40 @@
+{
+  "name": "portal-finance",
+  "version": "1.0.0",
+  "description": "Sistema Financeiro - InstaSolutions",
+  "main": "backend/server.js",
+  "engines": {
+    "node": ">=18.x",
+    "npm": ">=9.x"
+  },
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "client": "cd frontend && npm start",
+    "dev:full": "concurrently \"npm run dev\" \"npm run client\"",
+    "monitorar-faturas": "node backend/scripts/monitorarFaturasVencidas.js"
+  },
+  "keywords": [
+    "finance",
+    "sistema-financeiro"
+  ],
+  "author": "InstaSolutions",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-validator": "^7.0.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.0",
+    "nodemailer": "^6.9.7"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.1"
+  }
+}

@@ -1,0 +1,223 @@
+.ordem-servico-form-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.ordem-form-card {
+  background: var(--branco);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Desabilitar todos os campos para usuários fornecedor */
+.readonly-form input,
+.readonly-form select,
+.readonly-form textarea,
+.readonly-form button.clear-selection {
+  pointer-events: none;
+  opacity: 0.7;
+  background-color: #f8f9fa !important;
+  cursor: not-allowed;
+}
+
+.readonly-form .dropdown-list {
+  display: none !important;
+}
+
+.form-section {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--cinza-medio);
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+}
+
+.form-section h3 {
+  color: var(--azul-corporativo);
+  font-size: 1.3rem;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--azul-corporativo);
+}
+
+.form-group input,
+.form-group select {
+  padding: 0.75rem;
+  border: 1px solid var(--cinza-medio);
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.form-group {
+  position: relative;
+}
+
+.dropdown-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid var(--cinza-medio);
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-top: 4px;
+}
+
+.dropdown-item {
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: #f0f7ff;
+}
+
+.selected-value {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background-color: #e8f5e9;
+  border: 1px solid #4caf50;
+  border-radius: 8px;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+.clear-selection {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #d32f2f;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.clear-selection:hover {
+  transform: scale(1.2);
+}
+
+.form-grid-valores {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.valores-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.valores-total {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.valores-total .form-group {
+  min-width: 300px;
+}
+
+.valor-total {
+  font-size: 1.2rem !important;
+  font-weight: bold !important;
+  text-align: center !important;
+  background-color: #e3f2fd !important;
+  border: 2px solid var(--azul-corporativo) !important;
+}
+
+.field-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: #666;
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
+.form-group input,
+.form-group select {
+  padding: 0.75rem;
+  border: 1px solid var(--cinza-medio);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--azul-tech);
+  box-shadow: 0 0 0 3px rgba(0, 91, 237, 0.1);
+}
+
+.form-group select[size] {
+  height: 150px;
+  overflow-y: auto;
+}
+
+.search-input {
+  margin-bottom: 0.5rem !important;
+  background-color: var(--cinza-claro);
+}
+
+.readonly-field {
+  background-color: var(--cinza-claro);
+  font-weight: 700;
+  color: var(--azul-corporativo);
+  cursor: not-allowed;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid var(--cinza-medio);
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+}

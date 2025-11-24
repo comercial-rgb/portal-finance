@@ -1,0 +1,262 @@
+/* Container principal */
+.dashboard-cliente-container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Cabeçalho */
+.dashboard-header {
+  margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+  font-size: 2rem;
+  color: var(--azul-corporativo);
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+.dashboard-header p {
+  color: var(--cinza-escuro);
+  font-size: 1.1rem;
+}
+
+/* Grid de Estatísticas */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.stat-card {
+  background: var(--branco);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s;
+  border-left: 4px solid transparent;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.stat-faturas {
+  border-left-color: #667eea;
+}
+
+.stat-apagar {
+  border-left-color: #f59e0b;
+}
+
+.stat-pago {
+  border-left-color: #10b981;
+}
+
+.stat-os {
+  border-left-color: #3b82f6;
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  opacity: 0.9;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-content h3 {
+  font-size: 0.9rem;
+  color: var(--cinza-escuro);
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--azul-corporativo);
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--cinza-medio);
+}
+
+/* Seções do Dashboard */
+.dashboard-section {
+  background: var(--branco);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 2rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--cinza-claro);
+}
+
+.section-header h2 {
+  font-size: 1.4rem;
+  color: var(--azul-corporativo);
+  font-weight: 600;
+}
+
+.btn-ver-todas {
+  background: var(--azul-corporativo);
+  color: var(--branco);
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 0.95rem;
+}
+
+.btn-ver-todas:hover {
+  background: var(--azul-escuro);
+  transform: translateX(4px);
+}
+
+/* Tabela do Dashboard */
+.table-responsive {
+  overflow-x: auto;
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dashboard-table thead {
+  background: var(--cinza-claro);
+}
+
+.dashboard-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--azul-corporativo);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dashboard-table tbody tr {
+  border-bottom: 1px solid var(--cinza-claro);
+  transition: all 0.2s;
+}
+
+.dashboard-table tbody tr:hover {
+  background: #f8fafc;
+  transform: translateX(4px);
+}
+
+.dashboard-table td {
+  padding: 1rem;
+  color: var(--preto);
+}
+
+.dashboard-table td strong {
+  color: var(--azul-corporativo);
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.status-pendente, .status-aguardando {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-parcial {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-paga {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-autorizada {
+  background: #cfe2ff;
+  color: #084298;
+}
+
+/* Estado vazio */
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--cinza-medio);
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Loading */
+.loading {
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.2rem;
+  color: var(--azul-corporativo);
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .dashboard-cliente-container {
+    padding: 1rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    padding: 1.2rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .dashboard-table {
+    font-size: 0.85rem;
+  }
+
+  .dashboard-table th,
+  .dashboard-table td {
+    padding: 0.75rem 0.5rem;
+  }
+}

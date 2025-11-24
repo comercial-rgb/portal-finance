@@ -1,0 +1,132 @@
+.impostos-container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.impostos-sections {
+  display: grid;
+  gap: 2rem;
+}
+
+.imposto-section {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.imposto-section h3 {
+  color: #251C59;
+  margin-bottom: 1.5rem;
+  font-size: 1.25rem;
+  border-bottom: 2px solid #005BED;
+  padding-bottom: 0.5rem;
+}
+
+.imposto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.imposto-column h4 {
+  color: #005BED;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.imposto-field {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  gap: 0.75rem;
+}
+
+.imposto-field label {
+  flex: 1;
+  color: #333;
+  font-weight: 500;
+}
+
+.imposto-field input {
+  width: 100px;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  text-align: right;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.imposto-field input:focus {
+  outline: none;
+  border-color: #005BED;
+  box-shadow: 0 0 0 3px rgba(0, 91, 237, 0.1);
+}
+
+.imposto-field span {
+  color: #666;
+  font-weight: 600;
+}
+
+.retencoes-section .form-group {
+  max-width: 300px;
+}
+
+.retencoes-section label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #251C59;
+  font-weight: 600;
+}
+
+.retencoes-section input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.retencoes-section input:focus {
+  outline: none;
+  border-color: #005BED;
+  box-shadow: 0 0 0 3px rgba(0, 91, 237, 0.1);
+}
+
+.actions-footer {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #005BED;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

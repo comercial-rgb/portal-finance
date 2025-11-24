@@ -240,6 +240,14 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/relatorios"
+          element={
+            <PrivateRoute allowedRoles={['super_admin', 'admin', 'gerente']}>
+              <Relatorios />
+            </PrivateRoute>
+          }
+        />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>

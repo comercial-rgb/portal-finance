@@ -37,21 +37,56 @@ function RelatoriosCliente() {
       return;
     }
     setUser(currentUser);
-    loadDados();
   }, [navigate]);
+
+  useEffect(() => {
+    if (user) {
+      loadDados();
+    }
+  }, [user]);
 
   const loadDados = async () => {
     try {
       setLoading(true);
       
+      console.log('=== CARREGANDO DADOS RELATÓRIOS CLIENTE ===');
+      console.log('User:', user);
+      
       // Buscar ordens de serviço do cliente
       const ordensRes = await api.get('/ordens-servico?limit=10000');
       const todasOrdens = ordensRes.data.ordensServico || [];
       
-      // Filtrar apenas ordens do cliente logado
-      const minhasOrdens = todasOrdens.filter(ordem => 
-        ordem.cliente?._id === user?.clienteId || ordem.cliente === user?.clienteId
-      );
+      console.log('=== DEBUG FILTRO ===');
+      console.log('Total de ordens encontradas:', todasOrdens.length);
+      console.log('User completo:', user);
+      console.log('User clienteId:', user?.clienteId);
+      console.log('User clienteId tipo:', typeof user?.clienteId);
+      
+      if (todasOrdens.length > 0) {
+        console.log('Exemplo ordem completa:', JSON.stringify(todasOrdens[0], null, 2));
+        console.log('Cliente da primeira ordem:', todasOrdens[0].cliente);
+        console.log('Cliente._id:', todasOrdens[0].cliente?._id);
+        console.log('Cliente._id tipo:', typeof todasOrdens[0].cliente?._id);
+      }
+      
+      // Filtrar ordens do cliente logado usando o campo clienteId
+      const minhasOrdens = todasOrdens.filter(ordem => {
+        const clienteId = ordem.cliente?._id || ordem.cliente;
+        const userClienteId = user?.clienteId;
+        
+        console.log('Comparando:', {
+          clienteId,
+          clienteIdTipo: typeof clienteId,
+          userClienteId,
+          userClienteIdTipo: typeof userClienteId,
+          saoIguais: clienteId === userClienteId,
+          saoIguaisString: String(clienteId) === String(userClienteId)
+        });
+        
+        return String(clienteId) === String(userClienteId);
+      });
+      
+      console.log('Minhas ordens filtradas:', minhasOrdens.length);
 
       // Processar dados por centro de custo
       const centrosMap = new Map();

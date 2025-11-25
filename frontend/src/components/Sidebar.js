@@ -143,7 +143,7 @@ const Sidebar = ({ user }) => {
           <line x1="6" y1="20" x2="6" y2="14"/>
         </svg>
       ),
-      roles: ['super_admin', 'admin', 'gerente']
+      roles: ['super_admin', 'admin', 'gerente', 'cliente']
     }
   ];
 

@@ -237,3 +237,135 @@
     font-size: 20px;
   }
 }
+
+/* Alertas para Cliente */
+.alertas-section {
+  margin-bottom: 32px;
+}
+
+.alertas-section h2 {
+  font-size: 22px;
+  color: #2d3748;
+  margin-bottom: 16px;
+}
+
+.alertas-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.alerta-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+  border: 2px solid #fc8181;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(252, 129, 129, 0.2);
+}
+
+.alerta-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.alerta-info h3 {
+  font-size: 16px;
+  color: #742a2a;
+  margin: 0 0 8px 0;
+}
+
+.alerta-info p {
+  font-size: 14px;
+  color: #742a2a;
+  margin: 4px 0;
+}
+
+.alerta-info strong {
+  color: #c53030;
+  font-weight: 700;
+}
+
+.btn-atualizar {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(67, 233, 123, 0.3);
+}
+
+.btn-atualizar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(67, 233, 123, 0.4);
+}
+
+.valor-alerta {
+  color: #c53030;
+  font-weight: 700;
+}
+
+.badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.badge-warning {
+  background: #fef5e7;
+  color: #d68910;
+  border: 1px solid #f9e79f;
+}
+
+.badge-danger {
+  background: #fadbd8;
+  color: #c0392b;
+  border: 1px solid #f1948a;
+}
+
+.badge-success {
+  background: #d4efdf;
+  color: #1e8449;
+  border: 1px solid #a9dfbf;
+}
+
+.relatorios-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.tabela-section {
+  margin-top: 32px;
+}
+
+.tabela-section h2 {
+  font-size: 22px;
+  color: #2d3748;
+  margin-bottom: 16px;
+}

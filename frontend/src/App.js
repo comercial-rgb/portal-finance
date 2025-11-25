@@ -27,6 +27,7 @@ import Configuracoes from './pages/Configuracoes';
 import Usuarios from './pages/Usuarios';
 import ImpostosRetencoes from './pages/ImpostosRetencoes';
 import Relatorios from './pages/Relatorios';
+import RelatoriosCliente from './pages/RelatoriosCliente';
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {
@@ -243,7 +244,7 @@ function App() {
         <Route
           path="/relatorios"
           element={
-            <PrivateRoute allowedRoles={['super_admin', 'admin', 'gerente']}>
+            <PrivateRoute allowedRoles={['super_admin', 'admin', 'gerente', 'cliente']}>
               <Relatorios />
             </PrivateRoute>
           }

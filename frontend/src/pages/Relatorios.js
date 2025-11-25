@@ -12,6 +12,7 @@ import authService from '../services/authService';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import Footer from '../components/Footer';
+import RelatoriosCliente from './RelatoriosCliente';
 import './Relatorios.css';
 
 const COLORS = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
@@ -48,13 +49,29 @@ function Relatorios() {
 
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
-    if (!currentUser || currentUser.role === 'fornecedor' || currentUser.role === 'cliente') {
-      navigate('/dashboard');
+    if (!currentUser) {
+      navigate('/login');
       return;
     }
+    
+    // Se for fornecedor, redireciona
+    if (currentUser.role === 'fornecedor') {
+      navigate('/dashboard-fornecedor');
+      return;
+    }
+    
     setUser(currentUser);
-    loadInitialData();
+    
+    // Se não for cliente, carrega dados normais
+    if (currentUser.role !== 'cliente') {
+      loadInitialData();
+    }
   }, [navigate]);
+  
+  // Se for cliente, renderiza o componente específico
+  if (user?.role === 'cliente') {
+    return <RelatoriosCliente />;
+  }
 
   useEffect(() => {
     if (user) {

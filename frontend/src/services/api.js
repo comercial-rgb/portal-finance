@@ -10,8 +10,8 @@ const getApiUrl = () => {
   
   // Se estiver em Codespace (detecta .app.github.dev ou .github.dev)
   if (hostname.includes('app.github.dev') || hostname.includes('github.dev') || hostname.includes('githubpreview.dev')) {
-    // Substituir a porta 3000 pela 5000 na URL atual
-    const apiUrl = origin.replace('-3000.', '-5000.').replace('.app.github.dev', '.app.github.dev') + '/api';
+    // Substituir a porta do frontend (3000 ou 3001) pela porta do backend (5000)
+    const apiUrl = origin.replace(/-3000\./, '-5000.').replace(/-3001\./, '-5000.') + '/api';
     console.log('Detectado Codespace, usando URL:', apiUrl);
     return apiUrl;
   }

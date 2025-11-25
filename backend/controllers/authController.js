@@ -152,7 +152,9 @@ exports.login = async (req, res) => {
         id: user._id,
         nome: user.nome,
         email: user.email,
-        role: user.role
+        role: user.role,
+        fornecedorId: user.fornecedorId,
+        clienteId: user.clienteId
       }
     });
   } catch (error) {

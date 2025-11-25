@@ -67,17 +67,17 @@ function Relatorios() {
       loadInitialData();
     }
   }, [navigate]);
+
+  useEffect(() => {
+    if (user && user.role !== 'cliente') {
+      loadAnalytics();
+    }
+  }, [periodo, dataInicio, dataFim, clienteSelecionado, fornecedorSelecionado, user]);
   
   // Se for cliente, renderiza o componente específico
   if (user?.role === 'cliente') {
     return <RelatoriosCliente />;
   }
-
-  useEffect(() => {
-    if (user) {
-      loadAnalytics();
-    }
-  }, [periodo, dataInicio, dataFim, clienteSelecionado, fornecedorSelecionado, user]);
 
   const loadInitialData = async () => {
     try {

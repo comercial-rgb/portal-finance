@@ -27,7 +27,6 @@ import Configuracoes from './pages/Configuracoes';
 import Usuarios from './pages/Usuarios';
 import ImpostosRetencoes from './pages/ImpostosRetencoes';
 import Relatorios from './pages/Relatorios';
-import RelatoriosCliente from './pages/RelatoriosCliente';
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {

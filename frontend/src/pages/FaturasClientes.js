@@ -1257,7 +1257,7 @@ function FaturasClientes() {
                   <button className="btn-primary" onClick={exportarPDF}>
                     <span>📄</span> Gerar PDF
                   </button>
-                  {user?.role === 'admin' && (
+                  {(user?.role === 'admin' || user?.role === 'super_admin') && (
                     <button 
                       className="btn-gerar-fatura" 
                       onClick={gerarFatura}

@@ -252,10 +252,10 @@
 
 .quick-action-btn:hover {
   background: white;
-  border-color: #667eea;
-  color: #667eea;
+  border-color: var(--primary);
+  color: var(--primary);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 91, 237, 0.15);
 }
 
 .quick-action-btn svg {

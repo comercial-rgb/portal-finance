@@ -48,7 +48,7 @@
 }
 
 .stat-faturas {
-  border-left-color: #667eea;
+  border-left-color: var(--primary);
 }
 
 .stat-apagar {

@@ -21,6 +21,17 @@
   --white: #FFFFFF;
 
   /* =========================
+     ALIASES LEGADOS (compatibilidade)
+     ========================= */
+  --azul-corporativo: #251C59;
+  --azul-tech: #005BED;
+  --preto: #1a1a2e;
+  --branco: #FFFFFF;
+  --cinza-claro: #F8FAFC;
+  --cinza-medio: #E2E8F0;
+  --cinza-escuro: #475569;
+
+  /* =========================
      BACKGROUNDS / SURFACES
      ========================= */
   --background: #FFFFFF;
@@ -52,6 +63,12 @@
   --success: #198754;
   --warning: #EAB308;
   --danger: #EF4444;
+
+  /* Soft colors for backgrounds */
+  --success-soft: #d1fae5;
+  --warning-soft: #fef3c7;
+  --danger-soft: #fee2e2;
+  --info-soft: #dbeafe;
 
   /* =========================
      ACCESSIBILITY / FOCUS

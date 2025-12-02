@@ -463,13 +463,13 @@
 }
 
 .mini-table thead {
-  background: var(--azul-corporativo);
+  background: var(--secondary);
   color: white;
 }
 
 .mini-table th,
 .mini-table td {
-  padding: 0.5rem;
+  padding: 0.5rem 0.75rem;
   text-align: left;
   border-bottom: 1px solid var(--cinza-medio);
 }
@@ -477,6 +477,11 @@
 .mini-table th {
   font-weight: 600;
   font-size: 0.8rem;
+  color: white;
+}
+
+.mini-table td {
+  color: var(--text-primary);
 }
 
 .mini-table tbody tr:last-child td {
@@ -657,7 +662,7 @@
 }
 
 .empenhos-full-table thead {
-  background: var(--azul-corporativo);
+  background: var(--secondary);
   color: white;
 }
 
@@ -666,12 +671,14 @@
   padding: 0.75rem;
   text-align: left;
   border-bottom: 1px solid var(--cinza-medio);
+  color: var(--text-primary);
 }
 
 .empenhos-full-table th {
   font-weight: 600;
   font-size: 0.85rem;
   text-transform: uppercase;
+  color: white;
 }
 
 .empenhos-full-table tbody tr:last-child td {

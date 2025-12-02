@@ -214,7 +214,7 @@
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: #667eea;
+  accent-color: var(--primary);
 }
 
 .section-header-inline {
@@ -234,7 +234,7 @@
 }
 
 .section-header-inline svg {
-  color: #667eea;
+  color: var(--primary);
 }
 
 .alert-info {

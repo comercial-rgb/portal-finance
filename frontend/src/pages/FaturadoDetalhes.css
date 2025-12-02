@@ -114,7 +114,7 @@
 
 .input-previsao {
   padding: 0.5rem 0.75rem;
-  border: 2px solid #667eea;
+  border: 2px solid var(--primary);
   border-radius: 6px;
   font-size: 0.95rem;
   font-family: 'DM Sans', sans-serif;
@@ -124,8 +124,8 @@
 
 .input-previsao:focus {
   outline: none;
-  border-color: #5568d3;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: var(--primary-hover);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .btn-salvar-mini,
@@ -162,7 +162,7 @@
 
 .btn-editar-mini {
   background: transparent;
-  border: 1px solid #667eea;
+  border: 1px solid var(--primary);
   padding: 0.3rem 0.6rem;
   font-size: 0.85rem;
   cursor: pointer;
@@ -170,7 +170,7 @@
 }
 
 .btn-editar-mini:hover {
-  background: #667eea;
+  background: var(--primary);
   transform: scale(1.1);
 }
 
@@ -415,13 +415,13 @@
 }
 
 .btn-info {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-info);
   color: white;
 }
 
 .btn-info:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 91, 237, 0.4);
 }
 
 .btn-icon {

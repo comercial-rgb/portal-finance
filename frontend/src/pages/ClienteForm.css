@@ -580,6 +580,14 @@
   justify-content: flex-start;
 }
 
+/* Layout vertical para botões do contrato */
+.card-actions-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
 .btn-group {
   display: flex;
   gap: 0.5rem;

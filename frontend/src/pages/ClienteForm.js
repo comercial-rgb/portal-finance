@@ -1428,7 +1428,7 @@ function ClienteForm() {
                                 <span> | <strong>Saldo:</strong> <span style={{color: saldos.saldo < 0 ? '#dc3545' : '#28a745', fontWeight: 'bold'}}>R$ {formatarValor(saldos.saldo)}</span></span>
                               </div>
                             </div>
-                            <div className="card-actions">
+                            <div className="card-actions-vertical">
                               <div className="btn-group">
                                 <button
                                   className="btn-icon btn-info"

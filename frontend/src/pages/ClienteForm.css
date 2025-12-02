@@ -209,11 +209,11 @@
   background: none;
   border: none;
   color: #dc3545;
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   cursor: pointer;
-  padding: 0.25rem;
-  min-width: 32px;
-  min-height: 32px;
+  padding: 0.25rem 0.4rem;
+  min-width: 28px;
+  min-height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -536,17 +536,20 @@
 /* Grupos de botões */
 .card-actions {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  align-items: flex-end;
-  min-width: 200px;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-start;
 }
 
 .btn-group {
   display: flex;
   gap: 0.5rem;
-  flex-wrap: nowrap;
   align-items: center;
+}
+
+.btn-group:first-child {
+  margin-right: auto;
 }
 
 .btn-icon:disabled {

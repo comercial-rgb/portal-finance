@@ -211,14 +211,15 @@
   color: #dc3545;
   font-size: 1.5rem;
   cursor: pointer;
-  padding: 0;
-  width: 24px;
-  height: 24px;
+  padding: 0.25rem;
+  min-width: 32px;
+  min-height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 4px;
   transition: background 0.2s;
+  flex-shrink: 0;
 }
 
 .btn-icon-small:hover {
@@ -372,6 +373,7 @@
   align-items: flex-start;
   margin-bottom: 1rem;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .contrato-header h4 {
@@ -462,6 +464,11 @@
   cursor: pointer;
   transition: all 0.3s;
   white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
 }
 
 .btn-icon-small.btn-warning,
@@ -527,17 +534,20 @@
   font-weight: 700;
 }
 
-/* Grupos de bot\u00f5es */
+/* Grupos de botões */
 .card-actions {
   display: flex;
   gap: 1rem;
   align-items: center;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .btn-group {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .btn-icon:disabled {
@@ -663,4 +673,39 @@
 .status-inactive {
   background: #f8d7da;
   color: #721c24;
+}
+
+/* Media Queries para Responsividade */
+@media (max-width: 1024px) {
+  .contrato-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .card-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+  
+  .btn-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 768px) {
+  .btn-icon {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+  }
+  
+  .card-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .btn-group {
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
 }

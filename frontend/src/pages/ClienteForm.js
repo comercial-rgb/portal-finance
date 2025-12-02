@@ -1461,23 +1461,23 @@ function ClienteForm() {
                                   + Empenho
                                 </button>
                               </div>
-                              <div className="btn-group">
+                              <div className="btn-group-actions">
                                 <button
-                                  className="btn-action-icon btn-warning"
+                                  className="btn-icon-action"
                                   onClick={() => handleEditContrato(contrato)}
                                   title="Editar Contrato"
                                 >
                                   ✏️
                                 </button>
                                 <button
-                                  className="btn-action-icon btn-secondary"
+                                  className="btn-icon-action"
                                   onClick={() => handleToggleContratoStatus(contrato._id)}
                                   title={contrato.ativo ? 'Inativar' : 'Ativar'}
                                 >
                                   {contrato.ativo ? '🔓' : '🔒'}
                                 </button>
                                 <button
-                                  className="btn-action-icon btn-delete"
+                                  className="btn-icon-action btn-danger"
                                   onClick={() => handleDeleteContrato(contrato._id)}
                                   title="Excluir"
                                 >

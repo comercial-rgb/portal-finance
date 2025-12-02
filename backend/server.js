@@ -88,7 +88,7 @@ app.use('/api', rateLimit(1000, 60 * 1000)); // 1000 req/min geral
 app.use('/api/auth', rateLimit(30, 5 * 60 * 1000), authRoutes); // 30 req / 5 min
 app.use('/api', invalidateCache('fornecedores'), fornecedorRoutes);
 app.use('/api/clientes', cacheMiddleware(3 * 60 * 1000), invalidateCache('clientes'), clienteRoutes);
-app.use('/api/tipo-servicos', cacheMiddleware(10 * 60 * 1000), tipoServicoRoutes);
+app.use('/api/tipo-servicos', cacheMiddleware(10 * 60 * 1000), invalidateCache('tipo-servicos'), tipoServicoRoutes);
 app.use('/api/ordens-servico', invalidateCache(['ordens', 'clientes', 'fornecedores']), ordemServicoRoutes);
 app.use('/api/usuarios', rateLimitPresets.write, usuarioRoutes);
 app.use('/api/impostos-retencoes', cacheMiddleware(10 * 60 * 1000), impostosRetencoesRoutes);
@@ -98,11 +98,24 @@ app.use('/api/notificacoes', notificacaoRoutes);
 // Rota de teste e health check
 app.get('/api/health', (req, res) => {
   const uptime = process.uptime();
-  res.json({
-    status: 'OK',
-    uptime: `${Math.floor(uptime / 60)} minutos`,
-    timestamp: new Date().toISOString(),
-    mongodb: mongoose.connection.readyState === 1 ? 'Conectado' : 'Desconectado'
+  const memoryUsage = process.memoryUsage();
+  const { rateLimiter } = require('./middleware/rateLimit');
+  const { cacheManager } = require('./middleware/cache');
+  
+  res.json({ 
+    status: 'ok', 
+    message: 'Sistema Financeiro - InstaSolutions API',
+    uptime: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m`,
+    mongodb: mongoose.connection.readyState === 1 ? 'Conectado' : 'Desconectado',
+    memory: {
+      heapUsed: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)}MB`,
+      heapTotal: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)}MB`
+    },
+    cache: {
+      size: cacheManager.size()
+    },
+    rateLimit: rateLimiter.getStats(),
+    timestamp: new Date().toISOString()
   });
 });
 

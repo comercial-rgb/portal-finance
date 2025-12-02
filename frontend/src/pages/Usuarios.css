@@ -15,49 +15,50 @@
 }
 
 .role-super_admin {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-primary);
   color: white;
 }
 
 .role-admin {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: var(--gradient-secondary);
   color: white;
 }
 
 .role-gerente {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: var(--gradient-primary);
   color: white;
+  opacity: 0.9;
 }
 
 .role-funcionario {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  background: var(--gradient-success);
   color: white;
 }
 
 .role-fornecedor {
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  background: var(--gradient-warning);
   color: white;
 }
 
 .role-cliente {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: var(--primary);
   color: white;
 }
 
 .status-ativo {
-  background-color: #d4edda;
-  color: #155724;
+  background-color: var(--success-soft);
+  color: var(--success);
   padding: 0.25rem 0.75rem;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   font-size: 0.75rem;
   font-weight: 600;
 }
 
 .status-inativo {
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: var(--danger-soft);
+  color: var(--danger);
   padding: 0.25rem 0.75rem;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   font-size: 0.75rem;
   font-weight: 600;
 }
@@ -86,14 +87,14 @@
 }
 
 .modal-content {
-  background: white;
-  border-radius: 12px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
   padding: 2rem;
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-xl);
   animation: slideUp 0.3s ease-out;
 }
 
@@ -119,7 +120,7 @@
 
 .modal-header h2 {
   margin: 0;
-  color: #251C59;
+  color: var(--secondary);
   font-size: 1.5rem;
 }
 
@@ -140,8 +141,8 @@
 }
 
 .modal-close:hover {
-  background: #f0f0f0;
-  color: #251C59;
+  background: var(--surface-alt);
+  color: var(--secondary);
 }
 
 .modal-content .form-group {
@@ -151,7 +152,7 @@
 .modal-content .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #251C59;
+  color: var(--text-primary);
   font-weight: 600;
   font-size: 0.9rem;
 }
@@ -170,8 +171,8 @@
 .modal-content .form-group input:focus,
 .modal-content .form-group select:focus {
   outline: none;
-  border-color: #005BED;
-  box-shadow: 0 0 0 3px rgba(0, 91, 237, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .checkbox-group {
@@ -207,13 +208,13 @@
 }
 
 .btn-success {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  background: var(--gradient-success);
   color: white;
 }
 
 .btn-success:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(67, 233, 123, 0.4);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-icon.btn-success {

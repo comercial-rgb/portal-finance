@@ -5,11 +5,11 @@
 }
 
 .profile-card {
-  background: white;
-  border-radius: 14px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
   padding: 32px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
 }
 
 .profile-header {
@@ -25,7 +25,7 @@
   width: 100px;
   height: 100px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-primary);
   color: white;
   display: flex;
   align-items: center;
@@ -33,7 +33,7 @@
   font-size: 42px;
   font-weight: 700;
   flex-shrink: 0;
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  box-shadow: var(--shadow-md);
 }
 
 .profile-info {
@@ -41,7 +41,7 @@
 }
 
 .profile-info h2 {
-  color: #2d3748;
+  color: var(--text-primary);
   font-size: 28px;
   font-weight: 700;
   margin: 0 0 8px 0;
@@ -55,12 +55,12 @@
 
 .profile-role {
   display: inline-block;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-primary);
   color: white;
   font-size: 13px;
   font-weight: 600;
   padding: 6px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .profile-stats {
@@ -105,15 +105,15 @@
 }
 
 .form-card {
-  background: white;
-  border-radius: 14px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
   padding: 32px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
 }
 
 .form-card h3 {
-  color: #2d3748;
+  color: var(--text-primary);
   font-size: 20px;
   font-weight: 700;
   margin: 0 0 24px 0;
@@ -143,9 +143,9 @@
 
 .form-group input:focus {
   outline: none;
-  border-color: #667eea;
-  background-color: white;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: var(--primary);
+  background-color: var(--surface);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .form-group small {
@@ -161,17 +161,17 @@
   font-size: 16px;
   font-weight: 600;
   color: white;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-primary);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: var(--transition);
   margin-top: 8px;
 }
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+  box-shadow: var(--shadow-lg);
 }
 
 .btn-primary:disabled {

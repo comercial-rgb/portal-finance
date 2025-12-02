@@ -10,17 +10,17 @@
 }
 
 .imposto-section {
-  background: white;
-  border-radius: 12px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 
 .imposto-section h3 {
-  color: #251C59;
+  color: var(--secondary);
   margin-bottom: 1.5rem;
   font-size: 1.25rem;
-  border-bottom: 2px solid #005BED;
+  border-bottom: 2px solid var(--primary);
   padding-bottom: 0.5rem;
 }
 
@@ -31,7 +31,7 @@
 }
 
 .imposto-column h4 {
-  color: #005BED;
+  color: var(--primary);
   margin-bottom: 1rem;
   font-size: 1.1rem;
 }
@@ -60,8 +60,8 @@
 
 .imposto-field input:focus {
   outline: none;
-  border-color: #005BED;
-  box-shadow: 0 0 0 3px rgba(0, 91, 237, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .imposto-field span {
@@ -76,7 +76,7 @@
 .retencoes-section label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #251C59;
+  color: var(--text-primary);
   font-weight: 600;
 }
 
@@ -91,8 +91,8 @@
 
 .retencoes-section input:focus {
   outline: none;
-  border-color: #005BED;
-  box-shadow: 0 0 0 3px rgba(0, 91, 237, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .actions-footer {
@@ -118,8 +118,8 @@
 }
 
 .loading-spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #005BED;
+  border: 4px solid var(--surface-alt);
+  border-top: 4px solid var(--primary);
   border-radius: 50%;
   width: 50px;
   height: 50px;

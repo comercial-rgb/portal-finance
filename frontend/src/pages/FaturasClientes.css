@@ -10,21 +10,21 @@
 
 .page-header h1 {
   font-size: 28px;
-  color: #251c59;
+  color: var(--secondary);
   margin-bottom: 5px;
 }
 
 .filtros-section {
-  background: white;
+  background: var(--surface);
   padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
   margin-bottom: 25px;
 }
 
 .filtros-section h3 {
   font-size: 18px;
-  color: #251c59;
+  color: var(--secondary);
   margin-bottom: 15px;
 }
 
@@ -59,7 +59,7 @@
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #005bed;
+  border-color: var(--primary);
 }
 
 .filtros-actions {
@@ -69,10 +69,10 @@
 }
 
 .ordens-list {
-  background: white;
+  background: var(--surface);
   padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .ordens-header {
@@ -86,7 +86,7 @@
 
 .ordens-header h3 {
   font-size: 18px;
-  color: #251c59;
+  color: var(--secondary);
   font-weight: 600;
 }
 
@@ -122,25 +122,25 @@
 }
 
 .btn-excel {
-  background: #1d6f42;
+  background: var(--success);
   color: white;
 }
 
 .btn-excel:hover:not(:disabled) {
-  background: #155a35;
+  background: var(--success-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(29, 111, 66, 0.3);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-gerar-fatura {
-  background: #005bed;
+  background: var(--primary);
   color: white;
 }
 
 .btn-gerar-fatura:hover:not(:disabled) {
-  background: #0047ba;
+  background: var(--primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 91, 237, 0.3);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-gerar-fatura-alt {

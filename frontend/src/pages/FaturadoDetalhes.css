@@ -12,6 +12,7 @@
   justify-content: space-between;
   margin-bottom: 2rem;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .btn-voltar {
@@ -23,6 +24,8 @@
   font-weight: 600;
   color: var(--azul-corporativo);
   transition: all 0.3s;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .btn-voltar:hover {
@@ -38,6 +41,8 @@
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .btn-excluir-fatura:hover {
@@ -450,6 +455,16 @@
   .page-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .page-header > div {
+    width: 100%;
+  }
+  
+  .page-header > div[style] {
+    flex-direction: column;
+    align-items: flex-start !important;
   }
 
   .info-grid,
@@ -459,6 +474,11 @@
 
   .data-table {
     font-size: 0.85rem;
+  }
+  
+  .table-actions {
+    flex-direction: column;
+    gap: 0.25rem;
   }
 
   .acoes-footer {

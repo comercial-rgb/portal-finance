@@ -1,13 +1,13 @@
 .sidebar {
   width: 250px;
-  background: var(--azul-corporativo);
-  color: var(--branco);
+  background: var(--secondary);
+  color: white;
   min-height: calc(100vh - 80px);
   padding: 2rem 0;
   position: fixed;
   left: 0;
   top: 80px;
-  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .sidebar-nav {
@@ -20,7 +20,7 @@
 }
 
 .nav-section-title {
-  color: #a0aec0;
+  color: rgba(255, 255, 255, 0.6);
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
@@ -43,37 +43,38 @@
   align-items: center;
   gap: 14px;
   padding: 14px 16px;
-  border-radius: 10px;
-  color: #4a5568;
+  border-radius: var(--radius-md);
+  color: rgba(255, 255, 255, 0.9);
   text-decoration: none;
   font-size: 15px;
   font-weight: 500;
   position: relative;
-  transition: all 0.2s ease;
+  transition: all var(--transition);
   cursor: pointer;
 }
 
 .nav-badge {
   margin-left: auto;
-  background: rgba(255, 193, 7, 0.15);
-  color: #f59e0b;
+  background: var(--warning-soft);
+  color: var(--warning);
   font-size: 10px;
   font-weight: 600;
   padding: 3px 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-full);
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
 
 .nav-item:hover {
-  background: #f7fafc;
-  color: #667eea;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
 }
 
 .nav-item.active {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  color: #667eea;
+  background: var(--gradient-primary);
+  color: white;
   font-weight: 600;
+  box-shadow: var(--shadow-sm);
 }
 
 .nav-icon {
@@ -97,7 +98,7 @@
 
 .sidebar-footer {
   padding: 20px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .status-indicator {

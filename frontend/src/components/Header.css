@@ -1,10 +1,10 @@
 .header {
-  background: var(--azul-corporativo);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--secondary);
+  box-shadow: var(--shadow-sm);
   position: sticky;
   top: 0;
   z-index: 100;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border);
 }
 
 .header-content {
@@ -27,14 +27,14 @@
 .btn-back {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 8px 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
-  color: var(--branco);
+  transition: all var(--transition);
+  color: white;
 }
 
 .btn-back:hover {
@@ -67,7 +67,7 @@
 }
 
 .logo-text h1 {
-  color: #2d3748;
+  color: white;
   font-size: 20px;
   font-weight: 700;
   margin: 0;
@@ -75,7 +75,7 @@
 }
 
 .logo-text span {
-  color: #718096;
+  color: rgba(255, 255, 255, 0.8);
   font-size: 13px;
   font-weight: 500;
 }
@@ -88,17 +88,17 @@
 .search-bar {
   display: flex;
   align-items: center;
-  background: #f7fafc;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
+  background: var(--surface-alt);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
   padding: 4px;
-  transition: all 0.3s ease;
+  transition: all var(--transition);
 }
 
 .search-bar:focus-within {
-  background: white;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  background: var(--surface);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .search-bar input {
@@ -107,30 +107,30 @@
   background: transparent;
   padding: 10px 16px;
   font-size: 15px;
-  color: #2d3748;
+  color: var(--text-primary);
   outline: none;
 }
 
 .search-bar input::placeholder {
-  color: #a0aec0;
+  color: var(--text-muted);
 }
 
 .search-bar button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-primary);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 10px 16px;
   color: white;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: all var(--transition);
 }
 
 .search-bar button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: var(--shadow-md);
 }
 
 .header-right {
@@ -147,13 +147,13 @@
 }
 
 .welcome-text {
-  color: #718096;
+  color: rgba(255, 255, 255, 0.8);
   font-size: 13px;
   font-weight: 500;
 }
 
 .user-name {
-  color: #2d3748;
+  color: white;
   font-size: 16px;
   font-weight: 600;
 }
@@ -167,23 +167,23 @@
   align-items: center;
   gap: 8px;
   background: transparent;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-lg);
   padding: 6px 12px 6px 6px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition);
 }
 
 .profile-button:hover {
-  border-color: #667eea;
-  background: #f7fafc;
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .avatar {
   width: 40px;
   height: 40px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: var(--radius-md);
+  background: var(--gradient-primary);
   color: white;
   display: flex;
   align-items: center;
@@ -196,13 +196,13 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   min-width: 260px;
   padding: 8px;
   animation: slideDown 0.2s ease;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
 }
 
 @keyframes slideDown {
@@ -221,32 +221,32 @@
 }
 
 .dropdown-name {
-  color: #2d3748;
+  color: var(--text-primary);
   font-size: 15px;
   font-weight: 600;
   margin: 0 0 4px 0;
 }
 
 .dropdown-email {
-  color: #718096;
+  color: var(--text-secondary);
   font-size: 13px;
   margin: 0 0 6px 0;
 }
 
 .dropdown-role {
   display: inline-block;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-primary);
   color: white;
   font-size: 11px;
   font-weight: 600;
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   margin: 0;
 }
 
 .dropdown-divider {
   height: 1px;
-  background: #e2e8f0;
+  background: var(--border);
   margin: 8px 0;
 }
 

@@ -13,6 +13,7 @@ function RelatoriosCliente() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [ordens, setOrdens] = useState([]);
+  const [clienteData, setClienteData] = useState(null);
   
   const [filtros, setFiltros] = useState({
     centroCusto: '',
@@ -26,12 +27,15 @@ function RelatoriosCliente() {
   const [subunidadesList, setSubunidadesList] = useState([]);
   const [contratos, setContratos] = useState([]);
   const [empenhos, setEmpenhos] = useState([]);
+  const [contratoMap, setContratoMap] = useState({});
+  const [empenhoMap, setEmpenhoMap] = useState({});
   
   const [resumo, setResumo] = useState({
     valorContrato: 0,
-    valorEmpenhosGerados: 0,
+    totalEmpenhado: 0,
     valorConsumido: 0,
-    valorDisponivel: 0
+    valorDisponivel: 0,
+    empenhosAtivos: 0
   });
 
   useEffect(() => {
@@ -60,17 +64,73 @@ function RelatoriosCliente() {
   const loadDados = async () => {
     try {
       setLoading(true);
+      
+      // Buscar dados do cliente com contratos e empenhos
+      const clienteRes = await api.get(`/clientes/${user.clienteId}`);
+      const cliente = clienteRes.data;
+      setClienteData(cliente);
+      
+      // Criar mapeamento de IDs para números de contratos e empenhos
+      const contratoMapping = {};
+      const empenhoMapping = {};
+      const contratosDisponiveis = [];
+      const empenhosDisponiveis = [];
+      
+      if (cliente.contratos && cliente.contratos.length > 0) {
+        cliente.contratos.forEach(contrato => {
+          contratoMapping[contrato._id] = {
+            numero: contrato.numeroContrato,
+            valor: contrato.valor,
+            dataInicial: contrato.dataInicial,
+            dataFinal: contrato.dataFinal,
+            ativo: contrato.ativo
+          };
+          contratosDisponiveis.push({
+            id: contrato._id,
+            numero: contrato.numeroContrato
+          });
+          
+          if (contrato.empenhos && contrato.empenhos.length > 0) {
+            contrato.empenhos.forEach(empenho => {
+              empenhoMapping[empenho._id] = {
+                numero: empenho.numeroEmpenho,
+                valor: empenho.valor,
+                valorUtilizado: empenho.valorUtilizado || 0,
+                valorAnulado: empenho.valorAnulado || 0,
+                tipo: empenho.tipo,
+                centroCusto: empenho.centroCusto,
+                subunidade: empenho.subunidade,
+                contratoId: contrato._id,
+                numeroContrato: contrato.numeroContrato,
+                ativo: empenho.ativo
+              };
+              empenhosDisponiveis.push({
+                id: empenho._id,
+                numero: empenho.numeroEmpenho,
+                contrato: contrato.numeroContrato
+              });
+            });
+          }
+        });
+      }
+      
+      setContratoMap(contratoMapping);
+      setEmpenhoMap(empenhoMapping);
+      
+      // Buscar ordens de serviço
       const ordensRes = await api.get('/ordens-servico', { params: { limit: 10000 } });
       const todasOrdens = ordensRes.data.ordensServico || [];
       const minhasOrdens = todasOrdens.filter(ordem => {
         const clienteId = ordem.cliente?._id || ordem.cliente;
         return String(clienteId) === String(user?.clienteId);
       });
+      
       setOrdens(minhasOrdens);
       setCentrosCustoList([...new Set(minhasOrdens.map(o => o.centroCusto).filter(Boolean))]);
       setSubunidadesList([...new Set(minhasOrdens.map(o => o.subunidade).filter(Boolean))]);
-      setContratos([...new Set(minhasOrdens.map(o => o.contratoEmpenhoPecas || o.contratoEmpenhoServicos).filter(Boolean))]);
-      setEmpenhos([...new Set([...minhasOrdens.map(o => o.empenhoPecas).filter(Boolean), ...minhasOrdens.map(o => o.empenhoServicos).filter(Boolean)])]);
+      setContratos(contratosDisponiveis);
+      setEmpenhos(empenhosDisponiveis);
+      
       setLoading(false);
     } catch (error) {
       console.error('Erro:', error);
@@ -80,6 +140,11 @@ function RelatoriosCliente() {
   };
 
   const calcularResumo = () => {
+    if (!clienteData || !clienteData.contratos) {
+      return;
+    }
+    
+    // Aplicar filtros nas ordens
     let ordensFiltradas = ordens;
     if (filtros.centroCusto) ordensFiltradas = ordensFiltradas.filter(o => o.centroCusto === filtros.centroCusto);
     if (filtros.subunidade) ordensFiltradas = ordensFiltradas.filter(o => o.subunidade === filtros.subunidade);
@@ -88,25 +153,60 @@ function RelatoriosCliente() {
     if (filtros.tipoEmpenho === 'pecas') ordensFiltradas = ordensFiltradas.filter(o => o.empenhoPecas);
     if (filtros.tipoEmpenho === 'servicos') ordensFiltradas = ordensFiltradas.filter(o => o.empenhoServicos);
     
-    let valorConsumido = 0, valorEmpenhoPecas = 0, valorEmpenhoServicos = 0;
+    // Calcular valor consumido das OS
+    let valorConsumido = 0;
     ordensFiltradas.forEach(ordem => {
       if (['Autorizado', 'Aguardando pagamento', 'Pago'].includes(ordem.status)) {
         valorConsumido += ordem.valorFinal || 0;
       }
-      if (filtros.tipoEmpenho === '' || filtros.tipoEmpenho === 'pecas') {
-        valorEmpenhoPecas += ordem.valorPecasComDesconto || ordem.valorPecas || 0;
+    });
+    
+    // Calcular valores dos contratos e empenhos
+    let valorTotalContratos = 0;
+    let valorTotalEmpenhado = 0;
+    let empenhosAtivosCount = 0;
+    
+    clienteData.contratos.forEach(contrato => {
+      // Se há filtro de contrato, considerar apenas o selecionado
+      if (filtros.contrato && contrato._id !== filtros.contrato) {
+        return;
       }
-      if (filtros.tipoEmpenho === '' || filtros.tipoEmpenho === 'servicos') {
-        valorEmpenhoServicos += ordem.valorServicoComDesconto || ordem.valorServico || 0;
+      
+      if (contrato.ativo) {
+        valorTotalContratos += contrato.valor || 0;
+        
+        if (contrato.empenhos && contrato.empenhos.length > 0) {
+          contrato.empenhos.forEach(empenho => {
+            // Se há filtro de empenho, considerar apenas o selecionado
+            if (filtros.empenho && empenho._id !== filtros.empenho) {
+              return;
+            }
+            
+            // Aplicar filtro de tipo de empenho
+            if (filtros.tipoEmpenho === 'pecas' && empenho.tipo !== 'pecas' && empenho.tipo !== 'pecas_servicos') {
+              return;
+            }
+            if (filtros.tipoEmpenho === 'servicos' && empenho.tipo !== 'servicos' && empenho.tipo !== 'pecas_servicos') {
+              return;
+            }
+            
+            if (empenho.ativo) {
+              valorTotalEmpenhado += empenho.valor || 0;
+              empenhosAtivosCount++;
+            }
+          });
+        }
       }
     });
     
-    const valorEmpenhosGerados = valorEmpenhoPecas + valorEmpenhoServicos;
+    const valorDisponivel = valorTotalEmpenhado - valorConsumido;
+    
     setResumo({
-      valorContrato: valorEmpenhosGerados * 1.2,
-      valorEmpenhosGerados,
+      valorContrato: valorTotalContratos,
+      totalEmpenhado: valorTotalEmpenhado,
       valorConsumido,
-      valorDisponivel: valorEmpenhosGerados - valorConsumido
+      valorDisponivel,
+      empenhosAtivos: empenhosAtivosCount
     });
   };
 
@@ -164,6 +264,15 @@ function RelatoriosCliente() {
               <div>
                 <h1>📊 Relatórios Financeiros</h1>
                 <p>Acompanhe contratos, empenhos e consumo</p>
+                {filtros.contrato && contratoMap[filtros.contrato] && (
+                  <div className="info-contrato-selecionado">
+                    <strong>Contrato Nº {contratoMap[filtros.contrato].numero}</strong> - 
+                    Total Contrato: {formatCurrency(resumo.valorContrato)} | 
+                    Total Empenhado: {formatCurrency(resumo.totalEmpenhado)} | 
+                    Saldo: {formatCurrency(resumo.valorDisponivel)} | 
+                    Empenhos Ativos: {resumo.empenhosAtivos}
+                  </div>
+                )}
               </div>
               <button className="btn-atualizar" onClick={loadDados}>🔄 Atualizar</button>
             </div>
@@ -172,15 +281,18 @@ function RelatoriosCliente() {
               <div className="card-resumo card-blue">
                 <div className="card-icon">💼</div>
                 <div className="card-info">
-                  <span className="card-label">Valor do Contrato</span>
+                  <span className="card-label">Total Contrato{filtros.contrato ? ' (Selecionado)' : 's'}</span>
                   <span className="card-value">{formatCurrency(resumo.valorContrato)}</span>
                 </div>
               </div>
               <div className="card-resumo card-purple">
                 <div className="card-icon">📄</div>
                 <div className="card-info">
-                  <span className="card-label">Empenhos Gerados</span>
-                  <span className="card-value">{formatCurrency(resumo.valorEmpenhosGerados)}</span>
+                  <span className="card-label">Total Empenhado</span>
+                  <span className="card-value">{formatCurrency(resumo.totalEmpenhado)}</span>
+                  {resumo.empenhosAtivos > 0 && (
+                    <small style={{fontSize: '12px', color: '#718096'}}>{resumo.empenhosAtivos} empenho(s) ativo(s)</small>
+                  )}
                 </div>
               </div>
               <div className="card-resumo card-orange">
@@ -220,14 +332,14 @@ function RelatoriosCliente() {
                   <label>Contrato</label>
                   <select value={filtros.contrato} onChange={(e) => setFiltros({...filtros, contrato: e.target.value})}>
                     <option value="">Todos</option>
-                    {contratos.map(c => <option key={c} value={c}>{c}</option>)}
+                    {contratos.map(c => <option key={c.id} value={c.id}>{c.numero}</option>)}
                   </select>
                 </div>
                 <div className="filtro-group">
                   <label>Empenho</label>
                   <select value={filtros.empenho} onChange={(e) => setFiltros({...filtros, empenho: e.target.value})}>
                     <option value="">Todos</option>
-                    {empenhos.map(e => <option key={e} value={e}>{e}</option>)}
+                    {empenhos.map(e => <option key={e.id} value={e.id}>{e.numero} ({e.contrato})</option>)}
                   </select>
                 </div>
                 <div className="filtro-group">
@@ -263,18 +375,37 @@ function RelatoriosCliente() {
                     </tr>
                   </thead>
                   <tbody>
-                    {ordens.filter(filtrarOrdens).map(ordem => (
-                      <tr key={ordem._id}>
-                        <td>{ordem.numeroOrdemServico || ordem.codigo}</td>
-                        <td>{ordem.centroCusto || '-'}</td>
-                        <td>{ordem.subunidade || '-'}</td>
-                        <td>{ordem.contratoEmpenhoPecas || ordem.contratoEmpenhoServicos || '-'}</td>
-                        <td>{ordem.empenhoPecas || ordem.empenhoServicos || '-'}</td>
-                        <td>{ordem.empenhoPecas && ordem.empenhoServicos ? 'Peças + Serviços' : ordem.empenhoPecas ? 'Peças' : ordem.empenhoServicos ? 'Serviços' : '-'}</td>
-                        <td className="valor-destaque">{formatCurrency(ordem.valorFinal)}</td>
-                        <td><span className={`badge badge-${getStatusColor(ordem.status)}`}>{ordem.status}</span></td>
-                      </tr>
-                    ))}
+                    {ordens.filter(filtrarOrdens).map(ordem => {
+                      const contratoIdPecas = ordem.contratoEmpenhoPecas;
+                      const contratoIdServicos = ordem.contratoEmpenhoServicos;
+                      const empenhoIdPecas = ordem.empenhoPecas;
+                      const empenhoIdServicos = ordem.empenhoServicos;
+                      
+                      const contratoNumero = contratoIdPecas && contratoMap[contratoIdPecas] 
+                        ? contratoMap[contratoIdPecas].numero 
+                        : contratoIdServicos && contratoMap[contratoIdServicos]
+                        ? contratoMap[contratoIdServicos].numero
+                        : contratoIdPecas || contratoIdServicos || '-';
+                        
+                      const empenhoNumero = empenhoIdPecas && empenhoMap[empenhoIdPecas]
+                        ? empenhoMap[empenhoIdPecas].numero
+                        : empenhoIdServicos && empenhoMap[empenhoIdServicos]
+                        ? empenhoMap[empenhoIdServicos].numero
+                        : empenhoIdPecas || empenhoIdServicos || '-';
+                      
+                      return (
+                        <tr key={ordem._id}>
+                          <td>{ordem.numeroOrdemServico || ordem.codigo}</td>
+                          <td>{ordem.centroCusto || '-'}</td>
+                          <td>{ordem.subunidade || '-'}</td>
+                          <td>{contratoNumero}</td>
+                          <td>{empenhoNumero}</td>
+                          <td>{ordem.empenhoPecas && ordem.empenhoServicos ? 'Peças + Serviços' : ordem.empenhoPecas ? 'Peças' : ordem.empenhoServicos ? 'Serviços' : '-'}</td>
+                          <td className="valor-destaque">{formatCurrency(ordem.valorFinal)}</td>
+                          <td><span className={`badge badge-${getStatusColor(ordem.status)}`}>{ordem.status}</span></td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               )}

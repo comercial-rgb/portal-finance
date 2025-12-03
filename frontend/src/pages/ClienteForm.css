@@ -139,10 +139,10 @@
 }
 
 .centro-custo-card {
-  background: var(--cinza-claro);
+  background: #e3e8f0;
   border-radius: 12px;
   padding: 1.5rem;
-  border: 2px solid var(--cinza-medio);
+  border: 2px solid #b8c4d4;
   transition: all 0.3s ease;
 }
 
@@ -156,6 +156,10 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+  background: #d0d8e8;
+  margin: -1.5rem -1.5rem 1rem -1.5rem;
+  padding: 1rem 1.5rem;
+  border-radius: 10px 10px 0 0;
 }
 
 .centro-custo-header h4 {
@@ -195,9 +199,9 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem;
-  background: var(--branco);
+  background: #ffffff;
   border-radius: 8px;
-  border: 1px solid var(--cinza-medio);
+  border: 1px solid #d0d8e8;
 }
 
 .subunidades-list li span {
@@ -371,7 +375,12 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1rem;
-  gap: 1rem;
+  gap: 2rem;
+}
+
+.contrato-header > div:first-child {
+  flex: 1;
+  min-width: 0;
 }
 
 .contrato-header h4 {
@@ -379,14 +388,20 @@
   color: var(--azul-corporativo);
   font-weight: 600;
   margin: 0 0 0.5rem 0;
+  white-space: nowrap;
 }
 
 .contrato-valores {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--cinza-escuro);
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+  white-space: nowrap;
+}
+
+.contrato-header .card-actions {
+  flex-shrink: 0;
 }
 
 .badge-inactive {

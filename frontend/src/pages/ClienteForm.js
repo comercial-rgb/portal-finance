@@ -308,10 +308,8 @@ function ClienteForm() {
         
         toast.success('Cliente atualizado com sucesso!');
         
-        // Forçar reload da página para garantir que todos os dados são recarregados corretamente
-        setTimeout(() => {
-          window.location.reload();
-        }, 500);
+        // Navegar para a mesma página forçando recarregamento completo
+        window.location.href = `/clientes/${id}`;
       } else {
         const response = await api.post('/clientes', formData);
         const novoId = response.data._id || response.data.id;

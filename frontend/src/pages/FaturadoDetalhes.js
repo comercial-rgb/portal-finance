@@ -66,6 +66,52 @@ function FaturadoDetalhes() {
     return null;
   }, [fatura, ordensServico]);
 
+  // Calcular fator de proporção para valor líquido
+  const fatorLiquido = useMemo(() => {
+    if (!fatura) return 1;
+    const valorComDesconto = fatura.valorComDesconto || 0;
+    const valorDevido = fatura.valorDevido || 0;
+    if (valorComDesconto > 0) {
+      return valorDevido / valorComDesconto;
+    }
+    return 1;
+  }, [fatura]);
+
+  // Calcular valores líquidos proporcionais de cada OS
+  const ordensComValorLiquido = useMemo(() => {
+    return ordensServico.map(item => ({
+      ...item,
+      valorLiquido: Math.round((item.valorOS || 0) * fatorLiquido * 100) / 100
+    }));
+  }, [ordensServico, fatorLiquido]);
+
+  // Resumo das OS selecionadas
+  const resumoSelecionadas = useMemo(() => {
+    if (selecionadas.length === 0 || !fatura) {
+      return null;
+    }
+    
+    const osSelecionadas = ordensComValorLiquido.filter(
+      item => selecionadas.includes(item.ordemServico._id) && item.statusPagamento === 'Aguardando pagamento'
+    );
+    
+    const valorBruto = osSelecionadas.reduce((acc, item) => acc + (item.valorOS || 0), 0);
+    const valorLiquido = osSelecionadas.reduce((acc, item) => acc + (item.valorLiquido || 0), 0);
+    const taxasProporcional = valorBruto - valorLiquido;
+    
+    return {
+      quantidade: osSelecionadas.length,
+      valorBruto: Math.round(valorBruto * 100) / 100,
+      valorLiquido: Math.round(valorLiquido * 100) / 100,
+      taxasProporcional: Math.round(taxasProporcional * 100) / 100
+    };
+  }, [selecionadas, ordensComValorLiquido, fatura]);
+
+  // Verificar se há OS pendentes
+  const osPendentes = useMemo(() => {
+    return ordensServico.filter(item => item.statusPagamento === 'Aguardando pagamento');
+  }, [ordensServico]);
+
   // Verificar se é fornecedor ou cliente (somente leitura)
   const isFornecedor = user?.role === 'fornecedor';
   const isCliente = user?.role === 'cliente';
@@ -195,6 +241,35 @@ function FaturadoDetalhes() {
       loadFatura();
     } catch (error) {
       toast.error('Erro ao marcar como pagas');
+      console.error(error);
+    }
+  };
+
+  // Pagar fatura inteira (todas as OS pendentes)
+  const handlePagarFaturaInteira = async () => {
+    if (osPendentes.length === 0) {
+      toast.info('Todas as ordens de serviço já foram pagas');
+      return;
+    }
+
+    const valorRestante = fatura?.valorRestante || 0;
+    if (!window.confirm(`Deseja marcar TODAS as ${osPendentes.length} ordens de serviço como pagas?\n\nValor total a pagar: ${formatarValor(valorRestante)}`)) {
+      return;
+    }
+
+    try {
+      const promises = osPendentes.map(item =>
+        api.patch(`/faturas/${id}/ordem-servico/${item.ordemServico._id}/pagar`, {
+          dataPagamento: new Date()
+        })
+      );
+
+      await Promise.all(promises);
+      toast.success('Fatura paga integralmente!');
+      setSelecionadas([]);
+      loadFatura();
+    } catch (error) {
+      toast.error('Erro ao pagar fatura');
       console.error(error);
     }
   };
@@ -1794,7 +1869,8 @@ function FaturadoDetalhes() {
                     <th>Nº OS</th>
                     <th>{fatura.tipo === 'Fornecedor' ? 'Cliente' : 'Fornecedor'}</th>
                     <th>Tipo</th>
-                    <th>Valor</th>
+                    <th>Valor Bruto</th>
+                    <th>Valor Líquido</th>
                     <th>Status</th>
                     <th>Data Pagamento</th>
                     <th>Ações</th>
@@ -1803,7 +1879,7 @@ function FaturadoDetalhes() {
                 <tbody>
                   {ordemFiltradas.length === 0 ? (
                     <tr>
-                      <td colSpan="9" style={{ textAlign: 'center', padding: '2rem' }}>
+                      <td colSpan="10" style={{ textAlign: 'center', padding: '2rem' }}>
                         Nenhuma ordem de serviço encontrada
                       </td>
                     </tr>
@@ -1811,6 +1887,8 @@ function FaturadoDetalhes() {
                     ordemFiltradas.map(item => {
                       const os = item.ordemServico;
                       const isPaga = item.statusPagamento === 'Paga';
+                      // Calcular valor líquido proporcional para esta OS
+                      const valorLiquidoOS = Math.round((item.valorOS || 0) * fatorLiquido * 100) / 100;
                       
                       return (
                         <tr key={os._id} className={isPaga ? 'row-paga' : ''}>
@@ -1832,6 +1910,11 @@ function FaturadoDetalhes() {
                           </td>
                           <td>{os.tipo?.nome}</td>
                           <td>{formatarValor(item.valorOS || 0)}</td>
+                          <td>
+                            <span className="valor-liquido" title="Valor após descontar impostos e taxas proporcionais">
+                              {formatarValor(valorLiquidoOS)}
+                            </span>
+                          </td>
                           <td>
                             <span className={getStatusBadgeClass(item.statusPagamento)}>
                               {item.statusPagamento}
@@ -1856,6 +1939,27 @@ function FaturadoDetalhes() {
                 </tbody>
               </table>
             </div>
+
+            {/* Resumo das OS Selecionadas */}
+            {resumoSelecionadas && resumoSelecionadas.quantidade > 0 && (
+              <div className="resumo-selecionadas">
+                <h4>📋 Resumo das {resumoSelecionadas.quantidade} OS Selecionada{resumoSelecionadas.quantidade > 1 ? 's' : ''}</h4>
+                <div className="resumo-selecionadas-grid">
+                  <div className="resumo-item">
+                    <span>Valor Bruto:</span>
+                    <strong>{formatarValor(resumoSelecionadas.valorBruto)}</strong>
+                  </div>
+                  <div className="resumo-item negativo">
+                    <span>(-) Taxas Proporcionais:</span>
+                    <span>{formatarValor(resumoSelecionadas.taxasProporcional)}</span>
+                  </div>
+                  <div className="resumo-item destaque">
+                    <span>Valor Líquido a Pagar:</span>
+                    <strong>{formatarValor(resumoSelecionadas.valorLiquido)}</strong>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Resumo Financeiro */}
             <div className="resumo-financeiro">
@@ -1954,7 +2058,7 @@ function FaturadoDetalhes() {
               >
                 Fechar
               </button>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 {fatura.tipo === 'Cliente' ? (
                   // Fatura de Cliente: mostrar os 3 botões
                   <>
@@ -1991,13 +2095,24 @@ function FaturadoDetalhes() {
                   </button>
                 )}
                 {!isReadOnly && (
-                  <button
-                    className="btn-primary"
-                    onClick={handleMarcarComoPagas}
-                    disabled={selecionadas.length === 0}
-                  >
-                    Marcar como Paga{selecionadas.length > 1 ? 's' : ''} ({selecionadas.length})
-                  </button>
+                  <>
+                    {osPendentes.length > 0 && (
+                      <button
+                        className="btn-success"
+                        onClick={handlePagarFaturaInteira}
+                        title={`Pagar todas as ${osPendentes.length} OS pendentes`}
+                      >
+                        💰 Pagar Fatura Inteira ({formatarValor(fatura.valorRestante || 0)})
+                      </button>
+                    )}
+                    <button
+                      className="btn-primary"
+                      onClick={handleMarcarComoPagas}
+                      disabled={selecionadas.length === 0}
+                    >
+                      Marcar como Paga{selecionadas.length > 1 ? 's' : ''} ({selecionadas.length})
+                    </button>
+                  </>
                 )}
               </div>
             </div>

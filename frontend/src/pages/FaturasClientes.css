@@ -266,8 +266,8 @@
 }
 
 .btn-secondary {
-  background: white;
-  color: #555;
+  background: #f1f5f9;
+  color: var(--azul-corporativo);
   padding: 10px 20px;
   border: 2px solid #ddd;
   border-radius: 6px;
@@ -278,8 +278,9 @@
 }
 
 .btn-secondary:hover {
-  border-color: #005bed;
-  color: #005bed;
+  background: var(--azul-tech);
+  border-color: var(--azul-tech);
+  color: white;
 }
 
 /* Modal */

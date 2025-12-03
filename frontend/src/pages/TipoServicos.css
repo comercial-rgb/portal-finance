@@ -292,13 +292,15 @@
 }
 
 .btn-secondary {
-  background: var(--cinza-medio);
-  color: var(--preto);
+  background: var(--cinza-claro);
+  color: var(--azul-corporativo);
+  border: 1px solid var(--cinza-medio);
 }
 
 .btn-secondary:hover {
-  background: var(--cinza-escuro);
+  background: var(--azul-tech);
   color: var(--branco);
+  border-color: var(--azul-tech);
 }
 
 /* RESPONSIVE */

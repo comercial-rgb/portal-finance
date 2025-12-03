@@ -138,9 +138,9 @@
 
 .btn-secondary {
   padding: 0.75rem 1.5rem;
-  background: var(--cinza-medio);
-  color: var(--preto);
-  border: none;
+  background: var(--cinza-claro);
+  color: var(--azul-corporativo);
+  border: 1px solid var(--cinza-medio);
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
@@ -149,8 +149,9 @@
 }
 
 .btn-secondary:hover {
-  background: var(--cinza-escuro);
+  background: var(--azul-tech);
   color: var(--branco);
+  border-color: var(--azul-tech);
 }
 
 .loading {

@@ -410,13 +410,15 @@
 }
 
 .btn-secondary {
-  background: white;
-  color: var(--cinza-escuro);
+  background: var(--cinza-claro);
+  color: var(--azul-corporativo);
   border: 1px solid var(--cinza-medio);
 }
 
 .btn-secondary:hover {
-  background: var(--cinza-claro);
+  background: var(--azul-tech);
+  color: var(--branco);
+  border-color: var(--azul-tech);
 }
 
 .btn-info {

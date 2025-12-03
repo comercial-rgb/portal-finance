@@ -208,6 +208,40 @@
   border-top: 1px solid var(--cinza-claro);
 }
 
+.modal-footer .btn-primary,
+.modal-footer .btn-secondary {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.modal-footer .btn-primary {
+  background: var(--azul-tech);
+  color: white;
+}
+
+.modal-footer .btn-primary:hover {
+  background: var(--azul-corporativo);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 91, 237, 0.3);
+}
+
+.modal-footer .btn-secondary {
+  background: var(--cinza-claro);
+  color: var(--azul-corporativo);
+  border: 1px solid var(--cinza-medio);
+}
+
+.modal-footer .btn-secondary:hover {
+  background: var(--azul-tech);
+  color: white;
+  border-color: var(--azul-tech);
+}
+
 /* Reset Password Button */
 .btn-reset-password {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);

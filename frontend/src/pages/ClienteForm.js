@@ -134,9 +134,22 @@ function ClienteForm() {
       console.log('📋 taxaOperacao:', clienteData.taxaOperacao);
       console.log('📋 taxasAntecipacao:', clienteData.taxasAntecipacao);
       
+      // Formatar CNPJ ao carregar (se existir)
+      let cnpjFormatado = clienteData.cnpj || '';
+      if (cnpjFormatado) {
+        cnpjFormatado = cnpjFormatado
+          .replace(/\D/g, '')
+          .replace(/(\d{2})(\d)/, '$1.$2')
+          .replace(/(\d{3})(\d)/, '$1.$2')
+          .replace(/(\d{3})(\d)/, '$1/$2')
+          .replace(/(\d{4})(\d)/, '$1-$2')
+          .replace(/(-\d{2})\d+?$/, '$1');
+      }
+      
       // Garantir que os objetos aninhados existam
       setFormData({
         ...clienteData,
+        cnpj: cnpjFormatado,
         tipoImposto: clienteData.tipoImposto || [],
         tipoTaxa: clienteData.tipoTaxa || 'nenhum',
         taxaOperacao: clienteData.taxaOperacao !== undefined ? clienteData.taxaOperacao : 15,
@@ -291,6 +304,7 @@ function ClienteForm() {
   };
 
   const formatCNPJ = (value) => {
+    if (!value) return '';
     return value
       .replace(/\D/g, '')
       .replace(/(\d{2})(\d)/, '$1.$2')

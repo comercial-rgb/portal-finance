@@ -87,7 +87,8 @@ app.use('/api', rateLimit(1000, 60 * 1000)); // 1000 req/min geral
 // Auth com limite mais alto para evitar bloqueios durante testes
 app.use('/api/auth', rateLimit(30, 5 * 60 * 1000), authRoutes); // 30 req / 5 min
 app.use('/api', invalidateCache('fornecedores'), fornecedorRoutes);
-app.use('/api/clientes', cacheMiddleware(3 * 60 * 1000), invalidateCache('clientes'), clienteRoutes);
+// Clientes SEM cache para garantir dados sempre atualizados
+app.use('/api/clientes', clienteRoutes);
 app.use('/api/tipo-servicos', cacheMiddleware(10 * 60 * 1000), tipoServicoRoutes);
 app.use('/api/ordens-servico', invalidateCache(['ordens', 'clientes', 'fornecedores']), ordemServicoRoutes);
 app.use('/api/usuarios', rateLimitPresets.write, usuarioRoutes);

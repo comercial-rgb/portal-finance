@@ -144,7 +144,7 @@ function Faturados() {
                   onClick={() => setAbaAtiva('fornecedores')}
                 >
                   <span className="tab-icon">👥</span>
-                  {abaAtiva === 'fornecedores' ? 'Fornecedores' : 'Ver Fornecedores'}
+                  Fornecedores
                 </button>
               )}
               {!isFornecedor && (
@@ -153,7 +153,7 @@ function Faturados() {
                   onClick={() => setAbaAtiva('clientes')}
                 >
                   <span className="tab-icon">🏢</span>
-                  {abaAtiva === 'clientes' ? 'Clientes' : 'Ver Clientes'}
+                  Clientes
                 </button>
               )}
             </div>

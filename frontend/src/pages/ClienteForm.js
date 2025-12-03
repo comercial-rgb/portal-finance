@@ -306,37 +306,12 @@ function ClienteForm() {
         const response = await api.put(`/clientes/${id}`, formData);
         console.log('✅ Resposta do servidor:', response.data);
         
-        // Atualizar formData com os dados retornados pelo servidor
-        const clienteAtualizado = response.data;
-        setFormData(prev => ({
-          ...prev,
-          ...clienteAtualizado,
-          tipoImposto: clienteAtualizado.tipoImposto || [],
-          tipoTaxa: clienteAtualizado.tipoTaxa || 'nenhum',
-          taxaOperacao: clienteAtualizado.taxaOperacao !== undefined ? clienteAtualizado.taxaOperacao : 15,
-          taxasAntecipacao: {
-            aVista: clienteAtualizado.taxasAntecipacao?.aVista !== undefined ? clienteAtualizado.taxasAntecipacao.aVista : 15,
-            aposFechamento: clienteAtualizado.taxasAntecipacao?.aposFechamento !== undefined ? clienteAtualizado.taxasAntecipacao.aposFechamento : 13,
-            aprazado: clienteAtualizado.taxasAntecipacao?.aprazado !== undefined ? clienteAtualizado.taxasAntecipacao.aprazado : 0
-          },
-          endereco: clienteAtualizado.endereco || {
-            logradouro: '',
-            numero: '',
-            complemento: '',
-            bairro: '',
-            cidade: '',
-            estado: '',
-            cep: ''
-          },
-          contatos: clienteAtualizado.contatos || {
-            nome: '',
-            telefone: '',
-            celular: '',
-            email: ''
-          }
-        }));
-        
         toast.success('Cliente atualizado com sucesso!');
+        
+        // Forçar reload da página para garantir que todos os dados são recarregados corretamente
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
       } else {
         const response = await api.post('/clientes', formData);
         const novoId = response.data._id || response.data.id;

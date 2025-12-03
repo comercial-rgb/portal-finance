@@ -496,37 +496,63 @@
 }
 
 .btn-add-sub {
-  font-size: 0.85rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+  font-size: 0.8rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.25rem !important;
+  background: #28a745 !important;
   color: white !important;
-  padding: 0.5rem 1rem !important;
-  border-radius: 6px !important;
+  padding: 0.4rem 0.8rem !important;
+  border-radius: 4px !important;
+  border: none !important;
   font-weight: 600 !important;
-  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  min-width: 60px !important;
+  white-space: nowrap !important;
 }
 
+.btn-add-sub:hover {
+  background: #218838 !important;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+.btn-aditivo,
 .btn-empenho {
-  padding: 0.6rem 1.2rem;
-  border-radius: var(--radius-lg);
-  font-size: 0.95rem;
-  letter-spacing: 0.02em;
-  box-shadow: var(--shadow-md);
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
-  color: white !important;
-  margin-left: 0.5rem;
+  padding: 0.5rem 1rem !important;
+  border-radius: 6px !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 100px !important;
+  white-space: nowrap !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+  transition: all 0.2s ease !important;
 }
 
 .btn-aditivo {
-  padding: 0.6rem 1.2rem;
-  border-radius: var(--radius-lg);
-  font-size: 0.95rem;
-  letter-spacing: 0.02em;
-  box-shadow: var(--shadow-md);
-  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;
+  background: #17a2b8 !important;
   color: white !important;
+  margin-right: 0.5rem !important;
+}
+
+.btn-aditivo:hover {
+  background: #138496 !important;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2) !important;
+}
+
+.btn-empenho {
+  background: #28a745 !important;
+  color: white !important;
+}
+
+.btn-empenho:hover {
+  background: #218838 !important;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2) !important;
 }
 
 .action-button {
@@ -656,6 +682,7 @@
   border-radius: 12px;
   padding: 1.5rem;
   border: 2px solid var(--cinza-medio);
+  overflow-x: auto;
 }
 
 .empenho-contrato-header {
@@ -713,6 +740,7 @@
   padding: 0.75rem;
   text-align: left;
   border-bottom: 1px solid var(--cinza-medio);
+  white-space: nowrap;
 }
 
 .empenhos-full-table th {
@@ -720,6 +748,10 @@
   font-size: 0.85rem;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+.empenhos-full-table td {
+  font-size: 0.85rem;
 }
 
 .empenhos-full-table tbody tr:last-child td {

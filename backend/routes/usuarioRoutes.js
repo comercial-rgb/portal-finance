@@ -36,7 +36,7 @@ router.get('/:id', protect, authorize('admin', 'super_admin'), async (req, res) 
 // Atualizar usuário
 router.put('/:id', protect, authorize('admin', 'super_admin'), async (req, res) => {
   try {
-    const { nome, email, role, ativo } = req.body;
+    const { nome, email, role, ativo, senha, fornecedorId, clienteId } = req.body;
     
     const usuario = await User.findById(req.params.id);
     
@@ -56,6 +56,19 @@ router.put('/:id', protect, authorize('admin', 'super_admin'), async (req, res) 
     usuario.email = email || usuario.email;
     usuario.role = role || usuario.role;
     usuario.ativo = ativo !== undefined ? ativo : usuario.ativo;
+    
+    // Atualizar fornecedorId/clienteId se necessário
+    if (role === 'fornecedor' && fornecedorId) {
+      usuario.fornecedorId = fornecedorId;
+    }
+    if (role === 'cliente' && clienteId) {
+      usuario.clienteId = clienteId;
+    }
+    
+    // Atualizar senha se fornecida (o hook pre-save do model irá encriptar)
+    if (senha && senha.length >= 6) {
+      usuario.senha = senha;
+    }
     
     await usuario.save();
     

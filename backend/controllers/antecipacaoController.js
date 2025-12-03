@@ -2,6 +2,17 @@ const Antecipacao = require('../models/Antecipacao');
 const Fatura = require('../models/Fatura');
 const ImpostosRetencoes = require('../models/ImpostosRetencoes');
 const Fornecedor = require('../models/Fornecedor');
+const Notificacao = require('../models/Notificacao');
+const User = require('../models/User');
+
+// Função para criar notificação
+const criarNotificacao = async (dados) => {
+  try {
+    await Notificacao.create(dados);
+  } catch (error) {
+    console.error('Erro ao criar notificação:', error);
+  }
+};
 
 // Calcular taxa baseada nos dias de antecipação
 const calcularTaxa = (diasAntecipados, taxas) => {
@@ -231,6 +242,22 @@ exports.criarAntecipacao = async (req, res) => {
     
     await antecipacao.save();
     
+    // Buscar fornecedor para nome na notificação
+    const fornecedor = await Fornecedor.findById(user.fornecedorId);
+    
+    // Notificar admins sobre nova solicitação de antecipação
+    const admins = await User.find({ role: { $in: ['super_admin', 'admin'] }, ativo: true });
+    for (const admin of admins) {
+      await criarNotificacao({
+        usuario: admin._id,
+        tipo: 'antecipacao',
+        titulo: 'Nova Solicitação de Antecipação',
+        mensagem: `${fornecedor?.razaoSocial || 'Fornecedor'} solicitou antecipação de R$ ${valorSolicitado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        link: '/antecipacoes',
+        dados: { antecipacaoId: antecipacao._id }
+      });
+    }
+    
     // Buscar com populações para retornar
     const antecipacaoCriada = await Antecipacao.findById(antecipacao._id)
       .populate('fornecedor', 'razaoSocial nomeFantasia')
@@ -255,7 +282,8 @@ exports.aprovarAntecipacao = async (req, res) => {
       return res.status(403).json({ message: 'Sem permissão para aprovar antecipações' });
     }
     
-    const antecipacao = await Antecipacao.findById(req.params.id);
+    const antecipacao = await Antecipacao.findById(req.params.id)
+      .populate('fornecedor', 'razaoSocial');
     
     if (!antecipacao) {
       return res.status(404).json({ message: 'Antecipação não encontrada' });
@@ -271,6 +299,19 @@ exports.aprovarAntecipacao = async (req, res) => {
     antecipacao.observacoesAdmin = observacoesAdmin;
     
     await antecipacao.save();
+    
+    // Notificar fornecedor sobre aprovação
+    const usuarioFornecedor = await User.findOne({ fornecedorId: antecipacao.fornecedor._id, ativo: true });
+    if (usuarioFornecedor) {
+      await criarNotificacao({
+        usuario: usuarioFornecedor._id,
+        tipo: 'antecipacao',
+        titulo: 'Antecipação Aprovada',
+        mensagem: `Sua solicitação de antecipação de R$ ${antecipacao.valorSolicitado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} foi aprovada!`,
+        link: '/valores-pendentes',
+        dados: { antecipacaoId: antecipacao._id }
+      });
+    }
     
     res.json({ message: 'Antecipação aprovada com sucesso', antecipacao });
   } catch (error) {
@@ -327,7 +368,8 @@ exports.pagarAntecipacao = async (req, res) => {
       return res.status(403).json({ message: 'Sem permissão para processar pagamentos' });
     }
     
-    const antecipacao = await Antecipacao.findById(req.params.id);
+    const antecipacao = await Antecipacao.findById(req.params.id)
+      .populate('fornecedor', 'razaoSocial');
     
     if (!antecipacao) {
       return res.status(404).json({ message: 'Antecipação não encontrada' });
@@ -335,6 +377,27 @@ exports.pagarAntecipacao = async (req, res) => {
     
     if (antecipacao.status !== 'Aprovada') {
       return res.status(400).json({ message: 'Apenas antecipações aprovadas podem ser marcadas como pagas' });
+    }
+    
+    // Deduzir valores das faturas relacionadas
+    for (const faturaRef of antecipacao.faturas) {
+      const fatura = await Fatura.findById(faturaRef.fatura);
+      if (fatura) {
+        // Adicionar o valor antecipado ao valorPago da fatura
+        fatura.valorPago = (fatura.valorPago || 0) + faturaRef.valorUtilizado;
+        
+        // Recalcular valor restante
+        fatura.valorRestante = fatura.valorDevido - fatura.valorPago;
+        
+        // Atualizar status da fatura
+        if (fatura.valorPago >= fatura.valorDevido) {
+          fatura.statusFatura = 'Paga';
+        } else if (fatura.valorPago > 0) {
+          fatura.statusFatura = 'Parcialmente paga';
+        }
+        
+        await fatura.save();
+      }
     }
     
     antecipacao.status = 'Paga';
@@ -345,6 +408,19 @@ exports.pagarAntecipacao = async (req, res) => {
     }
     
     await antecipacao.save();
+    
+    // Notificar fornecedor sobre pagamento
+    const usuarioFornecedor = await User.findOne({ fornecedorId: antecipacao.fornecedor._id, ativo: true });
+    if (usuarioFornecedor) {
+      await criarNotificacao({
+        usuario: usuarioFornecedor._id,
+        tipo: 'pagamento',
+        titulo: 'Antecipação Paga',
+        mensagem: `O pagamento da antecipação de R$ ${antecipacao.valorAReceber.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} foi realizado!`,
+        link: '/pagamentos',
+        dados: { antecipacaoId: antecipacao._id }
+      });
+    }
     
     res.json({ message: 'Antecipação paga com sucesso', antecipacao });
   } catch (error) {

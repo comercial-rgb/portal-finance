@@ -15,6 +15,7 @@ function Usuarios() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [resetingPassword, setResetingPassword] = useState(false);
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -195,6 +196,30 @@ function Usuarios() {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!editingUser) return;
+    
+    if (!window.confirm(`Deseja realmente resetar a senha do usuário "${editingUser.nome}"? Uma nova senha será enviada para o email ${editingUser.email}.`)) {
+      return;
+    }
+    
+    try {
+      setResetingPassword(true);
+      const response = await api.post(`/usuarios/${editingUser._id}/reset-password`);
+      
+      if (response.data.emailEnviado) {
+        toast.success('Senha redefinida com sucesso! Nova senha enviada por email.');
+      } else {
+        // Email não enviou, mostrar a senha
+        toast.warning(`Senha redefinida, mas email não enviado. Nova senha: ${response.data.novaSenha}`);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Erro ao resetar senha');
+    } finally {
+      setResetingPassword(false);
+    }
+  };
+
   const getRoleDisplay = (role) => {
     const roles = {
       super_admin: 'Super Admin',
@@ -318,120 +343,159 @@ function Usuarios() {
               <button className="modal-close" onClick={handleCloseModal}>×</button>
             </div>
             <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label>Nome *</label>
-                <input
-                  type="text"
-                  name="nome"
-                  value={formData.nome}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Email *</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Senha {!editingUser && '*'}</label>
-                <input
-                  type="password"
-                  name="senha"
-                  value={formData.senha}
-                  onChange={handleChange}
-                  required={!editingUser}
-                  placeholder={editingUser ? 'Deixe em branco para não alterar' : 'Mínimo 6 caracteres'}
-                  minLength="6"
-                />
-              </div>
-              <div className="form-group">
-                <label>Confirmar Senha {!editingUser && '*'}</label>
-                <input
-                  type="password"
-                  name="confirmarSenha"
-                  value={formData.confirmarSenha}
-                  onChange={handleChange}
-                  required={!editingUser}
-                  placeholder={editingUser ? 'Deixe em branco para não alterar' : 'Digite a senha novamente'}
-                  minLength="6"
-                />
-              </div>
-              <div className="form-group">
-                <label>Perfil *</label>
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="funcionario">Funcionário</option>
-                  <option value="gerente">Gerente</option>
-                  <option value="admin">Administrador</option>
-                  <option value="super_admin">Super Admin</option>
-                  <option value="fornecedor">Fornecedor</option>
-                  <option value="cliente">Cliente</option>
-                </select>
-              </div>
-              {formData.role === 'fornecedor' && (
+              <div className="modal-body">
+                {editingUser && (
+                  <div className="reset-password-section">
+                    <p>
+                      <strong>Reset de Senha:</strong> Enviar uma nova senha automática para o email do usuário.
+                    </p>
+                    <button
+                      type="button"
+                      className="btn-reset-password"
+                      onClick={handleResetPassword}
+                      disabled={resetingPassword}
+                    >
+                      {resetingPassword ? (
+                        <>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
+                            <line x1="12" y1="2" x2="12" y2="6"></line>
+                            <line x1="12" y1="18" x2="12" y2="22"></line>
+                            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                            <line x1="2" y1="12" x2="6" y2="12"></line>
+                            <line x1="18" y1="12" x2="22" y2="12"></line>
+                            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                            <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                          </svg>
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                          </svg>
+                          Resetar Senha e Enviar por Email
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
                 <div className="form-group">
-                  <label>Fornecedor *</label>
-                  <select
-                    name="fornecedorId"
-                    value={formData.fornecedorId}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="">Selecione um fornecedor</option>
-                    {fornecedores.map(f => (
-                      <option key={f._id} value={f._id}>
-                        {f.razaoSocial || f.nomeFantasia}
-                      </option>
-                    ))}
-                  </select>
-                  <small style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '4px', display: 'block' }}>
-                    Usuários fornecedores terão acesso somente leitura aos dados do fornecedor selecionado
-                  </small>
-                </div>
-              )}
-              {formData.role === 'cliente' && (
-                <div className="form-group">
-                  <label>Cliente *</label>
-                  <select
-                    name="clienteId"
-                    value={formData.clienteId}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="">Selecione um cliente</option>
-                    {clientes.map(c => (
-                      <option key={c._id} value={c._id}>
-                        {c.razaoSocial || c.nomeFantasia}
-                      </option>
-                    ))}
-                  </select>
-                  <small style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '4px', display: 'block' }}>
-                    Usuários clientes terão acesso somente leitura aos seus dados
-                  </small>
-                </div>
-              )}
-              <div className="form-group checkbox-group">
-                <label>
+                  <label>Nome *</label>
                   <input
-                    type="checkbox"
-                    name="ativo"
-                    checked={formData.ativo}
+                    type="text"
+                    name="nome"
+                    value={formData.nome}
                     onChange={handleChange}
+                    required
                   />
-                  <span>Usuário Ativo</span>
-                </label>
+                </div>
+                <div className="form-group">
+                  <label>Email *</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Senha {!editingUser && '*'}</label>
+                  <input
+                    type="password"
+                    name="senha"
+                    value={formData.senha}
+                    onChange={handleChange}
+                    required={!editingUser}
+                    placeholder={editingUser ? 'Deixe em branco para não alterar' : 'Mínimo 6 caracteres'}
+                    minLength="6"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Confirmar Senha {!editingUser && '*'}</label>
+                  <input
+                    type="password"
+                    name="confirmarSenha"
+                    value={formData.confirmarSenha}
+                    onChange={handleChange}
+                    required={!editingUser}
+                    placeholder={editingUser ? 'Deixe em branco para não alterar' : 'Digite a senha novamente'}
+                    minLength="6"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Perfil *</label>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="funcionario">Funcionário</option>
+                    <option value="gerente">Gerente</option>
+                    <option value="admin">Administrador</option>
+                    <option value="super_admin">Super Admin</option>
+                    <option value="fornecedor">Fornecedor</option>
+                    <option value="cliente">Cliente</option>
+                  </select>
+                </div>
+                {formData.role === 'fornecedor' && (
+                  <div className="form-group">
+                    <label>Fornecedor *</label>
+                    <select
+                      name="fornecedorId"
+                      value={formData.fornecedorId}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Selecione um fornecedor</option>
+                      {fornecedores.map(f => (
+                        <option key={f._id} value={f._id}>
+                          {f.razaoSocial || f.nomeFantasia}
+                        </option>
+                      ))}
+                    </select>
+                    <small style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '4px', display: 'block' }}>
+                      Usuários fornecedores terão acesso somente leitura aos dados do fornecedor selecionado
+                    </small>
+                  </div>
+                )}
+                {formData.role === 'cliente' && (
+                  <div className="form-group">
+                    <label>Cliente *</label>
+                    <select
+                      name="clienteId"
+                      value={formData.clienteId}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Selecione um cliente</option>
+                      {clientes.map(c => (
+                        <option key={c._id} value={c._id}>
+                          {c.razaoSocial || c.nomeFantasia}
+                        </option>
+                      ))}
+                    </select>
+                    <small style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '4px', display: 'block' }}>
+                      Usuários clientes terão acesso somente leitura aos seus dados
+                    </small>
+                  </div>
+                )}
+                <div className="form-group checkbox-group">
+                  <label>
+                    <input
+                      type="checkbox"
+                      name="ativo"
+                      checked={formData.ativo}
+                      onChange={handleChange}
+                    />
+                    <span>Usuário Ativo</span>
+                  </label>
+                </div>
               </div>
-              <div className="modal-actions">
+              <div className="modal-footer">
                 <button type="button" className="btn-secondary" onClick={handleCloseModal}>
                   Cancelar
                 </button>

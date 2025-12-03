@@ -68,11 +68,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 1rem;
   animation: fadeIn 0.2s ease-out;
 }
 
@@ -86,14 +87,13 @@
 }
 
 .modal-content {
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  width: 90%;
+  background: var(--branco);
+  border-radius: 16px;
+  width: 100%;
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease-out;
 }
 
@@ -112,26 +112,26 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--cinza-claro);
+  background: linear-gradient(135deg, var(--azul-corporativo) 0%, var(--azul-tech) 100%);
+  border-radius: 16px 16px 0 0;
 }
 
 .modal-header h2 {
   margin: 0;
-  color: #251C59;
-  font-size: 1.5rem;
+  color: white;
+  font-size: 1.25rem;
 }
 
 .modal-close {
-  background: none;
+  background: rgba(255, 255, 255, 0.2);
   border: none;
-  font-size: 2rem;
-  color: #666;
+  font-size: 1.5rem;
+  color: white;
   cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -140,24 +140,27 @@
 }
 
 .modal-close:hover {
-  background: #f0f0f0;
-  color: #251C59;
+  background: rgba(255, 255, 255, 0.3);
 }
 
-.modal-content .form-group {
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-body .form-group {
   margin-bottom: 1.5rem;
 }
 
-.modal-content .form-group label {
+.modal-body .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #251C59;
+  color: var(--azul-corporativo);
   font-weight: 600;
   font-size: 0.9rem;
 }
 
-.modal-content .form-group input,
-.modal-content .form-group select {
+.modal-body .form-group input,
+.modal-body .form-group select {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #ddd;
@@ -167,10 +170,10 @@
   font-family: 'DM Sans', sans-serif;
 }
 
-.modal-content .form-group input:focus,
-.modal-content .form-group select:focus {
+.modal-body .form-group input:focus,
+.modal-body .form-group select:focus {
   outline: none;
-  border-color: #005BED;
+  border-color: var(--azul-tech);
   box-shadow: 0 0 0 3px rgba(0, 91, 237, 0.1);
 }
 
@@ -197,13 +200,52 @@
   color: #333;
 }
 
-.modal-actions {
+.modal-footer {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e0e0e0;
+  padding: 1.5rem;
+  border-top: 1px solid var(--cinza-claro);
+}
+
+/* Reset Password Button */
+.btn-reset-password {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s;
+}
+
+.btn-reset-password:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.btn-reset-password:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.reset-password-section {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.reset-password-section p {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  color: #92400e;
 }
 
 .btn-success {
@@ -223,4 +265,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Animation for loading spinner */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }

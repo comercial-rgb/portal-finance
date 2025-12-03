@@ -1,7 +1,8 @@
 .footer {
-  background: var(--azul-corporativo);
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
   color: #e2e8f0;
   margin-top: auto;
+  border-top: 3px solid var(--azul-tech);
 }
 
 .footer-content {

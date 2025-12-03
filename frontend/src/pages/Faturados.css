@@ -69,8 +69,16 @@
 }
 
 .tab-button.active {
-  color: var(--azul-tech);
+  color: white;
+  background: linear-gradient(135deg, var(--azul-corporativo) 0%, var(--azul-tech) 100%);
   border-bottom-color: var(--azul-tech);
+  border-radius: 8px 8px 0 0;
+}
+
+.tab-button:not(.active) {
+  background: #e9ecef;
+  color: var(--azul-corporativo);
+  border-radius: 8px 8px 0 0;
 }
 
 .tab-icon {

@@ -311,54 +311,13 @@ function ClienteForm() {
         const response = await api.put(`/clientes/${id}`, formData);
         console.log('✅ Resposta do servidor:', response.data);
         
-        // Atualizar formData diretamente com os dados retornados pelo servidor
-        const clienteAtualizado = response.data;
-        
-        // Forçar atualização imediata do formData
-        const novoFormData = {
-          ...clienteAtualizado,
-          tipoImposto: clienteAtualizado.tipoImposto || [],
-          tipoTaxa: clienteAtualizado.tipoTaxa || 'nenhum',
-          taxaOperacao: clienteAtualizado.taxaOperacao !== undefined ? clienteAtualizado.taxaOperacao : 15,
-          taxasAntecipacao: {
-            aVista: clienteAtualizado.taxasAntecipacao?.aVista !== undefined ? clienteAtualizado.taxasAntecipacao.aVista : 15,
-            aposFechamento: clienteAtualizado.taxasAntecipacao?.aposFechamento !== undefined ? clienteAtualizado.taxasAntecipacao.aposFechamento : 13,
-            aprazado: clienteAtualizado.taxasAntecipacao?.aprazado !== undefined ? clienteAtualizado.taxasAntecipacao.aprazado : 0
-          },
-          endereco: clienteAtualizado.endereco || {
-            logradouro: '',
-            numero: '',
-            complemento: '',
-            bairro: '',
-            cidade: '',
-            estado: '',
-            cep: ''
-          },
-          contatos: clienteAtualizado.contatos || {
-            nome: '',
-            telefone: '',
-            celular: '',
-            email: ''
-          }
-        };
-        
-        console.log('🔄 Novo formData:', novoFormData);
-        setFormData(novoFormData);
-        
-        // Forçar re-render verificando se os dados foram atualizados
-        setTimeout(async () => {
-          console.log('🔍 Verificando formData após atualização:', formData);
-          // Limpar cache e recarregar dados do servidor para garantir consistência
-          try {
-            await api.post('/api/dev/reset-rate-limit');
-            console.log('🧹 Cache limpo');
-          } catch (e) {
-            console.log('⚠️ Não foi possível limpar cache');
-          }
-          loadCliente();
-        }, 100);
-        
         toast.success('Cliente atualizado com sucesso!');
+        
+        // Forçar reload completo da página para garantir dados atualizados
+        // Isso evita problemas de cache e garante que os dados estejam sincronizados
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
       } else {
         const response = await api.post('/clientes', formData);
         const novoId = response.data._id || response.data.id;
@@ -1800,7 +1759,7 @@ function ClienteForm() {
             </div>
             <div className="modal-body">
               <div className="form-group">
-                <label>Nome do Centro de Custo *</label>
+                <label className="modal-label">Nome do Centro de Custo *</label>
                 <input
                   type="text"
                   value={novoCentroCusto}
@@ -1832,7 +1791,7 @@ function ClienteForm() {
             </div>
             <div className="modal-body">
               <div className="form-group">
-                <label>Nome da Subunidade *</label>
+                <label className="modal-label">Nome da Subunidade *</label>
                 <input
                   type="text"
                   value={novaSubunidade}
@@ -1864,7 +1823,7 @@ function ClienteForm() {
             </div>
             <div className="modal-body">
               <div className="form-group">
-                <label>N° do Contrato *</label>
+                <label className="modal-label">N° do Contrato *</label>
                 <input
                   type="text"
                   value={novoContrato.numeroContrato}
@@ -1874,7 +1833,7 @@ function ClienteForm() {
                 />
               </div>
               <div className="form-group">
-                <label>Valor *</label>
+                <label className="modal-label">Valor *</label>
                 <input
                   type="text"
                   value={novoContrato.valor}
@@ -1886,7 +1845,7 @@ function ClienteForm() {
                 />
               </div>
               <div className="form-group">
-                <label>Data Inicial *</label>
+                <label className="modal-label">Data Inicial *</label>
                 <input
                   type="date"
                   value={novoContrato.dataInicial}
@@ -1894,7 +1853,7 @@ function ClienteForm() {
                 />
               </div>
               <div className="form-group">
-                <label>Data Final *</label>
+                <label className="modal-label">Data Final *</label>
                 <input
                   type="date"
                   value={novoContrato.dataFinal}
@@ -1979,7 +1938,7 @@ function ClienteForm() {
                 <strong> Saldo Disponível:</strong> <span style={{color: calcularSaldoContrato(contratoSelecionado).saldo < 0 ? '#dc3545' : '#28a745', fontWeight: 'bold'}}>R$ {formatarValor(calcularSaldoContrato(contratoSelecionado).saldo)}</span>
               </div>
               <div className="form-group">
-                <label>Nº Empenho *</label>
+                <label className="modal-label">Nº Empenho *</label>
                 <input
                   type="text"
                   value={novoEmpenho.numeroEmpenho}
@@ -1989,7 +1948,7 @@ function ClienteForm() {
                 />
               </div>
               <div className="form-group">
-                <label>Centro de Custo</label>
+                <label className="modal-label">Centro de Custo</label>
                 <select
                   value={novoEmpenho.centroCusto}
                   onChange={(e) => {
@@ -2004,7 +1963,7 @@ function ClienteForm() {
               </div>
               {novoEmpenho.centroCusto && (
                 <div className="form-group">
-                  <label>Subunidade</label>
+                  <label className="modal-label">Subunidade</label>
                   <select
                     value={novoEmpenho.subunidade}
                     onChange={(e) => setNovoEmpenho({ ...novoEmpenho, subunidade: e.target.value })}
@@ -2019,7 +1978,7 @@ function ClienteForm() {
                 </div>
               )}
               <div className="form-group">
-                <label>Tipo *</label>
+                <label className="modal-label">Tipo *</label>
                 <select
                   value={novoEmpenho.tipo}
                   onChange={(e) => setNovoEmpenho({ ...novoEmpenho, tipo: e.target.value })}
@@ -2030,7 +1989,7 @@ function ClienteForm() {
                 </select>
               </div>
               <div className="form-group">
-                <label>Valor *</label>
+                <label className="modal-label">Valor *</label>
                 <input
                   type="text"
                   value={novoEmpenho.valor}
@@ -2042,7 +2001,7 @@ function ClienteForm() {
                 />
               </div>
               <div className="form-group">
-                <label>Valor Anulado</label>
+                <label className="modal-label">Valor Anulado</label>
                 <input
                   type="text"
                   value={novoEmpenho.valorAnulado}

@@ -164,8 +164,6 @@
 .table-actions {
   display: flex;
   gap: 0.5rem;
-  flex-wrap: wrap;
-  align-items: center;
 }
 
 .btn-edit,
@@ -175,12 +173,9 @@
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 32px;
-  min-height: 32px;
 }
 
 .btn-edit {

@@ -209,58 +209,20 @@
   background: none;
   border: none;
   color: #dc3545;
-  font-size: 1.1rem;
+  font-size: 1.5rem;
   cursor: pointer;
-  padding: 0.25rem 0.4rem;
-  min-width: 28px;
-  min-height: 28px;
+  padding: 0;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 4px;
   transition: background 0.2s;
-  flex-shrink: 0;
 }
 
 .btn-icon-small:hover {
   background: rgba(220, 53, 69, 0.1);
-}
-
-/* Botões de ação pequenos (editar, inativar, excluir) */
-.btn-group-actions {
-  display: flex;
-  gap: 0.25rem;
-  align-items: center;
-}
-
-.btn-icon-action {
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
-  font-size: 0.9rem;
-  cursor: pointer;
-  padding: 0.3rem 0.4rem;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.btn-icon-action:hover {
-  background: #e9ecef;
-  border-color: #adb5bd;
-}
-
-.btn-icon-action.btn-danger {
-  color: #dc3545;
-}
-
-.btn-icon-action.btn-danger:hover {
-  background: rgba(220, 53, 69, 0.1);
-  border-color: #dc3545;
 }
 
 /* Modal */
@@ -270,13 +232,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 1rem;
-  backdrop-filter: blur(4px);
 }
 
 .modal-content-small {
@@ -463,13 +424,13 @@
 }
 
 .mini-table thead {
-  background: var(--secondary);
+  background: var(--azul-corporativo);
   color: white;
 }
 
 .mini-table th,
 .mini-table td {
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem;
   text-align: left;
   border-bottom: 1px solid var(--cinza-medio);
 }
@@ -477,11 +438,6 @@
 .mini-table th {
   font-weight: 600;
   font-size: 0.8rem;
-  color: white;
-}
-
-.mini-table td {
-  color: var(--text-primary);
 }
 
 .mini-table tbody tr:last-child td {
@@ -506,11 +462,6 @@
   cursor: pointer;
   transition: all 0.3s;
   white-space: nowrap;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 32px;
 }
 
 .btn-icon-small.btn-warning,
@@ -534,12 +485,85 @@
 }
 
 .btn-icon.btn-success {
-  background: #28a745;
-  color: white;
+  background: var(--success);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-icon.btn-success:hover {
-  background: #218838;
+  background: var(--success-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-add-sub {
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.btn-empenho {
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-lg);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  box-shadow: var(--shadow-md);
+}
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-md);
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.action-button svg,
+.action-button span.icon {
+  font-size: 0.9rem;
+}
+
+.action-button.edit {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.action-button.edit:hover {
+  background: var(--warning);
+  color: #fff;
+}
+
+.action-button.status {
+  background: var(--surface-alt);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.action-button.status:hover {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.action-button.delete {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.action-button.delete:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+.table-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
 }
 
 .btn-icon-small.btn-secondary,
@@ -576,31 +600,17 @@
   font-weight: 700;
 }
 
-/* Grupos de botões */
+/* Grupos de bot\u00f5es */
 .card-actions {
   display: flex;
   gap: 1rem;
   align-items: center;
   flex-wrap: wrap;
-  justify-content: flex-start;
-}
-
-/* Layout vertical para botões do contrato */
-.card-actions-vertical {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  align-items: flex-end;
 }
 
 .btn-group {
   display: flex;
   gap: 0.5rem;
-  align-items: center;
-}
-
-.btn-group:first-child {
-  margin-right: 0;
 }
 
 .btn-icon:disabled {
@@ -662,7 +672,7 @@
 }
 
 .empenhos-full-table thead {
-  background: var(--secondary);
+  background: var(--azul-corporativo);
   color: white;
 }
 
@@ -671,14 +681,13 @@
   padding: 0.75rem;
   text-align: left;
   border-bottom: 1px solid var(--cinza-medio);
-  color: var(--text-primary);
 }
 
 .empenhos-full-table th {
   font-weight: 600;
   font-size: 0.85rem;
   text-transform: uppercase;
-  color: white;
+  white-space: nowrap;
 }
 
 .empenhos-full-table tbody tr:last-child td {
@@ -728,29 +737,4 @@
 .status-inactive {
   background: #f8d7da;
   color: #721c24;
-}
-
-/* Media Queries para Responsividade */
-@media (max-width: 1200px) {
-  .contrato-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .card-actions {
-    align-items: flex-start;
-    width: 100%;
-  }
-}
-
-@media (max-width: 768px) {
-  .btn-icon {
-    font-size: 0.75rem;
-    padding: 0.4rem 0.6rem;
-  }
-  
-  .btn-group {
-    width: 100%;
-    justify-content: space-between;
-  }
 }

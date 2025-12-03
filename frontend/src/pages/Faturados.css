@@ -9,9 +9,9 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--warning-soft);
-  border: 2px solid var(--warning);
-  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%);
+  border: 2px solid #fbbf24;
+  border-radius: 12px;
   padding: 16px 20px;
   margin-bottom: 24px;
   color: #92400e;
@@ -21,7 +21,7 @@
 
 .readonly-banner svg {
   flex-shrink: 0;
-  color: var(--warning);
+  color: #f59e0b;
 }
 
 /* Cabeçalho da página */
@@ -206,8 +206,6 @@
 .table-actions {
   display: flex;
   gap: 0.5rem;
-  flex-wrap: wrap;
-  align-items: center;
 }
 
 .btn-icon {
@@ -217,12 +215,9 @@
   cursor: pointer;
   border-radius: 6px;
   transition: all 0.2s;
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 32px;
-  min-height: 32px;
 }
 
 .btn-icon.btn-view {

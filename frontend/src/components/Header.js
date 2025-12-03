@@ -4,6 +4,8 @@ import authService from '../services/authService';
 import notificacaoService from '../services/notificacaoService';
 import './Header.css';
 
+const LOGO_ALTERNATIVO = '/images/InstaSolutions-LockupAlternativo-Cores.png';
+
 const Header = ({ user, onSearch, showBackButton = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -135,10 +137,7 @@ const Header = ({ user, onSearch, showBackButton = false }) => {
             </button>
           )}
           <div className="logo-header">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="50" cy="50" r="45" fill="#667eea" />
-              <text x="50" y="65" fontSize="48" fontWeight="bold" fill="white" textAnchor="middle">IS</text>
-            </svg>
+            <img src={LOGO_ALTERNATIVO} alt="InstaSolutions" className="logo-img" loading="lazy" />
             <div className="logo-text">
               <h1>InstaSolutions</h1>
               <span>Sistema Financeiro</span>

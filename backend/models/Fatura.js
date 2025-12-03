@@ -123,7 +123,7 @@ const faturaSchema = new mongoose.Schema({
 });
 
 // Índices para melhor performance
-faturaSchema.index({ numeroFatura: 1 });
+// Removido índice duplicado de numeroFatura (unique já cria índice)
 faturaSchema.index({ tipo: 1, statusFatura: 1 });
 faturaSchema.index({ fornecedor: 1, createdAt: -1 });
 faturaSchema.index({ cliente: 1, createdAt: -1 });

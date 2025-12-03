@@ -4,6 +4,8 @@ import { toast } from 'react-toastify';
 import authService from '../services/authService';
 import './Login.css';
 
+const LOGO_ALTERNATIVO = '/images/InstaSolutions-LockupAlternativo-Cores.png';
+
 const Login = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -71,10 +73,7 @@ const Login = () => {
       <div className="login-left">
         <div className="login-branding">
           <div className="login-logo">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="50" cy="50" r="45" fill="#005BED" />
-              <text x="50" y="65" fontSize="48" fontWeight="bold" fill="white" textAnchor="middle">IS</text>
-            </svg>
+            <img src={LOGO_ALTERNATIVO} alt="InstaSolutions" loading="lazy" />
           </div>
           <h1>InstaSolutions</h1>
           <p>Sistema Financeiro Inteligente</p>

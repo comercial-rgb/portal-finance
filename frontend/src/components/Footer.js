@@ -1,16 +1,20 @@
 import React from 'react';
 import './Footer.css';
 
+const LOGO_ALTERNATIVO = '/images/InstaSolutions-LockupAlternativo-Cores.png';
+
 const Footer = () => {
   return (
     <footer className="footer">
       <div className="footer-content">
         <div className="footer-section">
           <div className="footer-logo">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="50" cy="50" r="45" fill="#667eea" />
-              <text x="50" y="65" fontSize="48" fontWeight="bold" fill="white" textAnchor="middle">IS</text>
-            </svg>
+            <img
+              src={LOGO_ALTERNATIVO}
+              alt="InstaSolutions"
+              className="footer-logo-img"
+              loading="lazy"
+            />
             <div>
               <h3>InstaSolutions</h3>
               <p>Sistema Financeiro</p>

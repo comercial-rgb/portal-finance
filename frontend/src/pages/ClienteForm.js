@@ -1340,7 +1340,7 @@ function ClienteForm() {
                           <h4>{centro.nome}</h4>
                           <div className="card-actions">
                             <button
-                              className="btn-icon btn-primary"
+                              className="btn-icon btn-success btn-add-sub"
                               onClick={() => {
                                 setCentroCustoSelecionado(centro._id);
                                 setShowSubunidadeModal(true);
@@ -1428,7 +1428,7 @@ function ClienteForm() {
                                 <span> | <strong>Saldo:</strong> <span style={{color: saldos.saldo < 0 ? '#dc3545' : '#28a745', fontWeight: 'bold'}}>R$ {formatarValor(saldos.saldo)}</span></span>
                               </div>
                             </div>
-                            <div className="card-actions-vertical">
+                            <div className="card-actions">
                               <div className="btn-group">
                                 <button
                                   className="btn-icon btn-info"
@@ -1443,7 +1443,7 @@ function ClienteForm() {
                                   + Aditivo
                                 </button>
                                 <button
-                                  className="btn-icon btn-success"
+                                  className="btn-icon btn-success btn-empenho"
                                   onClick={() => {
                                     const saldos = calcularSaldoContrato(contrato);
                                     if (saldos.saldo <= 0) {
@@ -1461,27 +1461,32 @@ function ClienteForm() {
                                   + Empenho
                                 </button>
                               </div>
-                              <div className="btn-group-actions">
+                              <div className="btn-group">
                                 <button
-                                  className="btn-icon-action"
+                                  className="action-button edit"
                                   onClick={() => handleEditContrato(contrato)}
                                   title="Editar Contrato"
                                 >
-                                  ✏️
+                                  <span className="icon" role="img" aria-label="Editar">✏️</span>
+                                  Editar
                                 </button>
                                 <button
-                                  className="btn-icon-action"
+                                  className="action-button status"
                                   onClick={() => handleToggleContratoStatus(contrato._id)}
                                   title={contrato.ativo ? 'Inativar' : 'Ativar'}
                                 >
-                                  {contrato.ativo ? '🔓' : '🔒'}
+                                  <span className="icon" role="img" aria-label={contrato.ativo ? 'Inativar' : 'Ativar'}>
+                                    {contrato.ativo ? '🔓' : '🔒'}
+                                  </span>
+                                  {contrato.ativo ? 'Inativar' : 'Ativar'}
                                 </button>
                                 <button
-                                  className="btn-icon-action btn-danger"
+                                  className="action-button delete"
                                   onClick={() => handleDeleteContrato(contrato._id)}
                                   title="Excluir"
                                 >
-                                  🗑️
+                                  <span className="icon" role="img" aria-label="Excluir">🗑️</span>
+                                  Excluir
                                 </button>
                               </div>
                             </div>
@@ -1509,36 +1514,43 @@ function ClienteForm() {
                                       <td>{new Date(aditivo.dataFinal).toLocaleDateString()}</td>
                                       <td>{aditivo.ativo ? '✅ Ativo' : '❌ Inativo'}</td>
                                       <td>
-                                        <button
-                                          className="btn-icon-small btn-warning"
-                                          onClick={() => {
-                                            setContratoSelecionado(contrato);
-                                            handleEditAditivo(aditivo);
-                                          }}
-                                          title="Editar"
-                                        >
-                                          ✏️
-                                        </button>
-                                        <button
-                                          className="btn-icon-small btn-secondary"
-                                          onClick={() => {
-                                            setContratoSelecionado(contrato);
-                                            handleToggleAditivoStatus(aditivo._id);
-                                          }}
-                                          title={aditivo.ativo ? 'Inativar' : 'Ativar'}
-                                        >
-                                          {aditivo.ativo ? '🔓' : '🔒'}
-                                        </button>
-                                        <button
-                                          className="btn-icon-small btn-delete"
-                                          onClick={() => {
-                                            setContratoSelecionado(contrato);
-                                            handleDeleteAditivo(aditivo._id);
-                                          }}
-                                          title="Excluir"
-                                        >
-                                          ×
-                                        </button>
+                                        <div className="table-action-group">
+                                          <button
+                                            className="action-button edit"
+                                            onClick={() => {
+                                              setContratoSelecionado(contrato);
+                                              handleEditAditivo(aditivo);
+                                            }}
+                                            title="Editar"
+                                          >
+                                            <span className="icon" role="img" aria-label="Editar">✏️</span>
+                                            Editar
+                                          </button>
+                                          <button
+                                            className="action-button status"
+                                            onClick={() => {
+                                              setContratoSelecionado(contrato);
+                                              handleToggleAditivoStatus(aditivo._id);
+                                            }}
+                                            title={aditivo.ativo ? 'Inativar' : 'Ativar'}
+                                          >
+                                            <span className="icon" role="img" aria-label={aditivo.ativo ? 'Inativar' : 'Ativar'}>
+                                              {aditivo.ativo ? '🔓' : '🔒'}
+                                            </span>
+                                            {aditivo.ativo ? 'Inativar' : 'Ativar'}
+                                          </button>
+                                          <button
+                                            className="action-button delete"
+                                            onClick={() => {
+                                              setContratoSelecionado(contrato);
+                                              handleDeleteAditivo(aditivo._id);
+                                            }}
+                                            title="Excluir"
+                                          >
+                                            <span className="icon" role="img" aria-label="Excluir">🗑️</span>
+                                            Excluir
+                                          </button>
+                                        </div>
                                       </td>
                                     </tr>
                                   ))}
@@ -1582,33 +1594,40 @@ function ClienteForm() {
                                       <td>R$ {formatarValor((empenho.valor || 0) - (empenho.valorAnulado || 0))}</td>
                                       <td>{empenho.ativo ? '✅ Ativo' : '❌ Inativo'}</td>
                                       <td>
-                                        <button
-                                          className="btn-icon-small btn-warning"
-                                          onClick={() => {
-                                            setContratoSelecionado(contrato);
-                                            handleEditEmpenho(empenho);
-                                          }}
-                                          title="Editar"
-                                        >
-                                          ✏️
-                                        </button>
-                                        <button
-                                          className="btn-icon-small btn-secondary"
-                                          onClick={() => handleToggleEmpenhoStatus(contrato._id, empenho._id)}
-                                          title={empenho.ativo ? 'Inativar' : 'Ativar'}
-                                        >
-                                          {empenho.ativo ? '🔓' : '🔒'}
-                                        </button>
-                                        <button
-                                          className="btn-icon-small btn-delete"
-                                          onClick={() => {
-                                            setContratoSelecionado(contrato);
-                                            handleDeleteEmpenho(empenho._id);
-                                          }}
-                                          title="Excluir"
-                                        >
-                                          ×
-                                        </button>
+                                        <div className="table-action-group">
+                                          <button
+                                            className="action-button edit"
+                                            onClick={() => {
+                                              setContratoSelecionado(contrato);
+                                              handleEditEmpenho(empenho);
+                                            }}
+                                            title="Editar"
+                                          >
+                                            <span className="icon" role="img" aria-label="Editar">✏️</span>
+                                            Editar
+                                          </button>
+                                          <button
+                                            className="action-button status"
+                                            onClick={() => handleToggleEmpenhoStatus(contrato._id, empenho._id)}
+                                            title={empenho.ativo ? 'Inativar' : 'Ativar'}
+                                          >
+                                            <span className="icon" role="img" aria-label={empenho.ativo ? 'Inativar' : 'Ativar'}>
+                                              {empenho.ativo ? '🔓' : '🔒'}
+                                            </span>
+                                            {empenho.ativo ? 'Inativar' : 'Ativar'}
+                                          </button>
+                                          <button
+                                            className="action-button delete"
+                                            onClick={() => {
+                                              setContratoSelecionado(contrato);
+                                              handleDeleteEmpenho(empenho._id);
+                                            }}
+                                            title="Excluir"
+                                          >
+                                            <span className="icon" role="img" aria-label="Excluir">🗑️</span>
+                                            Excluir
+                                          </button>
+                                        </div>
                                       </td>
                                     </tr>
                                   ))}

@@ -8,9 +8,9 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--warning-soft);
-  border: 2px solid var(--warning);
-  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%);
+  border: 2px solid #fbbf24;
+  border-radius: 12px;
   padding: 16px 20px;
   margin-bottom: 24px;
   color: #92400e;
@@ -20,19 +20,19 @@
 
 .readonly-banner svg {
   flex-shrink: 0;
-  color: var(--warning);
+  color: #f59e0b;
 }
 
 .filtros-section {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
+  background: white;
+  border-radius: 12px;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .filtros-section h3 {
-  color: var(--secondary);
+  color: #251C59;
   margin-bottom: 1.5rem;
   font-size: 1.1rem;
 }
@@ -69,8 +69,8 @@
 .filtros-grid input:focus,
 .filtros-grid select:focus {
   outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  border-color: #005BED;
+  box-shadow: 0 0 0 3px rgba(0, 91, 237, 0.1);
 }
 
 .filtros-actions {
@@ -80,10 +80,10 @@
 }
 
 .ordens-list {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
+  background: white;
+  border-radius: 12px;
   padding: 2rem;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .ordens-header {
@@ -96,7 +96,7 @@
 }
 
 .ordens-header h3 {
-  color: var(--secondary);
+  color: #251C59;
   margin: 0;
 }
 
@@ -120,23 +120,23 @@
 }
 
 .btn-excel {
-  background: var(--gradient-success);
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
   color: white;
 }
 
 .btn-excel:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 12px rgba(67, 233, 123, 0.4);
 }
 
 .btn-gerar-fatura {
-  background: var(--gradient-primary);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
 }
 
 .btn-gerar-fatura:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .btn-gerar-fatura:disabled {
@@ -418,11 +418,6 @@
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  color: white;
-}
-
-.fatura-table td {
-  color: #333;
 }
 
 .fatura-table tbody tr {

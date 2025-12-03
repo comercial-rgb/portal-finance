@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { jsPDF } from 'jspdf';
@@ -27,6 +27,44 @@ function FaturadoDetalhes() {
     busca: '',
     status: ''
   });
+
+  const percentualTaxaOperacao = useMemo(() => {
+    if (!fatura) return null;
+    const valorTaxas = fatura.valorTaxasOperacao || 0;
+    if (valorTaxas <= 0) return null;
+
+    const base = fatura.valorComDesconto || 0;
+    if (base > 0) {
+      const perc = (valorTaxas / base) * 100;
+      if (Number.isFinite(perc)) {
+        return perc;
+      }
+    }
+
+    const osComTaxa = ordensServico.find(item => {
+      const taxa = item?.ordemServico?.taxaAplicada;
+      return typeof taxa === 'number' && taxa > 0;
+    });
+    if (osComTaxa) {
+      return osComTaxa.ordemServico.taxaAplicada;
+    }
+
+    const taxaCliente = fatura.cliente?.taxaOperacao;
+    if (typeof taxaCliente === 'number' && taxaCliente > 0) {
+      return taxaCliente;
+    }
+
+    const taxasAntecipacao = fatura.cliente?.taxasAntecipacao;
+    if (taxasAntecipacao) {
+      const { aVista, aposFechamento, aprazado } = taxasAntecipacao;
+      const candidatos = [aVista, aposFechamento, aprazado].filter(valor => typeof valor === 'number' && valor > 0);
+      if (candidatos.length > 0) {
+        return candidatos[0];
+      }
+    }
+
+    return null;
+  }, [fatura, ordensServico]);
 
   // Verificar se é fornecedor ou cliente (somente leitura)
   const isFornecedor = user?.role === 'fornecedor';
@@ -298,6 +336,13 @@ function FaturadoDetalhes() {
   const formatarPercentual = (valor) => {
     if (!valor && valor !== 0) return '0,00';
     return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const getTextoTaxaOperacao = () => {
+    if (percentualTaxaOperacao === null) {
+      return '(-) Taxa de Operação';
+    }
+    return `(-) Taxa de Operação (${formatarPercentual(percentualTaxaOperacao)}%)`;
   };
 
   const calcularDetalhamentoImpostos = () => {
@@ -987,7 +1032,7 @@ function FaturadoDetalhes() {
     }
     
     // Taxa de Operação
-    doc.text('(-) Taxa de Operação:', 25, finalY);
+    doc.text(`${getTextoTaxaOperacao()}:`, 25, finalY);
     doc.text(formatarValor(fatura.valorTaxasOperacao || 0), 185, finalY, { align: 'right' });
     doc.line(20, finalY + 2, 190, finalY + 2);
     finalY += 10;
@@ -1263,7 +1308,7 @@ function FaturadoDetalhes() {
       doc.setFont(undefined, 'normal');
     }
     
-    doc.text('(-) Taxa de Operação:', 25, finalY);
+    doc.text(`${getTextoTaxaOperacao()}:`, 25, finalY);
     doc.text(formatarValor(taxaOperacaoPecas), 185, finalY, { align: 'right' });
     doc.line(20, finalY + 2, 190, finalY + 2);
     finalY += 10;
@@ -1533,7 +1578,7 @@ function FaturadoDetalhes() {
       doc.setFont(undefined, 'normal');
     }
     
-    doc.text('(-) Taxa de Operação:', 25, finalY);
+    doc.text(`${getTextoTaxaOperacao()}:`, 25, finalY);
     doc.text(formatarValor(taxaOperacaoServicos), 185, finalY, { align: 'right' });
     doc.line(20, finalY + 2, 190, finalY + 2);
     finalY += 10;
@@ -1879,7 +1924,7 @@ function FaturadoDetalhes() {
                       )}
                       {(fatura.valorTaxasOperacao || 0) > 0 && (
                         <div className="resumo-linha">
-                          <span>(-) Taxa de Operação:</span>
+                          <span>{getTextoTaxaOperacao()}:</span>
                           <span className="valor-negativo">{formatarValor(fatura.valorTaxasOperacao || 0)}</span>
                         </div>
                       )}

@@ -54,10 +54,11 @@
   gap: 12px;
 }
 
-.logo-header svg {
-  width: 48px;
+.logo-header .logo-img {
   height: 48px;
+  width: auto;
   flex-shrink: 0;
+  display: block;
 }
 
 .logo-text {
@@ -269,7 +270,7 @@
 
 .profile-dropdown button:hover {
   background: #f7fafc;
-  color: var(--primary);
+  color: #667eea;
 }
 
 .profile-dropdown button svg {
@@ -297,9 +298,9 @@
 }
 
 .notifications-button:hover {
-  border-color: var(--primary);
+  border-color: #667eea;
   background: #f7fafc;
-  color: var(--primary);
+  color: #667eea;
 }
 
 .notification-badge {
@@ -355,7 +356,7 @@
 .mark-all-read {
   background: transparent;
   border: none;
-  color: var(--primary);
+  color: #667eea;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -407,11 +408,11 @@
 }
 
 .notification-item.unread {
-  background: rgba(0, 91, 237, 0.05);
+  background: rgba(102, 126, 234, 0.05);
 }
 
 .notification-item.unread:hover {
-  background: rgba(0, 91, 237, 0.08);
+  background: rgba(102, 126, 234, 0.08);
 }
 
 .notification-icon {
@@ -419,7 +420,7 @@
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: var(--gradient-info);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -470,7 +471,7 @@
 
 .change-more {
   margin-top: 6px;
-  color: var(--primary);
+  color: #667eea;
   font-weight: 600;
   text-align: center;
 }
@@ -489,8 +490,8 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--primary);
-  box-shadow: 0 0 0 3px rgba(0, 91, 237, 0.2);
+  background: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
 }
 
 @media (max-width: 1024px) {

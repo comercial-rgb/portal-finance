@@ -4,6 +4,8 @@ import { toast } from 'react-toastify';
 import authService from '../services/authService';
 import './RedefinirSenha.css';
 
+const LOGO_ALTERNATIVO = '/images/InstaSolutions-LockupAlternativo-Cores.png';
+
 const RedefinirSenha = () => {
   const { token } = useParams();
   const navigate = useNavigate();
@@ -67,10 +69,7 @@ const RedefinirSenha = () => {
       <div className="redefinir-senha-card">
         <div className="logo-container">
           <div className="logo">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="50" cy="50" r="45" fill="#667eea" />
-              <text x="50" y="65" fontSize="48" fontWeight="bold" fill="white" textAnchor="middle">IS</text>
-            </svg>
+            <img src={LOGO_ALTERNATIVO} alt="InstaSolutions" loading="lazy" />
           </div>
         </div>
 

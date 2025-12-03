@@ -360,6 +360,28 @@
 }
 
 /* RESPONSIVE */
+@media (max-width: 1366px) {
+  .main-content {
+    margin-left: 220px;
+    padding: 1.5rem;
+  }
+
+  .ordens-servico-container {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 200px;
+    padding: 1rem;
+  }
+
+  .filtros-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .main-content {
     margin-left: 0;

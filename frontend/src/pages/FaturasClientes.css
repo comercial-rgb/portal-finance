@@ -575,6 +575,20 @@
   gap: 10px;
 }
 
+/* Responsividade */
+@media (max-width: 1366px) {
+  .faturas-clientes-container {
+    max-width: 100%;
+    padding: 15px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .filtros-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .filtros-grid {
     grid-template-columns: 1fr;

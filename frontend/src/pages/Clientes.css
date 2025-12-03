@@ -339,6 +339,25 @@
   font-weight: 600;
 }
 
+/* Responsividade para notebooks */
+@media (max-width: 1366px) {
+  .main-content {
+    margin-left: 220px;
+    padding: 1.5rem;
+  }
+
+  .clientes-container {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 200px;
+    padding: 1rem;
+  }
+}
+
 @media (max-width: 768px) {
   .main-content {
     margin-left: 0;

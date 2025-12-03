@@ -336,10 +336,18 @@
    RESPONSIVIDADE - BREAKPOINTS DETALHADOS
    ============================================ */
 
+/* Notebooks (até 1366px) */
+@media (max-width: 1366px) {
+  .dashboard-main {
+    margin-left: 220px;
+    padding: 24px;
+  }
+}
+
 /* Tablets grandes e laptops pequenos (até 1200px) */
 @media (max-width: 1200px) {
   .dashboard-main {
-    margin-left: 250px;
+    margin-left: 220px;
     padding: 24px;
   }
 
@@ -360,7 +368,7 @@
 /* Tablets (até 1024px) */
 @media (max-width: 1024px) {
   .dashboard-main {
-    margin-left: 220px;
+    margin-left: 200px;
     padding: 20px;
   }
 

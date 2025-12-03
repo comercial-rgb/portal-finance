@@ -184,8 +184,17 @@ exports.updateCliente = async (req, res) => {
     
     cliente.updatedAt = Date.now();
     
+    // Marcar campos aninhados como modificados para garantir salvamento
+    cliente.markModified('tipoImposto');
+    cliente.markModified('taxasAntecipacao');
+    cliente.markModified('endereco');
+    cliente.markModified('contatos');
+    
     // Salvar usando save() para garantir que middleware seja executado
     await cliente.save();
+    
+    // Recarregar o cliente do banco para garantir dados atualizados
+    const clienteAtualizado = await Cliente.findById(req.params.id);
 
     // Detectar alterações em campos importantes
     const camposMonitorar = [
@@ -219,7 +228,7 @@ exports.updateCliente = async (req, res) => {
       console.log(`📬 Notificações criadas para ${admins.length} administradores sobre atualização de perfil do cliente`);
     }
 
-    res.json(cliente);
+    res.json(clienteAtualizado);
   } catch (error) {
     console.error('Erro ao atualizar cliente:', error);
     res.status(500).json({ message: 'Erro ao atualizar cliente' });

@@ -133,13 +133,32 @@ faturaSchema.pre('save', function(next) {
   // Não recalcular valorTotal - vem do controller já calculado corretamente
   // valorTotal deve ser a soma de peças + serviço SEM desconto
   
-  // Calcular valor pago
-  this.valorPago = this.ordensServico
-    .filter(os => os.statusPagamento === 'Paga')
-    .reduce((acc, os) => acc + (os.valorOS || 0), 0);
+  // Calcular valor pago - proporcional ao valor líquido (valorDevido)
+  // Cada OS representa uma proporção do valorComDesconto, aplicamos essa mesma proporção ao valorDevido
+  const valorComDesconto = this.valorComDesconto || 0;
+  const valorDevido = this.valorDevido || 0;
+  
+  if (valorComDesconto > 0) {
+    // Calcular o fator de proporção (líquido / bruto)
+    const fatorLiquido = valorDevido / valorComDesconto;
+    
+    // Valor pago é a soma dos valores líquidos das OS pagas
+    this.valorPago = this.ordensServico
+      .filter(os => os.statusPagamento === 'Paga')
+      .reduce((acc, os) => {
+        // valorOS é o valor bruto da OS, multiplicamos pelo fator para obter o valor líquido
+        const valorLiquidoOS = (os.valorOS || 0) * fatorLiquido;
+        return acc + valorLiquidoOS;
+      }, 0);
+    
+    // Arredondar para evitar problemas de precisão
+    this.valorPago = Math.round(this.valorPago * 100) / 100;
+  } else {
+    this.valorPago = 0;
+  }
   
   // Calcular valor restante
-  this.valorRestante = this.valorDevido - this.valorPago;
+  this.valorRestante = Math.round((this.valorDevido - this.valorPago) * 100) / 100;
   
   // Atualizar status da fatura
   if (this.valorPago === 0) {

@@ -113,11 +113,14 @@ exports.updateCliente = async (req, res) => {
   try {
     const { cnpj } = req.body;
     
-    // Buscar dados antigos para comparação
-    const clienteAntigo = await Cliente.findById(req.params.id).lean();
-    if (!clienteAntigo) {
+    // Buscar cliente existente
+    const cliente = await Cliente.findById(req.params.id);
+    if (!cliente) {
       return res.status(404).json({ message: 'Cliente não encontrado' });
     }
+    
+    // Guardar dados antigos para comparação (antes de atualizar)
+    const clienteAntigo = cliente.toObject();
     
     // Verificar se o CNPJ já existe em outro cliente
     if (cnpj) {
@@ -130,11 +133,59 @@ exports.updateCliente = async (req, res) => {
       }
     }
 
-    const cliente = await Cliente.findByIdAndUpdate(
-      req.params.id,
-      { ...req.body, updatedAt: Date.now() },
-      { new: true, runValidators: true }
-    );
+    // Lista de campos simples que podem ser atualizados
+    const camposSimples = [
+      'razaoSocial', 'nomeFantasia', 'cnpj', 'inscricaoMunicipal', 'inscricaoEstadual',
+      'percentualDesconto', 'tipoTaxa', 'taxaOperacao', 'ativo'
+    ];
+    
+    // Atualizar campos simples
+    camposSimples.forEach(campo => {
+      if (req.body[campo] !== undefined) {
+        cliente[campo] = req.body[campo];
+      }
+    });
+    
+    // Atualizar tipoImposto (array)
+    if (req.body.tipoImposto !== undefined) {
+      cliente.tipoImposto = Array.isArray(req.body.tipoImposto) ? req.body.tipoImposto : [];
+    }
+    
+    // Atualizar taxasAntecipacao (objeto aninhado)
+    if (req.body.taxasAntecipacao) {
+      cliente.taxasAntecipacao = {
+        aVista: req.body.taxasAntecipacao.aVista !== undefined ? req.body.taxasAntecipacao.aVista : cliente.taxasAntecipacao?.aVista || 15,
+        aposFechamento: req.body.taxasAntecipacao.aposFechamento !== undefined ? req.body.taxasAntecipacao.aposFechamento : cliente.taxasAntecipacao?.aposFechamento || 13,
+        aprazado: req.body.taxasAntecipacao.aprazado !== undefined ? req.body.taxasAntecipacao.aprazado : cliente.taxasAntecipacao?.aprazado || 0
+      };
+    }
+    
+    // Atualizar endereco (objeto aninhado)
+    if (req.body.endereco) {
+      cliente.endereco = {
+        logradouro: req.body.endereco.logradouro || '',
+        numero: req.body.endereco.numero || '',
+        complemento: req.body.endereco.complemento || '',
+        bairro: req.body.endereco.bairro || '',
+        cidade: req.body.endereco.cidade || '',
+        estado: req.body.endereco.estado || '',
+        cep: req.body.endereco.cep || ''
+      };
+    }
+    
+    // Atualizar contatos (objeto aninhado)
+    if (req.body.contatos) {
+      cliente.contatos = {
+        telefone: req.body.contatos.telefone || '',
+        celular: req.body.contatos.celular || '',
+        email: req.body.contatos.email || ''
+      };
+    }
+    
+    cliente.updatedAt = Date.now();
+    
+    // Salvar usando save() para garantir que middleware seja executado
+    await cliente.save();
 
     // Detectar alterações em campos importantes
     const camposMonitorar = [

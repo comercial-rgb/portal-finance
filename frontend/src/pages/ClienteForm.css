@@ -236,7 +236,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(30, 40, 60, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -375,7 +375,16 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1rem;
-  gap: 2rem;
+  gap: 1rem;
+}
+
+.contrato-header .card-actions {
+  flex-shrink: 0;
+  margin-top: -0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
 }
 
 .contrato-header > div:first-child {
@@ -398,10 +407,6 @@
   flex-wrap: nowrap;
   gap: 0.25rem;
   white-space: nowrap;
-}
-
-.contrato-header .card-actions {
-  flex-shrink: 0;
 }
 
 .badge-inactive {

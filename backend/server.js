@@ -89,10 +89,12 @@ app.use('/api/auth', rateLimit(30, 5 * 60 * 1000), authRoutes); // 30 req / 5 mi
 app.use('/api', invalidateCache('fornecedores'), fornecedorRoutes);
 // Clientes SEM cache para garantir dados sempre atualizados
 app.use('/api/clientes', clienteRoutes);
-app.use('/api/tipo-servicos', cacheMiddleware(10 * 60 * 1000), tipoServicoRoutes);
+// Tipo Servicos SEM cache para garantir dados sempre atualizados
+app.use('/api/tipo-servicos', tipoServicoRoutes);
 app.use('/api/ordens-servico', invalidateCache(['ordens', 'clientes', 'fornecedores']), ordemServicoRoutes);
 app.use('/api/usuarios', rateLimitPresets.write, usuarioRoutes);
-app.use('/api/impostos-retencoes', cacheMiddleware(10 * 60 * 1000), impostosRetencoesRoutes);
+// Impostos SEM cache para garantir dados sempre atualizados
+app.use('/api/impostos-retencoes', impostosRetencoesRoutes);
 app.use('/api/faturas', invalidateCache(['faturas', 'ordens']), faturaRoutes);
 app.use('/api/notificacoes', notificacaoRoutes);
 

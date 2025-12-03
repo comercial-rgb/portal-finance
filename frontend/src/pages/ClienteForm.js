@@ -101,6 +101,11 @@ function ClienteForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  // Debug: Monitorar mudanças no formData
+  useEffect(() => {
+    console.log('🔍 formData mudou:', formData);
+  }, [formData]);
+
   // Carrega centros de custo sempre que o ID mudar (incluindo após criação)
   useEffect(() => {
     if (id && id !== 'novo') {
@@ -308,7 +313,9 @@ function ClienteForm() {
         
         // Atualizar formData diretamente com os dados retornados pelo servidor
         const clienteAtualizado = response.data;
-        setFormData({
+        
+        // Forçar atualização imediata do formData
+        const novoFormData = {
           ...clienteAtualizado,
           tipoImposto: clienteAtualizado.tipoImposto || [],
           tipoTaxa: clienteAtualizado.tipoTaxa || 'nenhum',
@@ -333,7 +340,23 @@ function ClienteForm() {
             celular: '',
             email: ''
           }
-        });
+        };
+        
+        console.log('🔄 Novo formData:', novoFormData);
+        setFormData(novoFormData);
+        
+        // Forçar re-render verificando se os dados foram atualizados
+        setTimeout(async () => {
+          console.log('🔍 Verificando formData após atualização:', formData);
+          // Limpar cache e recarregar dados do servidor para garantir consistência
+          try {
+            await api.post('/api/dev/reset-rate-limit');
+            console.log('🧹 Cache limpo');
+          } catch (e) {
+            console.log('⚠️ Não foi possível limpar cache');
+          }
+          loadCliente();
+        }, 100);
         
         toast.success('Cliente atualizado com sucesso!');
       } else {

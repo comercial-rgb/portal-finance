@@ -224,6 +224,14 @@ exports.updateCliente = async (req, res) => {
       return res.status(404).json({ message: 'Cliente não encontrado após atualização' });
     }
 
+    console.log('✅ Cliente atualizado no banco:', {
+      id: clienteAtualizado._id,
+      razaoSocial: clienteAtualizado.razaoSocial,
+      tipoImposto: clienteAtualizado.tipoImposto,
+      endereco: clienteAtualizado.endereco,
+      contatos: clienteAtualizado.contatos
+    });
+
     // Detectar alterações em campos importantes
     const camposMonitorar = [
       'razaoSocial', 'nomeFantasia', 'cnpj', 'inscricaoEstadual',

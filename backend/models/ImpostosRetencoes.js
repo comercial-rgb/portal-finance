@@ -53,11 +53,25 @@ const impostosRetencoesSchema = new mongoose.Schema({
     taxaFixa: { type: Number, default: 0, min: 0, max: 100 }
   },
   
-  // Taxas Antecipação & Variáveis
+  // Taxas Antecipação & Variáveis (campos legados - manter para compatibilidade)
   taxasAntecipacao: {
     aVista: { type: Number, default: 0, min: 0, max: 100 },
     aposFechamento: { type: Number, default: 0, min: 0, max: 100 },
     dias30: { type: Number, default: 0, min: 0, max: 100 }
+  },
+  
+  // Taxas de Antecipação por Faixa de Dias (novas taxas)
+  taxasAntecipacaoFaixas: {
+    // 30 a 25 dias antes da previsão
+    faixa30a25: { type: Number, default: 10, min: 0, max: 100 },
+    // 24 a 19 dias antes da previsão
+    faixa24a19: { type: Number, default: 8, min: 0, max: 100 },
+    // 18 a 12 dias antes da previsão
+    faixa18a12: { type: Number, default: 6, min: 0, max: 100 },
+    // 11 a 6 dias antes da previsão
+    faixa11a06: { type: Number, default: 4, min: 0, max: 100 },
+    // 5 a 1 dias antes da previsão
+    faixa05a01: { type: Number, default: 2.5, min: 0, max: 100 }
   },
   
   ativo: {

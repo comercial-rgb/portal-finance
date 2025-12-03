@@ -27,6 +27,8 @@ import Configuracoes from './pages/Configuracoes';
 import Usuarios from './pages/Usuarios';
 import ImpostosRetencoes from './pages/ImpostosRetencoes';
 import Relatorios from './pages/Relatorios';
+import ValoresPendentes from './pages/ValoresPendentes';
+import Pagamentos from './pages/Pagamentos';
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {
@@ -245,6 +247,22 @@ function App() {
           element={
             <PrivateRoute allowedRoles={['super_admin', 'admin', 'gerente', 'cliente']}>
               <Relatorios />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/valores-pendentes"
+          element={
+            <PrivateRoute allowedRoles={['fornecedor']}>
+              <ValoresPendentes />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/pagamentos"
+          element={
+            <PrivateRoute allowedRoles={['super_admin', 'admin', 'gerente', 'fornecedor', 'cliente']}>
+              <Pagamentos />
             </PrivateRoute>
           }
         />

@@ -28,6 +28,8 @@ const usuarioRoutes = require('./routes/usuarioRoutes');
 const impostosRetencoesRoutes = require('./routes/impostosRetencoesRoutes');
 const faturaRoutes = require('./routes/faturaRoutes');
 const notificacaoRoutes = require('./routes/notificacaoRoutes');
+const antecipacaoRoutes = require('./routes/antecipacaoRoutes');
+const pagamentoRoutes = require('./routes/pagamentoRoutes');
 
 const app = express();
 
@@ -97,6 +99,9 @@ app.use('/api/usuarios', rateLimitPresets.write, usuarioRoutes);
 app.use('/api/impostos-retencoes', impostosRetencoesRoutes);
 app.use('/api/faturas', invalidateCache(['faturas', 'ordens']), faturaRoutes);
 app.use('/api/notificacoes', notificacaoRoutes);
+// Antecipações e Pagamentos SEM cache
+app.use('/api/antecipacoes', antecipacaoRoutes);
+app.use('/api/pagamentos', pagamentoRoutes);
 
 // Rota de teste e health check
 app.get('/api/health', (req, res) => {

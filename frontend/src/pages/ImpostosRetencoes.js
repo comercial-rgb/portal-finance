@@ -26,7 +26,14 @@ function ImpostosRetencoes() {
     },
     retencoesOrgao: { percentual: 0 },
     taxasOperacao: { taxaFixa: 0 },
-    taxasAntecipacao: { aVista: 0, aposFechamento: 0, dias30: 0 }
+    taxasAntecipacao: { aVista: 0, aposFechamento: 0, dias30: 0 },
+    taxasAntecipacaoFaixas: {
+      faixa30a25: 10,
+      faixa24a19: 8,
+      faixa18a12: 6,
+      faixa11a06: 4,
+      faixa05a01: 2.5
+    }
   });
 
   useEffect(() => {
@@ -84,6 +91,13 @@ function ImpostosRetencoes() {
             aVista: response.data.taxasAntecipacao?.aVista || 0,
             aposFechamento: response.data.taxasAntecipacao?.aposFechamento || 0,
             dias30: response.data.taxasAntecipacao?.dias30 || 0
+          },
+          taxasAntecipacaoFaixas: {
+            faixa30a25: response.data.taxasAntecipacaoFaixas?.faixa30a25 || 10,
+            faixa24a19: response.data.taxasAntecipacaoFaixas?.faixa24a19 || 8,
+            faixa18a12: response.data.taxasAntecipacaoFaixas?.faixa18a12 || 6,
+            faixa11a06: response.data.taxasAntecipacaoFaixas?.faixa11a06 || 4,
+            faixa05a01: response.data.taxasAntecipacaoFaixas?.faixa05a01 || 2.5
           }
         });
       }
@@ -494,6 +508,70 @@ function ImpostosRetencoes() {
                       max="100"
                       value={formData.taxasAntecipacao.dias30}
                       onChange={(e) => handleSimpleChange('taxasAntecipacao', 'dias30', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {/* Taxas de Antecipação por Faixa de Dias */}
+                <div className="imposto-section retencoes-section">
+                  <h3>💰 Taxas de Antecipação por Faixa de Dias</h3>
+                  <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                    Taxas aplicadas quando o fornecedor solicita antecipação de valores. 
+                    Baseado na quantidade de dias antes da previsão de recebimento.
+                  </p>
+                  <div className="form-group">
+                    <label>30 a 25 dias antes (%)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={formData.taxasAntecipacaoFaixas?.faixa30a25 || 10}
+                      onChange={(e) => handleSimpleChange('taxasAntecipacaoFaixas', 'faixa30a25', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>24 a 19 dias antes (%)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={formData.taxasAntecipacaoFaixas?.faixa24a19 || 8}
+                      onChange={(e) => handleSimpleChange('taxasAntecipacaoFaixas', 'faixa24a19', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>18 a 12 dias antes (%)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={formData.taxasAntecipacaoFaixas?.faixa18a12 || 6}
+                      onChange={(e) => handleSimpleChange('taxasAntecipacaoFaixas', 'faixa18a12', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>11 a 06 dias antes (%)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={formData.taxasAntecipacaoFaixas?.faixa11a06 || 4}
+                      onChange={(e) => handleSimpleChange('taxasAntecipacaoFaixas', 'faixa11a06', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>05 a 01 dias antes (%)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={formData.taxasAntecipacaoFaixas?.faixa05a01 || 2.5}
+                      onChange={(e) => handleSimpleChange('taxasAntecipacaoFaixas', 'faixa05a01', e.target.value)}
                     />
                   </div>
                 </div>

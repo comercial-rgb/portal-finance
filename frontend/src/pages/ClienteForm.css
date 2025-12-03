@@ -254,6 +254,12 @@
   box-shadow: 0 18px 48px rgba(4, 10, 22, 0.45);
 }
 
+.modal-label {
+  color: #e2e8f0 !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+}
+
 .modal-content-small {
   background: var(--branco);
   border-radius: 12px;

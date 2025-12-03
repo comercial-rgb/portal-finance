@@ -306,10 +306,36 @@ function ClienteForm() {
         const response = await api.put(`/clientes/${id}`, formData);
         console.log('✅ Resposta do servidor:', response.data);
         
-        toast.success('Cliente atualizado com sucesso!');
+        // Atualizar formData diretamente com os dados retornados pelo servidor
+        const clienteAtualizado = response.data;
+        setFormData({
+          ...clienteAtualizado,
+          tipoImposto: clienteAtualizado.tipoImposto || [],
+          tipoTaxa: clienteAtualizado.tipoTaxa || 'nenhum',
+          taxaOperacao: clienteAtualizado.taxaOperacao !== undefined ? clienteAtualizado.taxaOperacao : 15,
+          taxasAntecipacao: {
+            aVista: clienteAtualizado.taxasAntecipacao?.aVista !== undefined ? clienteAtualizado.taxasAntecipacao.aVista : 15,
+            aposFechamento: clienteAtualizado.taxasAntecipacao?.aposFechamento !== undefined ? clienteAtualizado.taxasAntecipacao.aposFechamento : 13,
+            aprazado: clienteAtualizado.taxasAntecipacao?.aprazado !== undefined ? clienteAtualizado.taxasAntecipacao.aprazado : 0
+          },
+          endereco: clienteAtualizado.endereco || {
+            logradouro: '',
+            numero: '',
+            complemento: '',
+            bairro: '',
+            cidade: '',
+            estado: '',
+            cep: ''
+          },
+          contatos: clienteAtualizado.contatos || {
+            nome: '',
+            telefone: '',
+            celular: '',
+            email: ''
+          }
+        });
         
-        // Navegar para a mesma página forçando recarregamento completo
-        window.location.href = `/clientes/${id}`;
+        toast.success('Cliente atualizado com sucesso!');
       } else {
         const response = await api.post('/clientes', formData);
         const novoId = response.data._id || response.data.id;
@@ -1875,7 +1901,7 @@ function ClienteForm() {
             </div>
             <div className="modal-body">
               <div className="form-group">
-                <label>Valor *</label>
+                <label className="modal-label">Valor *</label>
                 <input
                   type="text"
                   value={novoAditivo.valor}
@@ -1888,7 +1914,7 @@ function ClienteForm() {
                 />
               </div>
               <div className="form-group">
-                <label>Data Inicial *</label>
+                <label className="modal-label">Data Inicial *</label>
                 <input
                   type="date"
                   value={novoAditivo.dataInicial}
@@ -1896,7 +1922,7 @@ function ClienteForm() {
                 />
               </div>
               <div className="form-group">
-                <label>Data Final *</label>
+                <label className="modal-label">Data Final *</label>
                 <input
                   type="date"
                   value={novoAditivo.dataFinal}

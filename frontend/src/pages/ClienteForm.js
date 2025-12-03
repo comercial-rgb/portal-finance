@@ -1743,7 +1743,7 @@ function ClienteForm() {
 
       {/* Modal Centro de Custo */}
       {showCentroCustoModal && (
-        <div className="modal-overlay" onClick={() => setShowCentroCustoModal(false)}>
+        <div className="modal-overlay cliente-modal-overlay" onClick={() => setShowCentroCustoModal(false)}>
           <div className="modal-content-small" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Adicionar Centro de Custo</h3>
@@ -1775,7 +1775,7 @@ function ClienteForm() {
 
       {/* Modal Subunidade */}
       {showSubunidadeModal && (
-        <div className="modal-overlay" onClick={() => setShowSubunidadeModal(false)}>
+        <div className="modal-overlay cliente-modal-overlay" onClick={() => setShowSubunidadeModal(false)}>
           <div className="modal-content-small" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Adicionar Subunidade</h3>
@@ -1807,7 +1807,7 @@ function ClienteForm() {
 
       {/* Modal Contrato */}
       {showContratoModal && (
-        <div className="modal-overlay" onClick={() => setShowContratoModal(false)}>
+        <div className="modal-overlay cliente-modal-overlay" onClick={() => setShowContratoModal(false)}>
           <div className="modal-content-small" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{editingContrato ? 'Editar Contrato' : 'Adicionar Contrato'}</h3>
@@ -1867,7 +1867,7 @@ function ClienteForm() {
 
       {/* Modal Aditivo */}
       {showAditivoModal && (
-        <div className="modal-overlay" onClick={() => setShowAditivoModal(false)}>
+        <div className="modal-overlay cliente-modal-overlay" onClick={() => setShowAditivoModal(false)}>
           <div className="modal-content-small" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{editingAditivo ? 'Editar Aditivo' : 'Adicionar Aditivo'}</h3>
@@ -1918,7 +1918,7 @@ function ClienteForm() {
 
       {/* Modal Empenho */}
       {showEmpenhoModal && contratoSelecionado && (
-        <div className="modal-overlay" onClick={() => setShowEmpenhoModal(false)}>
+        <div className="modal-overlay cliente-modal-overlay" onClick={() => setShowEmpenhoModal(false)}>
           <div className="modal-content-medium" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{editingEmpenho ? 'Editar Empenho' : 'Adicionar Empenho'}</h3>

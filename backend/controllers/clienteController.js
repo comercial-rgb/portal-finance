@@ -133,68 +133,96 @@ exports.updateCliente = async (req, res) => {
       }
     }
 
-    // Lista de campos simples que podem ser atualizados
-    const camposSimples = [
-      'razaoSocial', 'nomeFantasia', 'cnpj', 'inscricaoMunicipal', 'inscricaoEstadual',
-      'percentualDesconto', 'tipoTaxa', 'taxaOperacao', 'ativo'
-    ];
-    
-    // Atualizar campos simples
-    camposSimples.forEach(campo => {
-      if (req.body[campo] !== undefined) {
-        cliente[campo] = req.body[campo];
-      }
-    });
-    
-    // Atualizar tipoImposto (array)
+    const sanitizeNumber = (value, fallback) => {
+      if (value === undefined || value === null || value === '') return fallback;
+      const parsed = Number(String(value).replace(',', '.'));
+      return Number.isFinite(parsed) ? parsed : fallback;
+    };
+
+    const updatePayload = {};
+
+    if (req.body.razaoSocial !== undefined) {
+      updatePayload.razaoSocial = req.body.razaoSocial;
+    }
+
+    if (req.body.nomeFantasia !== undefined) {
+      updatePayload.nomeFantasia = req.body.nomeFantasia;
+    }
+
+    if (req.body.cnpj !== undefined) {
+      updatePayload.cnpj = req.body.cnpj ? req.body.cnpj.replace(/\D/g, '') : '';
+    }
+
+    if (req.body.inscricaoMunicipal !== undefined) {
+      updatePayload.inscricaoMunicipal = req.body.inscricaoMunicipal;
+    }
+
+    if (req.body.inscricaoEstadual !== undefined) {
+      updatePayload.inscricaoEstadual = req.body.inscricaoEstadual;
+    }
+
+    if (req.body.percentualDesconto !== undefined) {
+      updatePayload.percentualDesconto = sanitizeNumber(req.body.percentualDesconto, cliente.percentualDesconto || 0);
+    }
+
+    if (req.body.tipoTaxa !== undefined) {
+      updatePayload.tipoTaxa = req.body.tipoTaxa;
+    }
+
+    if (req.body.taxaOperacao !== undefined) {
+      updatePayload.taxaOperacao = sanitizeNumber(req.body.taxaOperacao, cliente.taxaOperacao || 15);
+    }
+
+    if (req.body.ativo !== undefined) {
+      updatePayload.ativo = req.body.ativo;
+    }
+
     if (req.body.tipoImposto !== undefined) {
-      cliente.tipoImposto = Array.isArray(req.body.tipoImposto) ? req.body.tipoImposto : [];
+      const tipos = Array.isArray(req.body.tipoImposto)
+        ? req.body.tipoImposto
+        : [req.body.tipoImposto].filter(Boolean);
+      updatePayload.tipoImposto = tipos;
     }
-    
-    // Atualizar taxasAntecipacao (objeto aninhado)
+
     if (req.body.taxasAntecipacao) {
-      cliente.taxasAntecipacao = {
-        aVista: req.body.taxasAntecipacao.aVista !== undefined ? req.body.taxasAntecipacao.aVista : cliente.taxasAntecipacao?.aVista || 15,
-        aposFechamento: req.body.taxasAntecipacao.aposFechamento !== undefined ? req.body.taxasAntecipacao.aposFechamento : cliente.taxasAntecipacao?.aposFechamento || 13,
-        aprazado: req.body.taxasAntecipacao.aprazado !== undefined ? req.body.taxasAntecipacao.aprazado : cliente.taxasAntecipacao?.aprazado || 0
+      updatePayload.taxasAntecipacao = {
+        aVista: sanitizeNumber(req.body.taxasAntecipacao.aVista, cliente.taxasAntecipacao?.aVista ?? 15),
+        aposFechamento: sanitizeNumber(req.body.taxasAntecipacao.aposFechamento, cliente.taxasAntecipacao?.aposFechamento ?? 13),
+        aprazado: sanitizeNumber(req.body.taxasAntecipacao.aprazado, cliente.taxasAntecipacao?.aprazado ?? 0)
       };
     }
-    
-    // Atualizar endereco (objeto aninhado)
+
     if (req.body.endereco) {
-      cliente.endereco = {
-        logradouro: req.body.endereco.logradouro || '',
-        numero: req.body.endereco.numero || '',
-        complemento: req.body.endereco.complemento || '',
-        bairro: req.body.endereco.bairro || '',
-        cidade: req.body.endereco.cidade || '',
-        estado: req.body.endereco.estado || '',
-        cep: req.body.endereco.cep || ''
+      updatePayload.endereco = {
+        logradouro: req.body.endereco.logradouro ?? cliente.endereco?.logradouro ?? '',
+        numero: req.body.endereco.numero ?? cliente.endereco?.numero ?? '',
+        complemento: req.body.endereco.complemento ?? cliente.endereco?.complemento ?? '',
+        bairro: req.body.endereco.bairro ?? cliente.endereco?.bairro ?? '',
+        cidade: req.body.endereco.cidade ?? cliente.endereco?.cidade ?? '',
+        estado: req.body.endereco.estado ?? cliente.endereco?.estado ?? '',
+        cep: req.body.endereco.cep ?? cliente.endereco?.cep ?? ''
       };
     }
-    
-    // Atualizar contatos (objeto aninhado)
+
     if (req.body.contatos) {
-      cliente.contatos = {
-        telefone: req.body.contatos.telefone || '',
-        celular: req.body.contatos.celular || '',
-        email: req.body.contatos.email || ''
+      updatePayload.contatos = {
+        telefone: req.body.contatos.telefone ?? cliente.contatos?.telefone ?? '',
+        celular: req.body.contatos.celular ?? cliente.contatos?.celular ?? '',
+        email: req.body.contatos.email ?? cliente.contatos?.email ?? ''
       };
     }
-    
-    cliente.updatedAt = Date.now();
-    
-    // Marcar campos aninhados como modificados para garantir salvamento
-    cliente.markModified('tipoImposto');
-    cliente.markModified('taxasAntecipacao');
-    cliente.markModified('endereco');
-    cliente.markModified('contatos');
-    
-    // Salvar usando save() para garantir que middleware seja executado
-    await cliente.save();
-    
-    // Recarregar o cliente do banco para garantir dados atualizados
-    const clienteAtualizado = await Cliente.findById(req.params.id);
+
+    updatePayload.updatedAt = Date.now();
+
+    const clienteAtualizado = await Cliente.findByIdAndUpdate(
+      req.params.id,
+      { $set: updatePayload },
+      { new: true, runValidators: true }
+    );
+
+    if (!clienteAtualizado) {
+      return res.status(404).json({ message: 'Cliente não encontrado após atualização' });
+    }
 
     // Detectar alterações em campos importantes
     const camposMonitorar = [
@@ -212,7 +240,7 @@ exports.updateCliente = async (req, res) => {
         ativo: true 
       });
       
-      const nomeCliente = cliente.razaoSocial || cliente.nomeFantasia || 'Cliente';
+      const nomeCliente = clienteAtualizado.razaoSocial || clienteAtualizado.nomeFantasia || 'Cliente';
       const camposAlterados = Object.keys(alteracoes).join(', ');
       
       const notificacoes = admins.map(admin => ({
@@ -220,7 +248,7 @@ exports.updateCliente = async (req, res) => {
         titulo: 'Perfil de Cliente Atualizado',
         mensagem: `O cliente ${nomeCliente} atualizou seu perfil. Campos alterados: ${camposAlterados}`,
         usuario: admin._id,
-        cliente: cliente._id,
+        cliente: clienteAtualizado._id,
         alteracoes
       }));
       

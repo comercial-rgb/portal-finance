@@ -27,12 +27,16 @@ function ClienteForm() {
     inscricaoEstadual: '',
     percentualDesconto: '',
     tipoImposto: [],
+    impostosSobreValorBruto: false,
     tipoTaxa: 'nenhum',
     taxaOperacao: 15,
     taxasAntecipacao: {
       aVista: 15,
       aposFechamento: 13,
-      aprazado: 0
+      aprazado: 0,
+      dias40: 0,
+      dias50: 0,
+      dias60: 0
     },
     endereco: {
       logradouro: '',
@@ -151,12 +155,16 @@ function ClienteForm() {
         ...clienteData,
         cnpj: cnpjFormatado,
         tipoImposto: clienteData.tipoImposto || [],
+        impostosSobreValorBruto: clienteData.impostosSobreValorBruto || false,
         tipoTaxa: clienteData.tipoTaxa || 'nenhum',
         taxaOperacao: clienteData.taxaOperacao !== undefined ? clienteData.taxaOperacao : 15,
         taxasAntecipacao: {
           aVista: clienteData.taxasAntecipacao?.aVista !== undefined ? clienteData.taxasAntecipacao.aVista : 15,
           aposFechamento: clienteData.taxasAntecipacao?.aposFechamento !== undefined ? clienteData.taxasAntecipacao.aposFechamento : 13,
-          aprazado: clienteData.taxasAntecipacao?.aprazado !== undefined ? clienteData.taxasAntecipacao.aprazado : 0
+          aprazado: clienteData.taxasAntecipacao?.aprazado !== undefined ? clienteData.taxasAntecipacao.aprazado : 0,
+          dias40: clienteData.taxasAntecipacao?.dias40 !== undefined ? clienteData.taxasAntecipacao.dias40 : 0,
+          dias50: clienteData.taxasAntecipacao?.dias50 !== undefined ? clienteData.taxasAntecipacao.dias50 : 0,
+          dias60: clienteData.taxasAntecipacao?.dias60 !== undefined ? clienteData.taxasAntecipacao.dias60 : 0
         },
         endereco: clienteData.endereco || {
           logradouro: '',
@@ -1076,6 +1084,39 @@ function ClienteForm() {
                       </div>
                     </div>
                   </div>
+                  
+                  {/* Checkbox para impostos sobre valor bruto */}
+                  <div className="form-grid" style={{ marginTop: '1.5rem' }}>
+                    <div className="form-group full-width">
+                      <label style={{ 
+                        display: 'flex', 
+                        alignItems: 'flex-start', 
+                        cursor: 'pointer', 
+                        padding: '15px', 
+                        border: formData.impostosSobreValorBruto ? '2px solid #f59e0b' : '1px solid #ddd', 
+                        borderRadius: '8px', 
+                        backgroundColor: formData.impostosSobreValorBruto ? '#fef3c7' : 'white', 
+                        transition: 'all 0.2s' 
+                      }}>
+                        <input
+                          type="checkbox"
+                          checked={formData.impostosSobreValorBruto || false}
+                          onChange={(e) => setFormData({ ...formData, impostosSobreValorBruto: e.target.checked })}
+                          style={{ marginRight: '12px', width: '20px', height: '20px', cursor: 'pointer', flexShrink: 0, marginTop: '2px' }}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <span style={{ fontWeight: '600', color: '#92400e', display: 'block', marginBottom: '4px' }}>
+                            ⚠️ Impostos sobre valor bruto
+                          </span>
+                          <span style={{ fontSize: '0.85rem', color: '#78716c', lineHeight: '1.4' }}>
+                            Quando marcado, os Impostos Fora do Simples (Órgãos Federais) serão calculados sobre o Valor de Peças e Valor de Serviços 
+                            <strong> antes do desconto</strong>, ao invés do valor com desconto. 
+                            Útil para clientes que exigem base de cálculo sobre valores brutos.
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="form-section">
@@ -1170,11 +1211,50 @@ function ClienteForm() {
                         />
                       </div>
                       <div className="form-group">
-                        <label>Aprazado (%)</label>
+                        <label>30 Dias Após Fatura (%)</label>
                         <input
                           type="number"
                           name="taxasAntecipacao.aprazado"
                           value={formData.taxasAntecipacao.aprazado}
+                          onChange={handleTaxaChange}
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>40 Dias Após Fatura (%)</label>
+                        <input
+                          type="number"
+                          name="taxasAntecipacao.dias40"
+                          value={formData.taxasAntecipacao.dias40}
+                          onChange={handleTaxaChange}
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>50 Dias Após Fatura (%)</label>
+                        <input
+                          type="number"
+                          name="taxasAntecipacao.dias50"
+                          value={formData.taxasAntecipacao.dias50}
+                          onChange={handleTaxaChange}
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>60 Dias Após Fatura (%)</label>
+                        <input
+                          type="number"
+                          name="taxasAntecipacao.dias60"
+                          value={formData.taxasAntecipacao.dias60}
                           onChange={handleTaxaChange}
                           min="0"
                           max="100"

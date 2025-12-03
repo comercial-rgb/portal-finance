@@ -57,7 +57,10 @@ const impostosRetencoesSchema = new mongoose.Schema({
   taxasAntecipacao: {
     aVista: { type: Number, default: 0, min: 0, max: 100 },
     aposFechamento: { type: Number, default: 0, min: 0, max: 100 },
-    dias30: { type: Number, default: 0, min: 0, max: 100 }
+    dias30: { type: Number, default: 0, min: 0, max: 100 },
+    dias40: { type: Number, default: 0, min: 0, max: 100 },
+    dias50: { type: Number, default: 0, min: 0, max: 100 },
+    dias60: { type: Number, default: 0, min: 0, max: 100 }
   },
   
   // Taxas de Antecipação por Faixa de Dias (novas taxas)

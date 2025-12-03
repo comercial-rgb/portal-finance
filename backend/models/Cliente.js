@@ -202,7 +202,30 @@ const ClienteSchema = new mongoose.Schema({
       default: 0,
       min: 0,
       max: 100
+    },
+    dias40: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100
+    },
+    dias50: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100
+    },
+    dias60: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100
     }
+  },
+  // Flag para calcular impostos sobre valor bruto (antes do desconto)
+  impostosSobreValorBruto: {
+    type: Boolean,
+    default: false
   },
   endereco: {
     logradouro: String,

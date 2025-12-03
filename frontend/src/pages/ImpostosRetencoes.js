@@ -26,7 +26,7 @@ function ImpostosRetencoes() {
     },
     retencoesOrgao: { percentual: 0 },
     taxasOperacao: { taxaFixa: 0 },
-    taxasAntecipacao: { aVista: 0, aposFechamento: 0, dias30: 0 },
+    taxasAntecipacao: { aVista: 0, aposFechamento: 0, dias30: 0, dias40: 0, dias50: 0, dias60: 0 },
     taxasAntecipacaoFaixas: {
       faixa30a25: 10,
       faixa24a19: 8,
@@ -90,7 +90,10 @@ function ImpostosRetencoes() {
           taxasAntecipacao: {
             aVista: response.data.taxasAntecipacao?.aVista || 0,
             aposFechamento: response.data.taxasAntecipacao?.aposFechamento || 0,
-            dias30: response.data.taxasAntecipacao?.dias30 || 0
+            dias30: response.data.taxasAntecipacao?.dias30 || 0,
+            dias40: response.data.taxasAntecipacao?.dias40 || 0,
+            dias50: response.data.taxasAntecipacao?.dias50 || 0,
+            dias60: response.data.taxasAntecipacao?.dias60 || 0
           },
           taxasAntecipacaoFaixas: {
             faixa30a25: response.data.taxasAntecipacaoFaixas?.faixa30a25 || 10,
@@ -508,6 +511,39 @@ function ImpostosRetencoes() {
                       max="100"
                       value={formData.taxasAntecipacao.dias30}
                       onChange={(e) => handleSimpleChange('taxasAntecipacao', 'dias30', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>40 Dias Após Fechar a Fatura (%)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={formData.taxasAntecipacao.dias40}
+                      onChange={(e) => handleSimpleChange('taxasAntecipacao', 'dias40', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>50 Dias Após Fechar a Fatura (%)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={formData.taxasAntecipacao.dias50}
+                      onChange={(e) => handleSimpleChange('taxasAntecipacao', 'dias50', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>60 Dias Após Fechar a Fatura (%)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={formData.taxasAntecipacao.dias60}
+                      onChange={(e) => handleSimpleChange('taxasAntecipacao', 'dias60', e.target.value)}
                     />
                   </div>
                 </div>

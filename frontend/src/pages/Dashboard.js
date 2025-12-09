@@ -59,24 +59,31 @@ const Dashboard = () => {
       
       // Carregar dados em paralelo
       const [fornecedoresRes, clientesRes, faturasRes, ordensRes] = await Promise.all([
-        api.get('/fornecedores').catch(() => ({ data: { fornecedores: [] } })),
-        api.get('/clientes?limit=1000').catch(() => ({ data: { clientes: [] } })),
+        api.get('/fornecedores?limit=1').catch(() => ({ data: { fornecedores: [], total: 0 } })),
+        api.get('/clientes?limit=1').catch(() => ({ data: { clientes: [], total: 0 } })),
         api.get('/faturas').catch(() => ({ data: [] })),
-        api.get('/ordens-servico?limit=1000').catch(() => ({ data: { ordensServico: [] } }))
+        api.get('/ordens-servico?limit=1').catch(() => ({ data: { ordensServico: [], total: 0 } }))
       ]);
 
-      // Extrair dados corretamente
-      const fornecedoresData = fornecedoresRes.data.fornecedores || fornecedoresRes.data || [];
-      const clientesData = clientesRes.data.clientes || clientesRes.data || [];
+      // Extrair totais corretamente (a API retorna { fornecedores, total, totalPages, currentPage })
+      const totalFornecedores = fornecedoresRes.data.total || (fornecedoresRes.data.fornecedores || fornecedoresRes.data || []).length;
+      const totalClientes = clientesRes.data.total || (clientesRes.data.clientes || clientesRes.data || []).length;
       const faturasData = Array.isArray(faturasRes.data) ? faturasRes.data : faturasRes.data.faturas || [];
-      const ordensData = ordensRes.data.ordensServico || ordensRes.data || [];
+      const totalOrdens = ordensRes.data.total || (ordensRes.data.ordensServico || ordensRes.data || []).length;
 
       setStats({
-        fornecedores: Array.isArray(fornecedoresData) ? fornecedoresData.length : 0,
-        clientes: Array.isArray(clientesData) ? clientesData.length : 0,
+        fornecedores: totalFornecedores,
+        clientes: totalClientes,
         faturas: Array.isArray(faturasData) ? faturasData.length : 0,
-        ordensServico: Array.isArray(ordensData) ? ordensData.length : 0
+        ordensServico: totalOrdens
       });
+
+      // Carregar atividades recentes separadamente
+      const [ordensRecentesRes] = await Promise.all([
+        api.get('/ordens-servico?limit=5').catch(() => ({ data: { ordensServico: [] } }))
+      ]);
+      
+      const ordensData = ordensRecentesRes.data.ordensServico || ordensRecentesRes.data || [];
 
       // Preparar atividades recentes (últimas 5)
       const atividadesRecentes = [];

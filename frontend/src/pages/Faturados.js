@@ -91,6 +91,23 @@ function Faturados() {
     }
   };
 
+  // Traduzir status para Cliente (Recebido ao invés de Pago)
+  const getStatusLabel = (status) => {
+    if (abaAtiva === 'clientes') {
+      switch (status) {
+        case 'Aguardando pagamento':
+          return 'Aguardando recebimento';
+        case 'Parcialmente paga':
+          return 'Parcialmente recebida';
+        case 'Paga':
+          return 'Recebida';
+        default:
+          return status;
+      }
+    }
+    return status;
+  };
+
   const formatarData = (data) => {
     if (!data) return '-';
     const date = new Date(data);
@@ -179,9 +196,15 @@ function Faturados() {
                     onChange={handleFiltroChange}
                   >
                     <option value="">Todos</option>
-                    <option value="Aguardando pagamento">Aguardando pagamento</option>
-                    <option value="Parcialmente paga">Parcialmente paga</option>
-                    <option value="Paga">Paga</option>
+                    <option value="Aguardando pagamento">
+                      {abaAtiva === 'clientes' ? 'Aguardando recebimento' : 'Aguardando pagamento'}
+                    </option>
+                    <option value="Parcialmente paga">
+                      {abaAtiva === 'clientes' ? 'Parcialmente recebida' : 'Parcialmente paga'}
+                    </option>
+                    <option value="Paga">
+                      {abaAtiva === 'clientes' ? 'Recebida' : 'Paga'}
+                    </option>
                   </select>
                 </div>
               </div>
@@ -206,7 +229,7 @@ function Faturados() {
                         <th>Período Apurado</th>
                         {abaAtiva === 'fornecedores' && <th>Previsão Recebimento</th>}
                         <th>Valor Devido</th>
-                        <th>Valor Pago</th>
+                        <th>{abaAtiva === 'clientes' ? 'Valor Recebido' : 'Valor Pago'}</th>
                         <th>Status</th>
                         <th>Ações</th>
                       </tr>
@@ -231,7 +254,7 @@ function Faturados() {
                           <td>{formatarValor(fatura.valorPago)}</td>
                           <td>
                             <span className={getStatusBadgeClass(fatura.statusFatura)}>
-                              {fatura.statusFatura}
+                              {getStatusLabel(fatura.statusFatura)}
                             </span>
                           </td>
                           <td>

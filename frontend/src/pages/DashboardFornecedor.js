@@ -225,9 +225,9 @@ function DashboardFornecedor() {
                             >
                               <td><strong>{os.numeroOrdemServico || os.codigo}</strong></td>
                               <td>{os.cliente?.razaoSocial || '-'}</td>
-                              <td>{os.tipoServico?.nome || '-'}</td>
-                              <td>{formatarData(os.dataEmissao)}</td>
-                              <td><strong>{formatarValor(os.valorTotal)}</strong></td>
+                              <td>{os.tipoServico?.nome || os.tipo?.nome || '-'}</td>
+                              <td>{formatarData(os.createdAt)}</td>
+                              <td><strong>{formatarValor(os.valorFinal || os.valorTotal)}</strong></td>
                               <td>
                                 <span className={`status-badge ${getStatusClass(os.status)}`}>
                                   {os.status}
@@ -300,9 +300,9 @@ function DashboardFornecedor() {
               </>
             )}
           </div>
-          <Footer />
         </main>
       </div>
+      <Footer />
     </div>
   );
 }

@@ -15,6 +15,13 @@ function Fornecedores() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  
+  // Paginação
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(1);
+  const [totalRegistros, setTotalRegistros] = useState(0);
+  const itensPorPagina = 50;
+  
   const [filtros, setFiltros] = useState({
     razaoSocial: '',
     nomeFantasia: '',
@@ -47,14 +54,26 @@ function Fornecedores() {
     loadFornecedores();
   }, []);
 
+  useEffect(() => {
+    loadFornecedores();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paginaAtual]);
+
   const loadFornecedores = async () => {
     try {
+      setLoading(true);
       const response = await api.get('/fornecedores', {
-        params: filtros
+        params: {
+          ...filtros,
+          page: paginaAtual,
+          limit: itensPorPagina
+        }
       });
-      // A API agora retorna { fornecedores, totalPages, currentPage, total }
+      // A API retorna { fornecedores, totalPages, currentPage, total }
       const data = response.data;
       setFornecedores(Array.isArray(data) ? data : (data.fornecedores || []));
+      setTotalPaginas(data.totalPages || 1);
+      setTotalRegistros(data.total || 0);
     } catch (error) {
       toast.error('Erro ao carregar fornecedores');
     } finally {
@@ -71,6 +90,7 @@ function Fornecedores() {
   };
 
   const handleFiltrar = () => {
+    setPaginaAtual(1);
     loadFornecedores();
   };
 
@@ -82,6 +102,7 @@ function Fornecedores() {
       cidade: '',
       estado: ''
     });
+    setPaginaAtual(1);
     setTimeout(() => loadFornecedores(), 100);
   };
 
@@ -372,6 +393,48 @@ function Fornecedores() {
             </tbody>
           </table>
         </div>
+        
+        {/* Paginação */}
+        {totalPaginas > 1 && (
+          <div className="paginacao">
+            <div className="paginacao-info">
+              Mostrando {((paginaAtual - 1) * itensPorPagina) + 1} a {Math.min(paginaAtual * itensPorPagina, totalRegistros)} de {totalRegistros} fornecedores
+            </div>
+            <div className="paginacao-botoes">
+              <button 
+                className="btn-paginacao"
+                onClick={() => setPaginaAtual(1)}
+                disabled={paginaAtual === 1}
+              >
+                ⏮️ Primeira
+              </button>
+              <button 
+                className="btn-paginacao"
+                onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
+                disabled={paginaAtual === 1}
+              >
+                ◀️ Anterior
+              </button>
+              <span className="paginacao-atual">
+                Página {paginaAtual} de {totalPaginas}
+              </span>
+              <button 
+                className="btn-paginacao"
+                onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
+                disabled={paginaAtual === totalPaginas}
+              >
+                Próxima ▶️
+              </button>
+              <button 
+                className="btn-paginacao"
+                onClick={() => setPaginaAtual(totalPaginas)}
+                disabled={paginaAtual === totalPaginas}
+              >
+                Última ⏭️
+              </button>
+            </div>
+          </div>
+        )}
         </>
       )}
 

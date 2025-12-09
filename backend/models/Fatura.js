@@ -39,6 +39,10 @@ const faturaSchema = new mongoose.Schema({
     },
     dataPagamento: {
       type: Date
+    },
+    comprovante: {
+      type: String,
+      default: null
     }
   }],
   periodoInicio: {

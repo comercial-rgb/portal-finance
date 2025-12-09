@@ -40,7 +40,11 @@ exports.getClientes = async (req, res) => {
       query.nomeFantasia = { $regex: nomeFantasia, $options: 'i' };
     }
     if (cnpj) {
-      query.cnpj = { $regex: cnpj.replace(/\D/g, ''), $options: 'i' };
+      // Remover caracteres especiais da busca e criar regex flexível
+      const cnpjLimpo = cnpj.replace(/\D/g, '');
+      // Criar regex que encontra os números independente da formatação
+      const regexPattern = cnpjLimpo.split('').join('[^0-9]*');
+      query.cnpj = { $regex: regexPattern, $options: 'i' };
     }
     if (cidade) {
       query['endereco.cidade'] = { $regex: cidade, $options: 'i' };

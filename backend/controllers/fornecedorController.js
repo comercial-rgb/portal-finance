@@ -42,12 +42,12 @@ exports.listarFornecedores = async (req, res) => {
       query.nomeFantasia = { $regex: nomeFantasia, $options: 'i' };
     }
     if (cnpjCpf) {
-      // Buscar tanto com formatação quanto sem
+      // Remover caracteres especiais da busca e criar regex flexível
       const cnpjLimpo = cnpjCpf.replace(/\D/g, '');
-      query.$or = [
-        { cnpjCpf: { $regex: cnpjCpf, $options: 'i' } },
-        { cnpjCpf: { $regex: cnpjLimpo, $options: 'i' } }
-      ];
+      // Criar regex que encontra os números independente da formatação
+      // Ex: "12345" vai encontrar "12.345" ou "12345"
+      const regexPattern = cnpjLimpo.split('').join('[^0-9]*');
+      query.cnpjCpf = { $regex: regexPattern, $options: 'i' };
     }
     if (cidade) {
       query.cidade = { $regex: cidade, $options: 'i' };

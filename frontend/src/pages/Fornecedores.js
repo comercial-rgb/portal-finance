@@ -71,11 +71,22 @@ function Fornecedores() {
       });
       // A API retorna { fornecedores, totalPages, currentPage, total }
       const data = response.data;
-      setFornecedores(Array.isArray(data) ? data : (data.fornecedores || []));
-      setTotalPaginas(data.totalPages || 1);
-      setTotalRegistros(data.total || 0);
+      
+      // Extrair dados corretamente
+      if (Array.isArray(data)) {
+        // Resposta antiga (array direto)
+        setFornecedores(data);
+        setTotalPaginas(1);
+        setTotalRegistros(data.length);
+      } else {
+        // Resposta nova (objeto com paginação)
+        setFornecedores(data.fornecedores || []);
+        setTotalPaginas(data.totalPages || 1);
+        setTotalRegistros(data.total || (data.fornecedores?.length || 0));
+      }
     } catch (error) {
       toast.error('Erro ao carregar fornecedores');
+      console.error('Erro ao carregar fornecedores:', error);
     } finally {
       setLoading(false);
     }
@@ -395,44 +406,46 @@ function Fornecedores() {
         </div>
         
         {/* Paginação */}
-        {totalPaginas > 1 && (
+        {totalRegistros > 0 && (
           <div className="paginacao">
             <div className="paginacao-info">
               Mostrando {((paginaAtual - 1) * itensPorPagina) + 1} a {Math.min(paginaAtual * itensPorPagina, totalRegistros)} de {totalRegistros} fornecedores
             </div>
-            <div className="paginacao-botoes">
-              <button 
-                className="btn-paginacao"
-                onClick={() => setPaginaAtual(1)}
-                disabled={paginaAtual === 1}
-              >
-                ⏮️ Primeira
-              </button>
-              <button 
-                className="btn-paginacao"
-                onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
-                disabled={paginaAtual === 1}
-              >
-                ◀️ Anterior
-              </button>
-              <span className="paginacao-atual">
-                Página {paginaAtual} de {totalPaginas}
-              </span>
-              <button 
-                className="btn-paginacao"
-                onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
-                disabled={paginaAtual === totalPaginas}
-              >
-                Próxima ▶️
-              </button>
-              <button 
-                className="btn-paginacao"
-                onClick={() => setPaginaAtual(totalPaginas)}
-                disabled={paginaAtual === totalPaginas}
-              >
-                Última ⏭️
-              </button>
-            </div>
+            {totalPaginas > 1 && (
+              <div className="paginacao-botoes">
+                <button 
+                  className="btn-paginacao"
+                  onClick={() => setPaginaAtual(1)}
+                  disabled={paginaAtual === 1}
+                >
+                  ⏮️ Primeira
+                </button>
+                <button 
+                  className="btn-paginacao"
+                  onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
+                  disabled={paginaAtual === 1}
+                >
+                  ◀️ Anterior
+                </button>
+                <span className="paginacao-atual">
+                  Página {paginaAtual} de {totalPaginas}
+                </span>
+                <button 
+                  className="btn-paginacao"
+                  onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
+                  disabled={paginaAtual === totalPaginas}
+                >
+                  Próxima ▶️
+                </button>
+                <button 
+                  className="btn-paginacao"
+                  onClick={() => setPaginaAtual(totalPaginas)}
+                  disabled={paginaAtual === totalPaginas}
+                >
+                  Última ⏭️
+                </button>
+              </div>
+            )}
           </div>
         )}
         </>

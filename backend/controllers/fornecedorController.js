@@ -42,7 +42,12 @@ exports.listarFornecedores = async (req, res) => {
       query.nomeFantasia = { $regex: nomeFantasia, $options: 'i' };
     }
     if (cnpjCpf) {
-      query.cnpjCpf = { $regex: cnpjCpf.replace(/\D/g, ''), $options: 'i' };
+      // Buscar tanto com formatação quanto sem
+      const cnpjLimpo = cnpjCpf.replace(/\D/g, '');
+      query.$or = [
+        { cnpjCpf: { $regex: cnpjCpf, $options: 'i' } },
+        { cnpjCpf: { $regex: cnpjLimpo, $options: 'i' } }
+      ];
     }
     if (cidade) {
       query.cidade = { $regex: cidade, $options: 'i' };

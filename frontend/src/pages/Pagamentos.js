@@ -106,31 +106,44 @@ function Pagamentos() {
       return;
     }
 
-    try {
-      setUploadingComprovante(true);
-      
-      // Converter para base64
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = reader.result;
-        
-        try {
-          await api.put(
-            `/pagamentos/${comprovanteAtual.faturaId}/os/${comprovanteAtual.ordemServico._id}/comprovante`,
-            { comprovante: base64 }
-          );
-          
-          toast.success('Comprovante anexado com sucesso!');
-          setShowModalComprovante(false);
-          loadData();
-        } catch (error) {
-          toast.error('Erro ao anexar comprovante');
-        }
-      };
-      reader.readAsDataURL(file);
-    } finally {
-      setUploadingComprovante(false);
+    // Validar tipo de arquivo
+    const tiposPermitidos = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+    if (!tiposPermitidos.includes(file.type)) {
+      toast.error('Tipo de arquivo não permitido. Use PDF, JPG ou PNG.');
+      return;
     }
+
+    setUploadingComprovante(true);
+    
+    // Converter para base64
+    const reader = new FileReader();
+    
+    reader.onerror = () => {
+      toast.error('Erro ao ler o arquivo');
+      setUploadingComprovante(false);
+    };
+    
+    reader.onload = async () => {
+      const base64 = reader.result;
+      
+      try {
+        await api.put(
+          `/pagamentos/${comprovanteAtual.faturaId}/os/${comprovanteAtual.ordemServico._id}/comprovante`,
+          { comprovante: base64 }
+        );
+        
+        toast.success('Comprovante anexado com sucesso!');
+        setShowModalComprovante(false);
+        loadData();
+      } catch (error) {
+        console.error('Erro ao anexar comprovante:', error);
+        toast.error(error.response?.data?.message || 'Erro ao anexar comprovante');
+      } finally {
+        setUploadingComprovante(false);
+      }
+    };
+    
+    reader.readAsDataURL(file);
   };
 
   const isAdmin = ['super_admin', 'admin'].includes(user?.role);

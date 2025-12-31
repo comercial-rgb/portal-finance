@@ -199,7 +199,7 @@ function OrdensServico() {
                         <th>Tipo Serviço</th>
                         <th>Valor Final</th>
                         <th>Status</th>
-                        <th>Data</th>
+                        <th>Data Ref.</th>
                         <th>Ações</th>
                       </tr>
                     </thead>
@@ -225,7 +225,7 @@ function OrdensServico() {
                                 {ordem.status}
                               </span>
                             </td>
-                            <td>{new Date(ordem.createdAt).toLocaleDateString('pt-BR')}</td>
+                            <td>{new Date(ordem.dataReferencia || ordem.createdAt).toLocaleDateString('pt-BR')}</td>
                             <td>
                               <div className="table-actions">
                                 <button 

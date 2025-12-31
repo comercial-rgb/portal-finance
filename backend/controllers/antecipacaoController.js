@@ -466,21 +466,39 @@ exports.cancelarAntecipacao = async (req, res) => {
 exports.obterValoresPendentes = async (req, res) => {
   try {
     const user = req.user;
+    const Cliente = require('../models/Cliente');
     
     if (user.role !== 'fornecedor' || !user.fornecedorId) {
       return res.status(403).json({ message: 'Apenas fornecedores podem acessar valores pendentes' });
     }
     
     // Buscar faturas pendentes do fornecedor
-    const faturasPendentes = await Fatura.find({
+    const todasFaturasPendentes = await Fatura.find({
       fornecedor: user.fornecedorId,
       statusFatura: { $ne: 'Paga' },
       tipo: 'Fornecedor',
       ativo: true
-    }).sort({ createdAt: -1 });
+    }).populate('cliente', 'tipoTaxa razaoSocial nomeFantasia').sort({ createdAt: -1 });
     
-    // Calcular valor total pendente
+    // Filtrar apenas faturas de clientes com taxa antecipação/variável (NÃO taxa fixa/operacao)
+    // Clientes com tipoTaxa === 'operacao' (Taxa Fixa) NÃO podem ter antecipação
+    const faturasPendentes = todasFaturasPendentes.filter(f => {
+      // Se não tem cliente ou cliente não tem tipoTaxa definido, permitir antecipação por padrão
+      if (!f.cliente || !f.cliente.tipoTaxa) return true;
+      // Bloquear se cliente tem Taxa Fixa (operacao)
+      return f.cliente.tipoTaxa !== 'operacao';
+    });
+    
+    // Faturas bloqueadas por taxa fixa (para informar ao fornecedor)
+    const faturasBloqueadas = todasFaturasPendentes.filter(f => 
+      f.cliente && f.cliente.tipoTaxa === 'operacao'
+    );
+    
+    // Calcular valor total pendente (apenas faturas elegíveis para antecipação)
     const valorTotalPendente = faturasPendentes.reduce((sum, f) => sum + (f.valorDevido - f.valorPago), 0);
+    
+    // Valor bloqueado (faturas de clientes com taxa fixa)
+    const valorBloqueadoTaxaFixa = faturasBloqueadas.reduce((sum, f) => sum + (f.valorDevido - f.valorPago), 0);
     
     // Buscar antecipações ativas (pendentes ou aprovadas) para deduzir
     const antecipacoesPendentes = await Antecipacao.find({
@@ -496,6 +514,8 @@ exports.obterValoresPendentes = async (req, res) => {
       valorTotalPendente,
       valorEmAntecipacao,
       valorDisponivelParaAntecipacao,
+      valorBloqueadoTaxaFixa,
+      faturasBloqueadasCount: faturasBloqueadas.length,
       faturas: faturasPendentes.map(f => ({
         _id: f._id,
         numeroFatura: f.numeroFatura,
@@ -505,7 +525,12 @@ exports.obterValoresPendentes = async (req, res) => {
         previsaoRecebimento: f.previsaoRecebimento,
         statusFatura: f.statusFatura,
         periodoInicio: f.periodoInicio,
-        periodoFim: f.periodoFim
+        periodoFim: f.periodoFim,
+        cliente: f.cliente ? {
+          _id: f.cliente._id,
+          razaoSocial: f.cliente.razaoSocial,
+          nomeFantasia: f.cliente.nomeFantasia
+        } : null
       }))
     });
   } catch (error) {

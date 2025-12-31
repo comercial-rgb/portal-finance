@@ -31,6 +31,7 @@ function OrdemServicoForm() {
   
   const [formData, setFormData] = useState({
     numeroOrdemServico: '',
+    dataReferencia: new Date().toISOString().split('T')[0],
     cliente: '',
     fornecedor: '',
     tipoServicoSolicitado: '',
@@ -284,6 +285,8 @@ function OrdemServicoForm() {
       const response = await api.get(`/ordens-servico/${id}`);
       const ordem = response.data;
       setFormData({
+        numeroOrdemServico: ordem.numeroOrdemServico || '',
+        dataReferencia: ordem.dataReferencia ? new Date(ordem.dataReferencia).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         cliente: ordem.cliente?._id || '',
         fornecedor: ordem.fornecedor?._id || '',
         tipoServicoSolicitado: ordem.tipoServicoSolicitado?._id || '',
@@ -519,6 +522,19 @@ function OrdemServicoForm() {
                       required
                       disabled={isReadOnly}
                     />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Data de Referência *</label>
+                    <input
+                      type="date"
+                      name="dataReferencia"
+                      value={formData.dataReferencia}
+                      onChange={handleChange}
+                      required
+                      disabled={isReadOnly}
+                    />
+                    <small className="form-hint">Data de referência para qual mês esta OS pertence</small>
                   </div>
 
                   <div className="form-group">

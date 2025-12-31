@@ -165,6 +165,14 @@
   margin-top: 0.25rem;
 }
 
+.form-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: #666;
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
 .form-group input,
 .form-group select {
   padding: 0.75rem;

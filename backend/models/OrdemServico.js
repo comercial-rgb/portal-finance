@@ -10,6 +10,11 @@ const ordemServicoSchema = new mongoose.Schema({
     required: [true, 'Número da ordem de serviço é obrigatório'],
     trim: true
   },
+  dataReferencia: {
+    type: Date,
+    default: Date.now,
+    description: 'Data de referência da OS (para qual mês a OS pertence)'
+  },
   cliente: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Cliente',

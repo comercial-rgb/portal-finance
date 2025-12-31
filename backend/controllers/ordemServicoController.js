@@ -93,7 +93,7 @@ exports.getOrdensServico = async (req, res) => {
       .populate('fornecedor', 'razaoSocial nomeFantasia naoOptanteSimples')
       .populate('tipoServicoSolicitado', 'nome')
       .populate('tipo', 'nome')
-      .sort({ createdAt: -1 })
+      .sort({ dataReferencia: -1, createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
 

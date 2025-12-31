@@ -72,6 +72,20 @@
   color: white;
 }
 
+.stat-blocked .stat-icon {
+  background: linear-gradient(135deg, #636e72 0%, #b2bec3 100%);
+  color: white;
+}
+
+.stat-blocked {
+  opacity: 0.85;
+  border: 1px dashed #636e72;
+}
+
+.stat-blocked .stat-value {
+  color: #636e72;
+}
+
 .stat-content h3 {
   font-size: 0.875rem;
   color: var(--cinza-escuro);

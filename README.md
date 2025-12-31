@@ -1,37 +1,56 @@
 # Sistema Financeiro - InstaSolutions
 
-Sistema financeiro completo com autenticação segura, controle de usuários e recuperação de senha.
+Sistema financeiro completo para gestão de clientes, fornecedores, ordens de serviço, faturamento e pagamentos.
+
+## 🌐 Acesso ao Sistema
+
+**Produção:** https://portal.frotainstasolutions.com.br
 
 ## 🚀 Tecnologias
 
 ### Backend
 - Node.js + Express
-- MongoDB + Mongoose
+- MongoDB Atlas
 - JWT para autenticação
 - Bcrypt para criptografia de senhas
 - Nodemailer para envio de emails
+- Hospedado no Render
 
 ### Frontend
 - React 18
 - React Router DOM
 - Axios
 - React Toastify
+- Hospedado no Vercel
 
 ## 📋 Funcionalidades
 
 ### ✅ Implementadas
 - **Tela de Login** com logo centralizada e design moderno
 - **Autenticação segura** com JWT
-- **Sistema de roles** (Super Admin, Admin, Gerente, Funcionário)
+- **Sistema de roles** (Super Admin, Admin, Cliente, Fornecedor)
 - **Recuperação de senha** via email
 - **Redefinição de senha** com token temporário
-- **Dashboard** básico com informações do usuário
+- **Dashboard Admin** com visão geral do sistema
+- **Dashboard Cliente** com faturas e valores a receber
+- **Dashboard Fornecedor** com ordens de serviço e pagamentos
+- **Gestão de Clientes** (CRUD completo com paginação e filtros)
+- **Gestão de Fornecedores** (CRUD completo com paginação e filtros)
+- **Ordens de Serviço** (criação, edição, listagem)
+- **Faturamento** (geração de faturas, controle de status)
+- **Pagamentos** (registro de pagamentos, upload de comprovantes)
+- **Antecipações** (solicitação e aprovação de antecipações)
+- **Tipos de Serviço** (configuração de serviços oferecidos)
+- **Impostos e Retenções** (configuração de impostos)
+- **Configurações** do sistema
+- **Alertas de Faturas Vencidas**
+- **Busca por CNPJ** (formatado ou não formatado)
 
 ### 🔐 Níveis de Acesso
-1. **Super Admin** - Acesso total, pode criar outros administradores
-2. **Admin** - Gerenciar usuários e sistema
-3. **Gerente** - Acesso intermediário
-4. **Funcionário** - Acesso básico
+1. **Super Admin** - Acesso total ao sistema
+2. **Admin** - Gerenciar usuários, clientes e fornecedores
+3. **Cliente** - Visualizar faturas e valores a receber
+4. **Fornecedor** - Visualizar ordens de serviço e pagamentos
 
 ## 🛠️ Instalação e Configuração
 
@@ -122,6 +141,11 @@ npm run dev:full
 
 ### 7. Acessar o sistema
 
+**Produção:**
+- **Portal:** https://portal.frotainstasolutions.com.br
+- **API Backend:** https://portal-finance-api.onrender.com
+
+**Desenvolvimento Local:**
 - **Frontend:** http://localhost:3000
 - **Backend API:** http://localhost:5000
 - **Health Check:** http://localhost:5000/api/health
@@ -247,14 +271,21 @@ portal-finance/
 
 ## 🚧 Próximas Implementações
 
-- [ ] Gestão de usuários (CRUD completo)
-- [ ] Dashboard financeiro
-- [ ] Módulo de contas a pagar/receber
-- [ ] Relatórios financeiros
-- [ ] Gráficos e indicadores
-- [ ] Módulo de clientes e fornecedores
-- [ ] Controle de fluxo de caixa
+- [ ] Relatórios financeiros avançados
+- [ ] Gráficos e indicadores no dashboard
 - [ ] Exportação de relatórios (PDF/Excel)
+- [ ] Notificações por email automáticas
+- [ ] Integração com sistemas de pagamento
+- [ ] App mobile
+
+## 🔧 Hospedagem
+
+| Serviço | Plataforma | URL |
+|---------|------------|-----|
+| Frontend | Vercel | https://portal.frotainstasolutions.com.br |
+| Backend | Render | https://portal-finance-api.onrender.com |
+| Banco de Dados | MongoDB Atlas | - |
+| Domínio | GoDaddy | frotainstasolutions.com.br |
 
 ## 📝 Licença
 

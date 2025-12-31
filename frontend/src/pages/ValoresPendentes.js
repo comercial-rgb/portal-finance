@@ -16,6 +16,8 @@ function ValoresPendentes() {
     valorTotalPendente: 0,
     valorEmAntecipacao: 0,
     valorDisponivelParaAntecipacao: 0,
+    valorBloqueadoTaxaFixa: 0,
+    faturasBloqueadasCount: 0,
     faturas: []
   });
   const [showModalAntecipacao, setShowModalAntecipacao] = useState(false);
@@ -319,6 +321,22 @@ function ValoresPendentes() {
                       <span className="stat-label">Valor livre</span>
                     </div>
                   </div>
+
+                  {dados.valorBloqueadoTaxaFixa > 0 && (
+                    <div className="stat-card stat-blocked">
+                      <div className="stat-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                      </div>
+                      <div className="stat-content">
+                        <h3>Bloqueado (Taxa Fixa)</h3>
+                        <p className="stat-value">{formatarValor(dados.valorBloqueadoTaxaFixa)}</p>
+                        <span className="stat-label">{dados.faturasBloqueadasCount} fatura(s) sem opção de antecipação</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Lista de Faturas Pendentes */}

@@ -464,12 +464,15 @@ function ValoresPendentes() {
               {/* Taxas de Referência */}
               <div className="info-box">
                 <h4>📋 Taxas de Antecipação por Período</h4>
+                <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.5rem' }}>
+                  Quanto mais próximo da data de recebimento, menor a taxa
+                </p>
                 <div className="taxas-grid">
-                  <span>30-25 dias: <strong>10%</strong></span>
-                  <span>24-19 dias: <strong>8%</strong></span>
-                  <span>18-12 dias: <strong>6%</strong></span>
-                  <span>11-06 dias: <strong>4%</strong></span>
-                  <span>05-01 dias: <strong>2,5%</strong></span>
+                  <span>01-05 dias antes: <strong>2,5%</strong></span>
+                  <span>06-11 dias antes: <strong>4%</strong></span>
+                  <span>12-18 dias antes: <strong>6%</strong></span>
+                  <span>19-24 dias antes: <strong>8%</strong></span>
+                  <span>25-30 dias antes: <strong>10%</strong></span>
                 </div>
               </div>
 

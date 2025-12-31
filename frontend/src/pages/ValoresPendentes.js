@@ -323,18 +323,8 @@ function ValoresPendentes() {
                   </div>
 
                   {dados.valorBloqueadoAntecipacao > 0 && (
-                    <div className="stat-card stat-blocked">
-                      <div className="stat-icon">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                        </svg>
-                      </div>
-                      <div className="stat-content">
-                        <h3>Bloqueado pelo Cliente</h3>
-                        <p className="stat-value">{formatarValor(dados.valorBloqueadoAntecipacao)}</p>
-                        <span className="stat-label">{dados.faturasBloqueadasCount} fatura(s) de clientes sem permissão de antecipação</span>
-                      </div>
+                    <div style={{ display: 'none' }}>
+                      {/* Oculto: valor bloqueado por cliente */}
                     </div>
                   )}
                 </div>
@@ -348,7 +338,7 @@ function ValoresPendentes() {
                   
                   {dados.faturas.length === 0 ? (
                     <div className="empty-state">
-                      <p>Nenhuma fatura pendente encontrada</p>
+                      <p>Nenhuma fatura pendente disponível para antecipação</p>
                     </div>
                   ) : (
                     <div className="table-responsive">
@@ -356,6 +346,7 @@ function ValoresPendentes() {
                         <thead>
                           <tr>
                             <th>Nº Fatura</th>
+                            <th>Cliente</th>
                             <th>Período</th>
                             <th>Previsão Receb.</th>
                             <th>Valor Devido</th>
@@ -368,6 +359,7 @@ function ValoresPendentes() {
                           {dados.faturas.map(fatura => (
                             <tr key={fatura._id}>
                               <td><strong>{fatura.numeroFatura}</strong></td>
+                              <td>{fatura.cliente?.nomeFantasia || fatura.cliente?.razaoSocial || '-'}</td>
                               <td>{formatarData(fatura.periodoInicio)} - {formatarData(fatura.periodoFim)}</td>
                               <td>{formatarData(fatura.previsaoRecebimento)}</td>
                               <td>{formatarValor(fatura.valorDevido)}</td>

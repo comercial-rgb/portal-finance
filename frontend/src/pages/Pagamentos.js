@@ -127,8 +127,17 @@ function Pagamentos() {
       const base64 = reader.result;
       
       try {
+        // Obter o ID da OS corretamente
+        const osId = comprovanteAtual?.ordemServico?._id || comprovanteAtual?.ordemServico?.id || comprovanteAtual?.osId;
+        
+        if (!comprovanteAtual?.faturaId || !osId) {
+          toast.error('Erro: IDs da fatura ou OS não encontrados');
+          setUploadingComprovante(false);
+          return;
+        }
+        
         await api.put(
-          `/pagamentos/${comprovanteAtual.faturaId}/os/${comprovanteAtual.ordemServico._id}/comprovante`,
+          `/pagamentos/${comprovanteAtual.faturaId}/os/${osId}/comprovante`,
           { comprovante: base64 }
         );
         

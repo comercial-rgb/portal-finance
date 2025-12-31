@@ -227,6 +227,11 @@ const ClienteSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // Flag para permitir que fornecedores solicitem antecipação de faturas vinculadas a este cliente
+  permitirAntecipacaoFornecedor: {
+    type: Boolean,
+    default: false
+  },
   endereco: {
     logradouro: String,
     numero: String,

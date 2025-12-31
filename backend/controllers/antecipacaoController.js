@@ -478,27 +478,27 @@ exports.obterValoresPendentes = async (req, res) => {
       statusFatura: { $ne: 'Paga' },
       tipo: 'Fornecedor',
       ativo: true
-    }).populate('cliente', 'tipoTaxa razaoSocial nomeFantasia').sort({ createdAt: -1 });
+    }).populate('cliente', 'permitirAntecipacaoFornecedor razaoSocial nomeFantasia').sort({ createdAt: -1 });
     
-    // Filtrar apenas faturas de clientes com taxa antecipação/variável (NÃO taxa fixa/operacao)
-    // Clientes com tipoTaxa === 'operacao' (Taxa Fixa) NÃO podem ter antecipação
+    // Filtrar apenas faturas de clientes que permitiram antecipação
+    // Clientes com permitirAntecipacaoFornecedor === true podem ter antecipação
     const faturasPendentes = todasFaturasPendentes.filter(f => {
-      // Se não tem cliente ou cliente não tem tipoTaxa definido, permitir antecipação por padrão
-      if (!f.cliente || !f.cliente.tipoTaxa) return true;
-      // Bloquear se cliente tem Taxa Fixa (operacao)
-      return f.cliente.tipoTaxa !== 'operacao';
+      // Se não tem cliente, bloquear por padrão (segurança)
+      if (!f.cliente) return false;
+      // Permitir apenas se cliente marcou permitirAntecipacaoFornecedor
+      return f.cliente.permitirAntecipacaoFornecedor === true;
     });
     
-    // Faturas bloqueadas por taxa fixa (para informar ao fornecedor)
+    // Faturas bloqueadas (clientes que não permitiram antecipação)
     const faturasBloqueadas = todasFaturasPendentes.filter(f => 
-      f.cliente && f.cliente.tipoTaxa === 'operacao'
+      !f.cliente || f.cliente.permitirAntecipacaoFornecedor !== true
     );
     
     // Calcular valor total pendente (apenas faturas elegíveis para antecipação)
     const valorTotalPendente = faturasPendentes.reduce((sum, f) => sum + (f.valorDevido - f.valorPago), 0);
     
-    // Valor bloqueado (faturas de clientes com taxa fixa)
-    const valorBloqueadoTaxaFixa = faturasBloqueadas.reduce((sum, f) => sum + (f.valorDevido - f.valorPago), 0);
+    // Valor bloqueado (faturas de clientes que não permitiram antecipação)
+    const valorBloqueadoAntecipacao = faturasBloqueadas.reduce((sum, f) => sum + (f.valorDevido - f.valorPago), 0);
     
     // Buscar antecipações ativas (pendentes ou aprovadas) para deduzir
     const antecipacoesPendentes = await Antecipacao.find({
@@ -514,7 +514,7 @@ exports.obterValoresPendentes = async (req, res) => {
       valorTotalPendente,
       valorEmAntecipacao,
       valorDisponivelParaAntecipacao,
-      valorBloqueadoTaxaFixa,
+      valorBloqueadoAntecipacao,
       faturasBloqueadasCount: faturasBloqueadas.length,
       faturas: faturasPendentes.map(f => ({
         _id: f._id,

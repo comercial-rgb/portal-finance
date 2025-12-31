@@ -28,6 +28,7 @@ function ClienteForm() {
     percentualDesconto: '',
     tipoImposto: [],
     impostosSobreValorBruto: false,
+    permitirAntecipacaoFornecedor: false,
     tipoTaxa: 'nenhum',
     taxaOperacao: 15,
     taxasAntecipacao: {
@@ -156,6 +157,7 @@ function ClienteForm() {
         cnpj: cnpjFormatado,
         tipoImposto: clienteData.tipoImposto || [],
         impostosSobreValorBruto: clienteData.impostosSobreValorBruto || false,
+        permitirAntecipacaoFornecedor: clienteData.permitirAntecipacaoFornecedor || false,
         tipoTaxa: clienteData.tipoTaxa || 'nenhum',
         taxaOperacao: clienteData.taxaOperacao !== undefined ? clienteData.taxaOperacao : 15,
         taxasAntecipacao: {
@@ -1112,6 +1114,45 @@ function ClienteForm() {
                             Quando marcado, os Impostos Fora do Simples (Órgãos Federais) serão calculados sobre o Valor de Peças e Valor de Serviços 
                             <strong> antes do desconto</strong>, ao invés do valor com desconto. 
                             Útil para clientes que exigem base de cálculo sobre valores brutos.
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <h3>🔄 Antecipação de Fornecedores</h3>
+                  <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                    Configure se fornecedores podem solicitar antecipação de faturas vinculadas a este cliente
+                  </p>
+                  
+                  <div className="form-grid">
+                    <div className="form-group full-width">
+                      <label style={{ 
+                        display: 'flex', 
+                        alignItems: 'flex-start', 
+                        cursor: 'pointer', 
+                        padding: '15px', 
+                        border: formData.permitirAntecipacaoFornecedor ? '2px solid #10b981' : '1px solid #ddd', 
+                        borderRadius: '8px', 
+                        backgroundColor: formData.permitirAntecipacaoFornecedor ? '#d1fae5' : 'white', 
+                        transition: 'all 0.2s' 
+                      }}>
+                        <input
+                          type="checkbox"
+                          checked={formData.permitirAntecipacaoFornecedor || false}
+                          onChange={(e) => setFormData({ ...formData, permitirAntecipacaoFornecedor: e.target.checked })}
+                          style={{ marginRight: '12px', width: '20px', height: '20px', cursor: 'pointer', flexShrink: 0, marginTop: '2px' }}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <span style={{ fontWeight: '600', color: formData.permitirAntecipacaoFornecedor ? '#047857' : '#374151', display: 'block', marginBottom: '4px' }}>
+                            {formData.permitirAntecipacaoFornecedor ? '✅ Antecipação Permitida' : '❌ Antecipação Bloqueada'}
+                          </span>
+                          <span style={{ fontSize: '0.85rem', color: '#78716c', lineHeight: '1.4' }}>
+                            Quando marcado, os fornecedores poderão solicitar antecipação de valores das faturas de ordens de serviço 
+                            vinculadas a este cliente. <strong>Se não marcado</strong>, as faturas deste cliente ficarão bloqueadas 
+                            para antecipação no painel do fornecedor.
                           </span>
                         </div>
                       </label>

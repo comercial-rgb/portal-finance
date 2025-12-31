@@ -16,7 +16,7 @@ function ValoresPendentes() {
     valorTotalPendente: 0,
     valorEmAntecipacao: 0,
     valorDisponivelParaAntecipacao: 0,
-    valorBloqueadoTaxaFixa: 0,
+    valorBloqueadoAntecipacao: 0,
     faturasBloqueadasCount: 0,
     faturas: []
   });
@@ -322,7 +322,7 @@ function ValoresPendentes() {
                     </div>
                   </div>
 
-                  {dados.valorBloqueadoTaxaFixa > 0 && (
+                  {dados.valorBloqueadoAntecipacao > 0 && (
                     <div className="stat-card stat-blocked">
                       <div className="stat-icon">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -331,9 +331,9 @@ function ValoresPendentes() {
                         </svg>
                       </div>
                       <div className="stat-content">
-                        <h3>Bloqueado (Taxa Fixa)</h3>
-                        <p className="stat-value">{formatarValor(dados.valorBloqueadoTaxaFixa)}</p>
-                        <span className="stat-label">{dados.faturasBloqueadasCount} fatura(s) sem opção de antecipação</span>
+                        <h3>Bloqueado pelo Cliente</h3>
+                        <p className="stat-value">{formatarValor(dados.valorBloqueadoAntecipacao)}</p>
+                        <span className="stat-label">{dados.faturasBloqueadasCount} fatura(s) de clientes sem permissão de antecipação</span>
                       </div>
                     </div>
                   )}

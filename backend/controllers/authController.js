@@ -154,7 +154,8 @@ exports.login = async (req, res) => {
         email: user.email,
         role: user.role,
         fornecedorId: user.fornecedorId,
-        clienteId: user.clienteId
+        clienteId: user.clienteId,
+        mustChangePassword: user.mustChangePassword || false
       }
     });
   } catch (error) {
@@ -397,3 +398,63 @@ exports.updateProfile = async (req, res) => {
     });
   }
 };
+
+// @desc    Alterar senha do usuário logado
+// @route   PUT /api/auth/alterar-senha
+// @access  Private
+exports.alterarSenha = async (req, res) => {
+  try {
+    const { senhaAtual, novaSenha } = req.body;
+
+    if (!senhaAtual || !novaSenha) {
+      return res.status(400).json({
+        success: false,
+        message: 'Senha atual e nova senha são obrigatórias'
+      });
+    }
+
+    if (novaSenha.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nova senha deve ter no mínimo 6 caracteres'
+      });
+    }
+
+    // Buscar usuário com senha
+    const user = await User.findById(req.user.id).select('+senha +senhaTemporaria');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+    }
+
+    // Verificar senha atual
+    const senhaCorreta = await user.compararSenha(senhaAtual);
+    if (!senhaCorreta) {
+      return res.status(401).json({
+        success: false,
+        message: 'Senha atual incorreta'
+      });
+    }
+
+    // Atualizar senha
+    user.senha = novaSenha;
+    user.mustChangePassword = false; // Remove obrigatoriedade de mudar senha
+    user.senhaTemporaria = undefined; // Remove senha temporária
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Senha alterada com sucesso'
+    });
+  } catch (error) {
+    console.error('Erro ao alterar senha:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao alterar senha'
+    });
+  }
+};
+

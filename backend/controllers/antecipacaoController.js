@@ -4,6 +4,7 @@ const ImpostosRetencoes = require('../models/ImpostosRetencoes');
 const Fornecedor = require('../models/Fornecedor');
 const Notificacao = require('../models/Notificacao');
 const User = require('../models/User');
+const Cliente = require('../models/Cliente');
 
 // Função para criar notificação
 const criarNotificacao = async (dados) => {
@@ -149,17 +150,35 @@ exports.criarAntecipacao = async (req, res) => {
       return res.status(403).json({ message: 'Apenas fornecedores podem solicitar antecipação' });
     }
     
-    // Buscar faturas pendentes do fornecedor
-    const faturasPendentes = await Fatura.find({
+    // Buscar faturas pendentes do fornecedor COM populate do cliente
+    const todasFaturasSelecionadas = await Fatura.find({
       _id: { $in: faturasSelecionadas },
       fornecedor: user.fornecedorId,
       statusFatura: { $ne: 'Paga' },
       tipo: 'Fornecedor'
-    });
+    }).populate('cliente', 'permitirAntecipacaoFornecedor razaoSocial');
     
-    if (faturasPendentes.length === 0) {
+    if (todasFaturasSelecionadas.length === 0) {
       return res.status(400).json({ message: 'Nenhuma fatura pendente válida selecionada' });
     }
+    
+    // VALIDAÇÃO DE SEGURANÇA: Verificar se TODAS as faturas são de clientes que permitem antecipação
+    const faturasBloqueadas = todasFaturasSelecionadas.filter(f => 
+      !f.cliente || f.cliente.permitirAntecipacaoFornecedor !== true
+    );
+    
+    if (faturasBloqueadas.length > 0) {
+      const clientesBloqueados = [...new Set(faturasBloqueadas.map(f => 
+        f.cliente?.razaoSocial || 'Cliente não identificado'
+      ))];
+      return res.status(400).json({ 
+        message: `Não é possível solicitar antecipação para faturas de clientes que não permitem: ${clientesBloqueados.join(', ')}`,
+        faturasBloqueadas: faturasBloqueadas.map(f => f.numeroFatura)
+      });
+    }
+    
+    // Todas as faturas são de clientes que permitem antecipação
+    const faturasPendentes = todasFaturasSelecionadas;
     
     // Calcular valor pendente total das faturas selecionadas
     const valorPendenteTotal = faturasPendentes.reduce((sum, f) => sum + (f.valorDevido - f.valorPago), 0);
@@ -466,7 +485,6 @@ exports.cancelarAntecipacao = async (req, res) => {
 exports.obterValoresPendentes = async (req, res) => {
   try {
     const user = req.user;
-    const Cliente = require('../models/Cliente');
     
     if (user.role !== 'fornecedor' || !user.fornecedorId) {
       return res.status(403).json({ message: 'Apenas fornecedores podem acessar valores pendentes' });

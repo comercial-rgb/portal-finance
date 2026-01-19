@@ -44,6 +44,15 @@ const Login = () => {
         
         // Redirecionar baseado no role do usuário
         const user = authService.getCurrentUser();
+        
+        // Verificar se precisa mudar senha
+        if (user?.mustChangePassword) {
+          setTimeout(() => {
+            navigate('/alterar-senha-obrigatoria');
+          }, 500);
+          return;
+        }
+        
         let dashboardPath = '/dashboard';
         
         if (user?.role === 'fornecedor') {

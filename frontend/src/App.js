@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Login from './pages/Login';
 import EsqueciSenha from './pages/EsqueciSenha';
 import RedefinirSenha from './pages/RedefinirSenha';
+import AlterarSenhaObrigatoria from './pages/AlterarSenhaObrigatoria';
 import Dashboard from './pages/Dashboard';
 import DashboardFornecedor from './pages/DashboardFornecedor';
 import DashboardCliente from './pages/DashboardCliente';
@@ -50,6 +51,11 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/esqueci-senha" element={<EsqueciSenha />} />
         <Route path="/redefinir-senha/:token" element={<RedefinirSenha />} />
+        <Route path="/alterar-senha-obrigatoria" element={
+          <PrivateRoute>
+            <AlterarSenhaObrigatoria />
+          </PrivateRoute>
+        } />
         <Route
           path="/dashboard"
           element={

@@ -55,6 +55,14 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  mustChangePassword: {
+    type: Boolean,
+    default: false
+  },
+  senhaTemporaria: {
+    type: String,
+    select: false
+  },
   resetPasswordToken: String,
   resetPasswordExpire: Date,
   criadoPor: {

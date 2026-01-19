@@ -220,6 +220,70 @@ function Usuarios() {
     }
   };
 
+  const handleGerarSenhaTemporaria = async (usuario) => {
+    if (!['fornecedor', 'cliente'].includes(usuario.role)) {
+      toast.error('Senha temporária só pode ser gerada para fornecedores e clientes');
+      return;
+    }
+
+    if (!window.confirm(`Deseja gerar uma senha temporária para "${usuario.nome}"?\n\nUm email será enviado automaticamente para ${usuario.email} com os dados de acesso.`)) {
+      return;
+    }
+
+    try {
+      const response = await api.post(`/usuarios/${usuario._id}/gerar-senha-temporaria`);
+      
+      if (response.data.emailEnviado) {
+        toast.success(`Senha temporária gerada e enviada para ${usuario.email}!`);
+        // Mostrar também a senha em um alerta (caso o admin precise)
+        alert(
+          `✅ Email enviado com sucesso!\n\n` +
+          `Para: ${usuario.email}\n` +
+          `Senha temporária: ${response.data.senhaTemporaria}\n\n` +
+          `O usuário receberá um email com:\n` +
+          `- Dados de login\n` +
+          `- Link de acesso ao sistema\n` +
+          `- Instruções para alteração de senha\n\n` +
+          `O usuário será obrigado a alterar a senha no primeiro acesso.`
+        );
+      } else {
+        // Email não enviou
+        toast.warning('Senha gerada, mas o email não foi enviado. Informe ao usuário manualmente.');
+        alert(
+          `⚠️ Atenção: Email não enviado!\n\n` +
+          `Senha temporária para ${usuario.nome}:\n` +
+          `${response.data.senhaTemporaria}\n\n` +
+          `Email: ${usuario.email}\n\n` +
+          `Por favor, informe estes dados ao usuário manualmente.\n` +
+          `O usuário deverá alterar a senha no primeiro acesso.\n\n` +
+          `Erro: ${response.data.emailError || 'Erro desconhecido'}`
+        );
+      }
+      
+      loadUsuarios();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Erro ao gerar senha temporária');
+    }
+  };
+
+  const handleVisualizarSenhaTemporaria = async (usuario) => {
+    try {
+      const response = await api.get(`/usuarios/${usuario._id}/senha-temporaria`);
+      
+      if (response.data.senhaTemporaria) {
+        alert(`Senha temporária de ${usuario.nome}:\n\n${response.data.senhaTemporaria}\n\nMustChangePassword: ${response.data.mustChangePassword ? 'Sim' : 'Não'}`);
+      } else {
+        toast.info('Este usuário não possui senha temporária');
+      }
+    } catch (error) {
+      if (error.response?.status === 404) {
+        toast.info('Este usuário não possui senha temporária');
+      } else {
+        toast.error(error.response?.data?.message || 'Erro ao buscar senha temporária');
+      }
+    }
+  };
+
   const getRoleDisplay = (role) => {
     const roles = {
       super_admin: 'Super Admin',
@@ -304,6 +368,32 @@ function Usuarios() {
                                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                 </svg>
                               </button>
+                              
+                              {['fornecedor', 'cliente'].includes(usuario.role) && (
+                                <>
+                                  <button 
+                                    className="btn-icon btn-warning"
+                                    onClick={() => handleGerarSenhaTemporaria(usuario)}
+                                    title="Gerar Senha Temporária"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                  </button>
+                                  <button 
+                                    className="btn-icon btn-info"
+                                    onClick={() => handleVisualizarSenhaTemporaria(usuario)}
+                                    title="Visualizar Senha Temporária"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                      <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                  </button>
+                                </>
+                              )}
+                              
                               <button 
                                 className={`btn-icon ${usuario.ativo ? 'btn-delete' : 'btn-success'}`}
                                 onClick={() => handleToggleStatus(usuario)}

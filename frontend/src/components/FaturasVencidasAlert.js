@@ -17,7 +17,6 @@ function FaturasVencidasAlert() {
 
   const checkFaturasVencidas = async () => {
     try {
-      setLoading(true);
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
 
@@ -50,8 +49,6 @@ function FaturasVencidasAlert() {
       }
     } catch (error) {
       console.error('Erro ao verificar faturas vencidas:', error);
-    } finally {
-      setLoading(false);
     }
   };
 

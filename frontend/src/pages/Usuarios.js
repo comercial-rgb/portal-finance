@@ -16,6 +16,12 @@ function Usuarios() {
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [resetingPassword, setResetingPassword] = useState(false);
+  
+  // Paginação e filtros
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filtroTipo, setFiltroTipo] = useState('todos');
+  const itemsPerPage = 30;
+  
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -290,9 +296,109 @@ function Usuarios() {
       admin: 'Administrador',
       gerente: 'Gerente',
       funcionario: 'Funcionário',
-      fornecedor: 'Fornecedor'
+      fornecedor: 'Fornecedor',
+      cliente: 'Cliente'
     };
     return roles[role] || role;
+  };
+
+  // Filtrar usuários por tipo
+  const usuariosFiltrados = filtroTipo === 'todos' 
+    ? usuarios 
+    : usuarios.filter(u => u.role === filtroTipo);
+
+  // Paginação
+  const totalPages = Math.ceil(usuariosFiltrados.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const usuariosPaginados = usuariosFiltrados.slice(startIndex, endIndex);
+
+  // Reset para página 1 quando mudar o filtro
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filtroTipo]);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const renderPaginacao = () => {
+    if (totalPages <= 1) return null;
+
+    const pages = [];
+    const maxPagesToShow = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+    if (endPage - startPage < maxPagesToShow - 1) {
+      startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    }
+
+    // Primeira página
+    if (startPage > 1) {
+      pages.push(
+        <button
+          key={1}
+          onClick={() => handlePageChange(1)}
+          className="pagination-btn"
+        >
+          1
+        </button>
+      );
+      if (startPage > 2) {
+        pages.push(<span key="dots1" className="pagination-dots">...</span>);
+      }
+    }
+
+    // Páginas intermediárias
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`pagination-btn ${currentPage === i ? 'active' : ''}`}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    // Última página
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        pages.push(<span key="dots2" className="pagination-dots">...</span>);
+      }
+      pages.push(
+        <button
+          key={totalPages}
+          onClick={() => handlePageChange(totalPages)}
+          className="pagination-btn"
+        >
+          {totalPages}
+        </button>
+      );
+    }
+
+    return (
+      <div className="pagination-container">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="pagination-btn pagination-prev"
+        >
+          ← Anterior
+        </button>
+        {pages}
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="pagination-btn pagination-next"
+        >
+          Próxima →
+        </button>
+      </div>
+    );
   };
 
   return (
@@ -318,30 +424,55 @@ function Usuarios() {
               </button>
             </div>
 
+            {/* Filtros */}
+            <div className="filters-container">
+              <div className="filter-group">
+                <label htmlFor="filtroTipo">Tipo de Usuário:</label>
+                <select 
+                  id="filtroTipo"
+                  value={filtroTipo} 
+                  onChange={(e) => setFiltroTipo(e.target.value)}
+                  className="filter-select"
+                >
+                  <option value="todos">Todos ({usuarios.length})</option>
+                  <option value="super_admin">Super Admin ({usuarios.filter(u => u.role === 'super_admin').length})</option>
+                  <option value="admin">Administrador ({usuarios.filter(u => u.role === 'admin').length})</option>
+                  <option value="gerente">Gerente ({usuarios.filter(u => u.role === 'gerente').length})</option>
+                  <option value="funcionario">Funcionário ({usuarios.filter(u => u.role === 'funcionario').length})</option>
+                  <option value="fornecedor">Fornecedor ({usuarios.filter(u => u.role === 'fornecedor').length})</option>
+                  <option value="cliente">Cliente ({usuarios.filter(u => u.role === 'cliente').length})</option>
+                </select>
+              </div>
+              <div className="filter-info">
+                Exibindo {usuariosPaginados.length} de {usuariosFiltrados.length} usuário(s)
+              </div>
+            </div>
+
             {loading ? (
               <div className="loading">Carregando...</div>
             ) : (
-              <div className="table-container">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Nome</th>
-                      <th>Email</th>
-                      <th>Perfil</th>
-                      <th>Status</th>
-                      <th>Data Cadastro</th>
-                      <th>Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {usuarios.length === 0 ? (
+              <>
+                <div className="table-container">
+                  <table className="data-table">
+                    <thead>
                       <tr>
-                        <td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>
-                          Nenhum usuário encontrado
-                        </td>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th>Perfil</th>
+                        <th>Status</th>
+                        <th>Data Cadastro</th>
+                        <th>Ações</th>
                       </tr>
-                    ) : (
-                      usuarios.map((usuario) => (
+                    </thead>
+                    <tbody>
+                      {usuariosPaginados.length === 0 ? (
+                        <tr>
+                          <td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>
+                            Nenhum usuário encontrado
+                          </td>
+                        </tr>
+                      ) : (
+                        usuariosPaginados.map((usuario) => (
                         <tr key={usuario._id}>
                           <td><strong>{usuario.nome}</strong></td>
                           <td>{usuario.email}</td>
@@ -419,6 +550,10 @@ function Usuarios() {
                   </tbody>
                 </table>
               </div>
+              
+              {/* Paginação */}
+              {renderPaginacao()}
+            </>
             )}
           </div>
         </main>

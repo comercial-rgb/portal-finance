@@ -20,6 +20,7 @@ function Usuarios() {
   // Paginação e filtros
   const [currentPage, setCurrentPage] = useState(1);
   const [filtroTipo, setFiltroTipo] = useState('todos');
+  const [searchTerm, setSearchTerm] = useState('');
   const itemsPerPage = 30;
   
   const [formData, setFormData] = useState({
@@ -302,10 +303,21 @@ function Usuarios() {
     return roles[role] || role;
   };
 
-  // Filtrar usuários por tipo
-  const usuariosFiltrados = filtroTipo === 'todos' 
-    ? usuarios 
-    : usuarios.filter(u => u.role === filtroTipo);
+  // Filtrar usuários por nome e tipo
+  let usuariosFiltrados = usuarios;
+  
+  // Filtro por nome
+  if (searchTerm.trim()) {
+    usuariosFiltrados = usuariosFiltrados.filter(u => 
+      u.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }
+  
+  // Filtro por tipo
+  if (filtroTipo !== 'todos') {
+    usuariosFiltrados = usuariosFiltrados.filter(u => u.role === filtroTipo);
+  }
 
   // Paginação
   const totalPages = Math.ceil(usuariosFiltrados.length / itemsPerPage);
@@ -316,7 +328,7 @@ function Usuarios() {
   // Reset para página 1 quando mudar o filtro
   useEffect(() => {
     setCurrentPage(1);
-  }, [filtroTipo]);
+  }, [filtroTipo, searchTerm]);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -426,6 +438,26 @@ function Usuarios() {
 
             {/* Filtros */}
             <div className="filters-container">
+              <div className="filter-group search-group">
+                <label htmlFor="searchTerm">Pesquisar:</label>
+                <input 
+                  id="searchTerm"
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Buscar por nome ou email..."
+                  className="filter-input"
+                />
+                {searchTerm && (
+                  <button 
+                    onClick={() => setSearchTerm('')}
+                    className="clear-search-btn"
+                    title="Limpar pesquisa"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
               <div className="filter-group">
                 <label htmlFor="filtroTipo">Tipo de Usuário:</label>
                 <select 

@@ -371,6 +371,12 @@
   gap: 0.75rem;
   flex: 1;
   min-width: 250px;
+  position: relative;
+}
+
+.search-group {
+  flex: 1.5;
+  min-width: 300px;
 }
 
 .filter-group label {
@@ -378,6 +384,57 @@
   color: #334155;
   font-size: 0.875rem;
   white-space: nowrap;
+}
+
+.filter-input {
+  flex: 1;
+  padding: 0.625rem 2.5rem 0.625rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #1e293b;
+  background-color: white;
+  transition: all 0.2s ease;
+  min-width: 200px;
+}
+
+.filter-input:hover {
+  border-color: #cbd5e1;
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-input::placeholder {
+  color: #94a3b8;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 8px;
+  background: #e2e8f0;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+.clear-search-btn:hover {
+  background: #cbd5e1;
+  color: #334155;
+  transform: scale(1.1);
 }
 
 .filter-select {

@@ -30,6 +30,7 @@ function Clientes() {
     const currentUser = authService.getCurrentUser();
     setUser(currentUser);
     loadClientes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   const loadClientes = async () => {

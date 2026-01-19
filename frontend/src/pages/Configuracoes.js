@@ -46,6 +46,7 @@ function Configuracoes() {
     setUser(currentUser);
     loadConfig();
     loadAdministradores();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadConfig = async () => {

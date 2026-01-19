@@ -214,21 +214,6 @@ function PerfilFornecedorUsuario() {
     }
   };
 
-  const formatarCNPJ = (cnpj) => {
-    if (!cnpj) return '-';
-    return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
-  };
-
-  const formatarTelefone = (telefone) => {
-    if (!telefone) return '-';
-    return telefone.replace(/^(\d{2})(\d{4,5})(\d{4})$/, '($1) $2-$3');
-  };
-
-  const formatarCEP = (cep) => {
-    if (!cep) return '-';
-    return cep.replace(/^(\d{5})(\d{3})$/, '$1-$2');
-  };
-
   return (
     <div className="page-container">
       <Header user={user} />

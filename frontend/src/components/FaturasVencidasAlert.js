@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
 import api from '../services/api';
 import './FaturasVencidasAlert.css';
 
 function FaturasVencidasAlert() {
   const [faturasVencidas, setFaturasVencidas] = useState([]);
   const [showAlert, setShowAlert] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     checkFaturasVencidas();

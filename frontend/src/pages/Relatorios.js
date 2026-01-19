@@ -72,6 +72,7 @@ function Relatorios() {
     if (user && user.role !== 'cliente') {
       loadAnalytics();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [periodo, dataInicio, dataFim, clienteSelecionado, fornecedorSelecionado, user]);
   
   // Se for cliente, renderiza o componente específico

@@ -28,6 +28,7 @@ function OrdensServico() {
     const currentUser = authService.getCurrentUser();
     setUser(currentUser);
     loadOrdensServico();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   const loadOrdensServico = async () => {

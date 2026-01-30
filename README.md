@@ -45,6 +45,7 @@ Sistema financeiro completo para gestão de clientes, fornecedores, ordens de se
 - **Configurações** do sistema
 - **Alertas de Faturas Vencidas**
 - **Busca por CNPJ** (formatado ou não formatado)
+- **Webhook de Integração** com sistema de frotas (recebimento automático de OS)
 
 ### 🔐 Níveis de Acesso
 1. **Super Admin** - Acesso total ao sistema
@@ -84,6 +85,9 @@ EMAIL_PASSWORD=sua_senha_de_aplicativo
 EMAIL_FROM=noreply@instasolutions.com
 
 FRONTEND_URL=http://localhost:3000
+
+# Webhook integração sistema de frotas
+WEBHOOK_FROTA_TOKEN=seu_token_super_seguro_aqui
 ```
 
 ### 3. Iniciar MongoDB
@@ -287,7 +291,33 @@ portal-finance/
 | Banco de Dados | MongoDB Atlas | - |
 | Domínio | GoDaddy | frotainstasolutions.com.br |
 
-## 📝 Licença
+## � Integração com Sistema de Frotas
+
+O Portal Finance possui um webhook para receber automaticamente Ordens de Serviço do sistema de frotas quando uma OS for autorizada.
+
+### Documentação Completa
+Consulte [INTEGRACAO_WEBHOOK_FROTA.md](./INTEGRACAO_WEBHOOK_FROTA.md) para:
+- Endpoints e autenticação
+- Formato dos dados (mapeamento de campos)
+- Exemplos de código (Node.js, Python)
+- Testes e validação
+
+### Quick Start
+```bash
+# Configurar token no .env
+WEBHOOK_FROTA_TOKEN=seu-token-secreto-aqui
+
+# Testar webhook localmente
+node backend/scripts/testeWebhookFrota.js
+```
+
+**Endpoint do webhook:**
+```
+POST /api/webhook/frota/receber-os
+Header: X-Webhook-Token: seu-token-aqui
+```
+
+## �📝 Licença
 
 Todos os direitos reservados - InstaSolutions © 2025
 

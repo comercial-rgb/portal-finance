@@ -41,35 +41,64 @@ exports.receberOSFrota = async (req, res) => {
       });
     }
 
-    // 1. Buscar Cliente pelo nome fantasia (deve estar cadastrado previamente)
-    const cliente = await Cliente.findOne({ 
+    // Array para armazenar observações de divergências
+    const observacoesWebhook = [];
+
+    // 1. Buscar Cliente pelo nome fantasia (exato ou aproximado)
+    let cliente = await Cliente.findOne({ 
       nomeFantasia: { $regex: new RegExp(`^${clienteNomeFantasia}$`, 'i') }
     });
 
+    // Se não encontrou exato, tenta busca parcial
     if (!cliente) {
-      console.log(`❌ Cliente "${clienteNomeFantasia}" não encontrado no sistema.`);
-      return res.status(404).json({ 
-        success: false, 
-        message: `Cliente "${clienteNomeFantasia}" não cadastrado no Portal Finance. Cadastre o cliente antes de enviar a OS.`,
-        campo: 'clienteNomeFantasia'
+      console.log(`⚠️  Cliente "${clienteNomeFantasia}" não encontrado (busca exata). Tentando busca aproximada...`);
+      cliente = await Cliente.findOne({ 
+        nomeFantasia: { $regex: new RegExp(clienteNomeFantasia, 'i') }
       });
+      
+      if (cliente) {
+        const obs = `⚠️ Divergência: Cliente no Frotas="${clienteNomeFantasia}" vs Portal Finance="${cliente.nomeFantasia}"`;
+        observacoesWebhook.push(obs);
+        console.log(obs);
+      } else {
+        console.log(`❌ Cliente "${clienteNomeFantasia}" não encontrado mesmo com busca aproximada.`);
+        return res.status(404).json({ 
+          success: false, 
+          message: `Cliente "${clienteNomeFantasia}" não encontrado no Portal Finance. Verifique o cadastro ou nome fantasia.`,
+          campo: 'clienteNomeFantasia'
+        });
+      }
+    } else {
+      console.log(`✅ Cliente encontrado (nome exato): ${cliente.nomeFantasia} (ID: ${cliente._id})`);
     }
-    console.log(`✅ Cliente encontrado: ${cliente.nomeFantasia} (ID: ${cliente._id})`);
 
-    // 2. Buscar Fornecedor pelo nome fantasia (deve estar cadastrado previamente)
-    const fornecedor = await Fornecedor.findOne({ 
+    // 2. Buscar Fornecedor pelo nome fantasia (exato ou aproximado)
+    let fornecedor = await Fornecedor.findOne({ 
       nomeFantasia: { $regex: new RegExp(`^${fornecedorNomeFantasia}$`, 'i') }
     });
 
+    // Se não encontrou exato, tenta busca parcial
     if (!fornecedor) {
-      console.log(`❌ Fornecedor "${fornecedorNomeFantasia}" não encontrado no sistema.`);
-      return res.status(404).json({ 
-        success: false, 
-        message: `Fornecedor "${fornecedorNomeFantasia}" não cadastrado no Portal Finance. Cadastre o fornecedor antes de enviar a OS.`,
-        campo: 'fornecedorNomeFantasia'
+      console.log(`⚠️  Fornecedor "${fornecedorNomeFantasia}" não encontrado (busca exata). Tentando busca aproximada...`);
+      fornecedor = await Fornecedor.findOne({ 
+        nomeFantasia: { $regex: new RegExp(fornecedorNomeFantasia, 'i') }
       });
+      
+      if (fornecedor) {
+        const obs = `⚠️ Divergência: Fornecedor no Frotas="${fornecedorNomeFantasia}" vs Portal Finance="${fornecedor.nomeFantasia}"`;
+        observacoesWebhook.push(obs);
+        console.log(obs);
+      } else {
+        console.log(`❌ Fornecedor "${fornecedorNomeFantasia}" não encontrado mesmo com busca aproximada.`);
+        return res.status(404).json({ 
+          success: false, 
+          message: `Fornecedor "${fornecedorNomeFantasia}" não encontrado no Portal Finance. Verifique o cadastro ou nome fantasia.`,
+          campo: 'fornecedorNomeFantasia'
+        });
+      }
+    } else {
+      console.log(`✅ Fornecedor encontrado (nome exato): ${fornecedor.nomeFantasia} (ID: ${fornecedor._id})`);
     }
-    console.log(`✅ Fornecedor encontrado: ${fornecedor.nomeFantasia} (ID: ${fornecedor._id})`);
 
 
     // 3. Buscar ou criar Tipo de Serviço Solicitado
@@ -123,7 +152,14 @@ exports.receberOSFrota = async (req, res) => {
       valorServicoSemDesconto ? valorServicoSemDesconto * (1 - (descontoPercentual || 0) / 100) : 0
     );
 
-    // 7. Criar Ordem de Serviço
+    // 7. Preparar observações (incluir as do webhook + observações originais)
+    let observacoesFinais = observacoes || '';
+    if (observacoesWebhook.length > 0) {
+      const divergencias = '\n[WEBHOOK] ' + observacoesWebhook.join('\n[WEBHOOK] ');
+      observacoesFinais = observacoesFinais ? observacoesFinais + divergencias : divergencias.trim();
+    }
+
+    // 8. Criar Ordem de Serviço
     const ordemServico = new OrdemServico({
       codigo: codigo,
       numeroOrdemServico: numeroOrdemServico || codigo,
@@ -146,6 +182,7 @@ exports.receberOSFrota = async (req, res) => {
       valorFinal: valorPecasCalc + valorServicoCalc,
       notaFiscalPeca: notaFiscalPeca || '',
       notaFiscalServico: notaFiscalServico || '',
+      observacoes: observacoesFinais,
       status: 'Autorizada' // Sempre autorizada quando vem do webhook
     });
 
@@ -162,7 +199,8 @@ exports.receberOSFrota = async (req, res) => {
     res.status(201).json({ 
       success: true, 
       message: 'OS cadastrada com sucesso via webhook',
-      ordemServico: osPopulada
+      ordemServico: osPopulada,
+      divergencias: observacoesWebhook.length > 0 ? observacoesWebhook : undefined
     });
 
   } catch (error) {

@@ -362,11 +362,13 @@
 }
 
 /* Responsividade */
-@media (max-width: 1024px) {
+@media (max-width: 1280px) {
   .content-area {
-    margin-left: 0;
+    margin-left: 70px; /* Sidebar minimizado */
   }
+}
 
+@media (max-width: 1024px) {
   .form-grid {
     grid-template-columns: 1fr;
   }
@@ -378,6 +380,7 @@
 
 @media (max-width: 768px) {
   .content-area {
+    margin-left: 0;
     padding: 1rem;
   }
 

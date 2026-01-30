@@ -19,6 +19,12 @@
   transition: margin-left var(--transition);
 }
 
+@media (max-width: 1280px) {
+  .dashboard-main {
+    margin-left: 70px;
+  }
+}
+
 .welcome-banner {
   background: var(--gradient-primary);
   color: white;

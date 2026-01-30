@@ -5,6 +5,12 @@
   background-color: var(--cinza-claro);
 }
 
+@media (max-width: 1280px) {
+  .configuracoes-container {
+    margin-left: 70px;
+  }
+}
+
 .configuracoes-header {
   margin-bottom: 2rem;
 }

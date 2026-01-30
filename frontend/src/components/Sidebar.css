@@ -199,6 +199,44 @@
   }
 }
 
+/* Para tablets e notebooks pequenos */
+@media (max-width: 1280px) {
+  .sidebar {
+    width: 70px;
+    padding: 0;
+  }
+
+  .nav-text {
+    display: none;
+  }
+
+  .nav-section-title {
+    display: none;
+  }
+
+  .nav-item {
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .nav-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .nav-badge {
+    display: none;
+  }
+
+  .sidebar-footer {
+    padding: 12px;
+  }
+
+  .status-text {
+    display: none;
+  }
+}
+
 @media (max-width: 768px) {
   .sidebar {
     position: fixed;
@@ -214,6 +252,14 @@
 
   .sidebar.open {
     left: 0;
+  }
+
+  .nav-text {
+    display: inline;
+  }
+
+  .nav-section-title {
+    display: block;
   }
 }
 

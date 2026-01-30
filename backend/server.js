@@ -30,6 +30,7 @@ const faturaRoutes = require('./routes/faturaRoutes');
 const notificacaoRoutes = require('./routes/notificacaoRoutes');
 const antecipacaoRoutes = require('./routes/antecipacaoRoutes');
 const pagamentoRoutes = require('./routes/pagamentoRoutes');
+const notaFiscalClienteRoutes = require('./routes/notaFiscalClienteRoutes');
 
 const app = express();
 
@@ -102,6 +103,8 @@ app.use('/api/notificacoes', notificacaoRoutes);
 // Antecipações e Pagamentos SEM cache
 app.use('/api/antecipacoes', antecipacaoRoutes);
 app.use('/api/pagamentos', pagamentoRoutes);
+// Notas Fiscais de Clientes SEM cache
+app.use('/api/notas-fiscais-clientes', notaFiscalClienteRoutes);
 
 // Rota de teste e health check
 app.get('/api/health', (req, res) => {

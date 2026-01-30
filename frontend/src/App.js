@@ -30,6 +30,7 @@ import ImpostosRetencoes from './pages/ImpostosRetencoes';
 import Relatorios from './pages/Relatorios';
 import ValoresPendentes from './pages/ValoresPendentes';
 import Pagamentos from './pages/Pagamentos';
+import NotasFiscaisClientes from './pages/NotasFiscaisClientes';
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {
@@ -205,6 +206,14 @@ function App() {
           element={
             <PrivateRoute>
               <FaturasClientes />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/notas-fiscais-clientes"
+          element={
+            <PrivateRoute allowedRoles={['super_admin', 'admin']}>
+              <NotasFiscaisClientes />
             </PrivateRoute>
           }
         />

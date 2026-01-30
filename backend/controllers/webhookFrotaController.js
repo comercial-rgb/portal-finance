@@ -41,46 +41,36 @@ exports.receberOSFrota = async (req, res) => {
       });
     }
 
-    // 1. Buscar ou criar Cliente pelo nome fantasia
-    let cliente = await Cliente.findOne({ 
+    // 1. Buscar Cliente pelo nome fantasia (deve estar cadastrado previamente)
+    const cliente = await Cliente.findOne({ 
       nomeFantasia: { $regex: new RegExp(`^${clienteNomeFantasia}$`, 'i') }
     });
 
     if (!cliente) {
-      console.log(`⚠️  Cliente "${clienteNomeFantasia}" não encontrado. Criando automaticamente...`);
-      
-      // Criar cliente básico (mínimo necessário)
-      cliente = new Cliente({
-        nomeFantasia: clienteNomeFantasia,
-        razaoSocial: clienteNomeFantasia, // Usa o mesmo nome por padrão
-        cnpj: `TEMP-${Date.now()}`, // CNPJ temporário (deve ser ajustado depois)
-        ativo: true,
-        endereco: {},
-        contatos: {}
+      console.log(`❌ Cliente "${clienteNomeFantasia}" não encontrado no sistema.`);
+      return res.status(404).json({ 
+        success: false, 
+        message: `Cliente "${clienteNomeFantasia}" não cadastrado no Portal Finance. Cadastre o cliente antes de enviar a OS.`,
+        campo: 'clienteNomeFantasia'
       });
-      await cliente.save();
-      console.log(`✅ Cliente criado com ID: ${cliente._id}`);
     }
+    console.log(`✅ Cliente encontrado: ${cliente.nomeFantasia} (ID: ${cliente._id})`);
 
-    // 2. Buscar ou criar Fornecedor pelo nome fantasia
-    let fornecedor = await Fornecedor.findOne({ 
+    // 2. Buscar Fornecedor pelo nome fantasia (deve estar cadastrado previamente)
+    const fornecedor = await Fornecedor.findOne({ 
       nomeFantasia: { $regex: new RegExp(`^${fornecedorNomeFantasia}$`, 'i') }
     });
 
     if (!fornecedor) {
-      console.log(`⚠️  Fornecedor "${fornecedorNomeFantasia}" não encontrado. Criando automaticamente...`);
-      
-      fornecedor = new Fornecedor({
-        nomeFantasia: fornecedorNomeFantasia,
-        razaoSocial: fornecedorNomeFantasia,
-        cnpj: `TEMP-${Date.now()}`,
-        ativo: true,
-        endereco: {},
-        contatos: {}
+      console.log(`❌ Fornecedor "${fornecedorNomeFantasia}" não encontrado no sistema.`);
+      return res.status(404).json({ 
+        success: false, 
+        message: `Fornecedor "${fornecedorNomeFantasia}" não cadastrado no Portal Finance. Cadastre o fornecedor antes de enviar a OS.`,
+        campo: 'fornecedorNomeFantasia'
       });
-      await fornecedor.save();
-      console.log(`✅ Fornecedor criado com ID: ${fornecedor._id}`);
     }
+    console.log(`✅ Fornecedor encontrado: ${fornecedor.nomeFantasia} (ID: ${fornecedor._id})`);
+
 
     // 3. Buscar ou criar Tipo de Serviço Solicitado
     let tipoServicoSolicitadoDoc = await TipoServicoSolicitado.findOne({ 

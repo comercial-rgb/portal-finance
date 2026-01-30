@@ -2,6 +2,8 @@ const NotaFiscalCliente = require('../models/NotaFiscalCliente');
 const Fatura = require('../models/Fatura');
 const Cliente = require('../models/Cliente');
 
+const CLIENTE_POPULATE_FIELDS = 'nomeFantasia razaoSocial cnpj';
+
 // Criar nova nota fiscal
 exports.criarNotaFiscal = async (req, res) => {
   try {
@@ -59,7 +61,7 @@ exports.criarNotaFiscal = async (req, res) => {
     await notaFiscal.save();
 
     // Popular os dados para retornar
-    await notaFiscal.populate('clienteId', 'nome cnpj');
+    await notaFiscal.populate('clienteId', CLIENTE_POPULATE_FIELDS);
     if (faturaId) {
       await notaFiscal.populate('faturaId', 'numeroFatura valorTotal');
     }
@@ -96,7 +98,7 @@ exports.listarNotasFiscais = async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const notasFiscais = await NotaFiscalCliente.find(filtros)
-      .populate('clienteId', 'nome cnpj')
+      .populate('clienteId', CLIENTE_POPULATE_FIELDS)
       .populate('faturaId', 'numeroFatura valorTotal')
       .populate('criadoPor', 'nome email')
       .sort({ createdAt: -1 })
@@ -121,7 +123,7 @@ exports.listarNotasFiscais = async (req, res) => {
 exports.buscarNotaFiscalPorId = async (req, res) => {
   try {
     const notaFiscal = await NotaFiscalCliente.findById(req.params.id)
-      .populate('clienteId', 'nome cnpj email telefone')
+      .populate('clienteId', CLIENTE_POPULATE_FIELDS)
       .populate('faturaId', 'numeroFatura valorTotal dataEmissao dataVencimento')
       .populate('criadoPor', 'nome email');
 
@@ -183,7 +185,7 @@ exports.atualizarNotaFiscal = async (req, res) => {
 
     await notaFiscal.save();
 
-    await notaFiscal.populate('clienteId', 'nome cnpj');
+    await notaFiscal.populate('clienteId', CLIENTE_POPULATE_FIELDS);
     if (notaFiscal.faturaId) {
       await notaFiscal.populate('faturaId', 'numeroFatura valorTotal');
     }

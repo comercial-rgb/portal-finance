@@ -41,6 +41,17 @@ function NotasFiscaisClientes() {
 
   const notasPorPagina = 15;
 
+  const getClienteLabel = (cliente) => {
+    if (!cliente) return '';
+    return (
+      cliente.nomeFantasia ||
+      cliente.razaoSocial ||
+      cliente.nome ||
+      cliente.cnpj ||
+      'Cliente'
+    );
+  };
+
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
     setUser(currentUser);
@@ -298,17 +309,18 @@ function NotasFiscaisClientes() {
   };
 
   return (
-    <div className="app-container">
+    <div className="page-container notas-fiscais-clientes-page">
       <Header user={user} />
-      <div className="main-content">
+      <div className="content-wrapper">
         <Sidebar user={user} />
-        <main className="content-area">
-          <div className="page-header">
-            <h1>Notas Fiscais Clientes</h1>
-            <button className="btn-primary" onClick={() => handleOpenModal()}>
-              + Nova Nota Fiscal
-            </button>
-          </div>
+        <main className="main-content">
+          <div className="notas-fiscais-clientes-container">
+            <div className="page-header">
+              <h1>Notas Fiscais Clientes</h1>
+              <button className="btn-primary" onClick={() => handleOpenModal()}>
+                + Nova Nota Fiscal
+              </button>
+            </div>
 
           {/* Filtros */}
           <div className="filtros-container">
@@ -324,7 +336,7 @@ function NotasFiscaisClientes() {
                   <option value="">Todos os clientes</option>
                   {clientes.map(cliente => (
                     <option key={cliente._id} value={cliente._id}>
-                      {cliente.nome}
+                      {getClienteLabel(cliente)}
                     </option>
                   ))}
                 </select>
@@ -407,7 +419,7 @@ function NotasFiscaisClientes() {
                   {notasFiscais.map(nota => (
                     <tr key={nota._id}>
                       <td>{nota.numeroNotaFiscal}</td>
-                      <td>{nota.clienteId?.nome || '-'}</td>
+                      <td>{getClienteLabel(nota.clienteId) || '-'}</td>
                       <td>{nota.tipo}</td>
                       <td>{nota.centroCusto || '-'}</td>
                       <td>{nota.subunidade || '-'}</td>
@@ -464,6 +476,8 @@ function NotasFiscaisClientes() {
               </button>
             </div>
           )}
+
+          </div>
         </main>
       </div>
 
@@ -517,7 +531,7 @@ function NotasFiscaisClientes() {
                     <option value="">Selecione um cliente</option>
                     {clientes.map(cliente => (
                       <option key={cliente._id} value={cliente._id}>
-                        {cliente.nome}
+                        {getClienteLabel(cliente)}
                       </option>
                     ))}
                   </select>

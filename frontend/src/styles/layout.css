@@ -1,0 +1,40 @@
+/* Estilos de layout globais para consistência */
+
+/* Container principal de páginas */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Wrapper do conteúdo (sidebar + conteúdo principal) */
+.content-wrapper {
+  display: flex;
+  flex: 1;
+  padding-top: 0;
+}
+
+/* Área de conteúdo principal */
+.main-content {
+  flex: 1;
+  margin-left: 250px;
+  padding: 2rem;
+  min-height: calc(100vh - 80px);
+  background-color: var(--surface);
+  transition: margin-left 0.3s ease;
+}
+
+/* Responsividade para notebooks */
+@media (max-width: 1280px) {
+  .main-content {
+    margin-left: 70px;
+  }
+}
+
+/* Responsividade para tablets e mobile */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+}

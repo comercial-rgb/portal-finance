@@ -2,11 +2,12 @@
   width: 250px;
   background: var(--secondary);
   color: white;
-  height: calc(100vh - 80px);
+  height: 100vh;
   padding: 0;
+  padding-top: 80px;
   position: fixed;
   left: 0;
-  top: 80px;
+  top: 0;
   box-shadow: var(--shadow-md);
   overflow-y: auto;
   overflow-x: hidden;
@@ -203,7 +204,7 @@
 @media (max-width: 1280px) {
   .sidebar {
     width: 70px;
-    padding: 0;
+    padding-top: 80px;
   }
 
   .nav-text {

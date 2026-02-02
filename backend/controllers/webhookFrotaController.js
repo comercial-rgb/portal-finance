@@ -151,7 +151,116 @@ exports.receberOSFrota = async (req, res) => {
       });
     }
 
-    // 6. Calcular valores (com fallback caso não venham calculados)
+    // 6. Auto-criar Centro de Custo e Subunidade se não existirem
+    if (centroCusto) {
+      const clienteCompleto = await Cliente.findById(cliente._id);
+      let centroCustoObj = clienteCompleto.centrosCusto?.find(cc => cc.nome === centroCusto);
+      
+      if (!centroCustoObj) {
+        console.log(`📍 Centro de Custo "${centroCusto}" não existe. Criando automaticamente...`);
+        clienteCompleto.centrosCusto.push({ nome: centroCusto, subunidades: [] });
+        await clienteCompleto.save();
+        centroCustoObj = clienteCompleto.centrosCusto[clienteCompleto.centrosCusto.length - 1];
+        observacoesWebhook.push(`[AUTO-CRIADO] Centro de Custo: ${centroCusto}`);
+        console.log(`✅ Centro de Custo "${centroCusto}" criado automaticamente`);
+      }
+      
+      // Auto-criar Subunidade se vier e não existir
+      if (subunidade && centroCustoObj) {
+        const subunidadeExiste = centroCustoObj.subunidades?.some(sub => sub.nome === subunidade);
+        if (!subunidadeExiste) {
+          console.log(`📍 Subunidade "${subunidade}" não existe. Criando automaticamente...`);
+          centroCustoObj.subunidades.push({ nome: subunidade });
+          await clienteCompleto.save();
+          observacoesWebhook.push(`[AUTO-CRIADO] Subunidade: ${subunidade}`);
+          console.log(`✅ Subunidade "${subunidade}" criada automaticamente`);
+        }
+      }
+    }
+
+    // 7. Validar e consumir saldo dos empenhos
+    const valorPecasFinal = valorPecasComDesconto ?? (valorPecasSemDesconto || 0);
+    const valorServicosFinal = valorServicoComDesconto ?? (valorServicoSemDesconto || 0);
+    
+    if (empenhoPecas && valorPecasFinal > 0) {
+      const clienteCompleto = await Cliente.findById(cliente._id);
+      let empenhoEncontrado = null;
+      let contratoEncontrado = null;
+      
+      // Buscar empenho em todos os contratos
+      for (const contrato of clienteCompleto.contratos || []) {
+        const empenho = contrato.empenhos?.find(e => e.numeroEmpenho === empenhoPecas && e.ativo);
+        if (empenho) {
+          empenhoEncontrado = empenho;
+          contratoEncontrado = contrato;
+          break;
+        }
+      }
+      
+      if (empenhoEncontrado) {
+        const valorDisponivel = empenhoEncontrado.valor - empenhoEncontrado.valorAnulado - empenhoEncontrado.valorUtilizado;
+        
+        if (valorPecasFinal > valorDisponivel) {
+          return res.status(400).json({
+            success: false,
+            message: `Saldo insuficiente no empenho de peças. Disponível: R$ ${valorDisponivel.toFixed(2)}, Necessário: R$ ${valorPecasFinal.toFixed(2)}`,
+            empenho: empenhoPecas,
+            saldoDisponivel: valorDisponivel,
+            valorNecessario: valorPecasFinal
+          });
+        }
+        
+        // Consumir saldo do empenho
+        empenhoEncontrado.valorUtilizado += valorPecasFinal;
+        await clienteCompleto.save();
+        console.log(`💰 Empenho ${empenhoPecas}: Consumido R$ ${valorPecasFinal.toFixed(2)}, Saldo restante: R$ ${(valorDisponivel - valorPecasFinal).toFixed(2)}`);
+        observacoesWebhook.push(`[EMPENHO] Peças: ${empenhoPecas} - Consumido: R$ ${valorPecasFinal.toFixed(2)}`);
+      } else {
+        console.log(`⚠️  Empenho de peças "${empenhoPecas}" não encontrado ou inativo. OS será criada sem validação de saldo.`);
+        observacoesWebhook.push(`[AVISO] Empenho de peças ${empenhoPecas} não encontrado no sistema`);
+      }
+    }
+    
+    if (empenhoServicos && valorServicosFinal > 0) {
+      const clienteCompleto = await Cliente.findById(cliente._id);
+      let empenhoEncontrado = null;
+      let contratoEncontrado = null;
+      
+      // Buscar empenho em todos os contratos
+      for (const contrato of clienteCompleto.contratos || []) {
+        const empenho = contrato.empenhos?.find(e => e.numeroEmpenho === empenhoServicos && e.ativo);
+        if (empenho) {
+          empenhoEncontrado = empenho;
+          contratoEncontrado = contrato;
+          break;
+        }
+      }
+      
+      if (empenhoEncontrado) {
+        const valorDisponivel = empenhoEncontrado.valor - empenhoEncontrado.valorAnulado - empenhoEncontrado.valorUtilizado;
+        
+        if (valorServicosFinal > valorDisponivel) {
+          return res.status(400).json({
+            success: false,
+            message: `Saldo insuficiente no empenho de serviços. Disponível: R$ ${valorDisponivel.toFixed(2)}, Necessário: R$ ${valorServicosFinal.toFixed(2)}`,
+            empenho: empenhoServicos,
+            saldoDisponivel: valorDisponivel,
+            valorNecessario: valorServicosFinal
+          });
+        }
+        
+        // Consumir saldo do empenho
+        empenhoEncontrado.valorUtilizado += valorServicosFinal;
+        await clienteCompleto.save();
+        console.log(`💰 Empenho ${empenhoServicos}: Consumido R$ ${valorServicosFinal.toFixed(2)}, Saldo restante: R$ ${(valorDisponivel - valorServicosFinal).toFixed(2)}`);
+        observacoesWebhook.push(`[EMPENHO] Serviços: ${empenhoServicos} - Consumido: R$ ${valorServicosFinal.toFixed(2)}`);
+      } else {
+        console.log(`⚠️  Empenho de serviços "${empenhoServicos}" não encontrado ou inativo. OS será criada sem validação de saldo.`);
+        observacoesWebhook.push(`[AVISO] Empenho de serviços ${empenhoServicos} não encontrado no sistema`);
+      }
+    }
+
+    // 8. Calcular valores (com fallback caso não venham calculados)
     const valorPecasCalc = valorPecasComDesconto ?? (
       valorPecasSemDesconto ? valorPecasSemDesconto * (1 - (descontoPercentual || 0) / 100) : 0
     );
@@ -160,14 +269,14 @@ exports.receberOSFrota = async (req, res) => {
       valorServicoSemDesconto ? valorServicoSemDesconto * (1 - (descontoPercentual || 0) / 100) : 0
     );
 
-    // 7. Preparar observações (incluir as do webhook + observações originais)
+    // 9. Preparar observações (incluir as do webhook + observações originais)
     let observacoesFinais = observacoes || '';
     if (observacoesWebhook.length > 0) {
       const divergencias = '\n[WEBHOOK] ' + observacoesWebhook.join('\n[WEBHOOK] ');
       observacoesFinais = observacoesFinais ? observacoesFinais + divergencias : divergencias.trim();
     }
 
-    // 8. Criar Ordem de Serviço
+    // 10. Criar Ordem de Serviço
     const ordemServico = new OrdemServico({
       codigo: codigo,
       numeroOrdemServico: numeroOrdemServico || codigo,

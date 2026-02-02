@@ -357,7 +357,9 @@ function ClienteForm() {
       }
     } catch (error) {
       console.error('❌ Erro ao salvar cliente:', error);
-      toast.error(error.response?.data?.mensagem || 'Erro ao salvar cliente');
+      console.error('❌ Resposta completa do erro:', error.response?.data);
+      const mensagemErro = error.response?.data?.message || error.response?.data?.mensagem || 'Erro ao salvar cliente';
+      toast.error(mensagemErro);
     } finally {
       setLoading(false);
     }

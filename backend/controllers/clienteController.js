@@ -128,13 +128,25 @@ exports.updateCliente = async (req, res) => {
     
     // Verificar se o CNPJ já existe em outro cliente
     if (cnpj) {
+      const cnpjLimpo = cnpj.replace(/\D/g, '');
+      console.log('🔍 Verificando CNPJ:', {
+        recebido: cnpj,
+        limpo: cnpjLimpo,
+        clienteAtual: req.params.id,
+        cnpjAtualNoBanco: cliente.cnpj
+      });
+      
       const clienteExiste = await Cliente.findOne({ 
-        cnpj: cnpj.replace(/\D/g, ''),
+        cnpj: cnpjLimpo,
         _id: { $ne: req.params.id }
       });
+      
       if (clienteExiste) {
+        console.log('⚠️ CNPJ já cadastrado em outro cliente:', clienteExiste._id);
         return res.status(400).json({ message: 'CNPJ já cadastrado' });
       }
+      
+      console.log('✅ CNPJ disponível para uso');
     }
 
     const sanitizeNumber = (value, fallback) => {

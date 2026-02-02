@@ -103,9 +103,24 @@ const ordemServicoSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  // Campos simplificados de valores totais
+  valorTotalSemDesconto: {
+    type: Number,
+    default: 0,
+    min: 0,
+    description: 'Valor total sem desconto (peças + serviços)'
+  },
+  descontoPercentual: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100,
+    description: 'Desconto percentual geral aplicado'
+  },
   valorFinal: {
     type: Number,
-    default: 0
+    default: 0,
+    description: 'Valor total com desconto'
   },
   notaFiscalPeca: {
     type: String,

@@ -30,7 +30,8 @@ exports.receberOSFrota = async (req, res) => {
       placa,
       veiculo,
       contrato,
-      numeroOrdemServico
+      numeroOrdemServico,
+      observacoes
     } = req.body;
 
     // Validações básicas

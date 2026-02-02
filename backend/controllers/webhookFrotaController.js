@@ -201,21 +201,15 @@ exports.receberOSFrota = async (req, res) => {
         const valorDisponivel = empenhoEncontrado.valor - empenhoEncontrado.valorAnulado - empenhoEncontrado.valorUtilizado;
         
         if (valorPecasFinal > valorDisponivel) {
-          return res.status(400).json({
-            success: false,
-            message: `Saldo insuficiente no empenho de peças. Disponível: R$ ${valorDisponivel.toFixed(2)}, Necessário: R$ ${valorPecasFinal.toFixed(2)}`,
-            empenho: empenhoPecas,
-            saldoDisponivel: valorDisponivel,
-            valorNecessario: valorPecasFinal
-          });
-        }
-        
-        // Consumir saldo do empenho
-        empenhoEncontrado.valorUtilizado += valorPecasFinal;
-        await clienteCompleto.save();
-        console.log(`💰 Empenho ${empenhoPecas}: Consumido R$ ${valorPecasFinal.toFixed(2)}, Saldo restante: R$ ${(valorDisponivel - valorPecasFinal).toFixed(2)}`);
-        observacoesWebhook.push(`[EMPENHO] Peças: ${empenhoPecas} - Consumido: R$ ${valorPecasFinal.toFixed(2)}`);
-      } else {
+          console.log(`⚠️  Saldo insuficiente no empenho ${empenhoPecas}. Disponível: R$ ${valorDisponivel.toFixed(2)}, Necessário: R$ ${valorPecasFinal.toFixed(2)}`);
+          observacoesWebhook.push(`[AVISO] Empenho de peças ${empenhoPecas}: Saldo insuficiente (Disponível: R$ ${valorDisponivel.toFixed(2)}, Usado: R$ ${valorPecasFinal.toFixed(2)})`);
+        } else {
+          // Consumir saldo do empenho
+          empenhoEncontrado.valorUtilizado += valorPecasFinal;
+          await clienteCompleto.save();
+          console.log(`💰 Empenho ${empenhoPecas}: Consumido R$ ${valorPecasFinal.toFixed(2)}, Saldo restante: R$ ${(valorDisponivel - valorPecasFinal).toFixed(2)}`);
+          observacoesWebhook.push(`[EMPENHO] Peças: ${empenhoPecas} - Consumido: R$ ${valorPecasFinal.toFixed(2)}`);
+        }      } else {
         console.log(`⚠️  Empenho de peças "${empenhoPecas}" não encontrado ou inativo. OS será criada sem validação de saldo.`);
         observacoesWebhook.push(`[AVISO] Empenho de peças ${empenhoPecas} não encontrado no sistema`);
       }
@@ -240,21 +234,15 @@ exports.receberOSFrota = async (req, res) => {
         const valorDisponivel = empenhoEncontrado.valor - empenhoEncontrado.valorAnulado - empenhoEncontrado.valorUtilizado;
         
         if (valorServicosFinal > valorDisponivel) {
-          return res.status(400).json({
-            success: false,
-            message: `Saldo insuficiente no empenho de serviços. Disponível: R$ ${valorDisponivel.toFixed(2)}, Necessário: R$ ${valorServicosFinal.toFixed(2)}`,
-            empenho: empenhoServicos,
-            saldoDisponivel: valorDisponivel,
-            valorNecessario: valorServicosFinal
-          });
-        }
-        
-        // Consumir saldo do empenho
-        empenhoEncontrado.valorUtilizado += valorServicosFinal;
-        await clienteCompleto.save();
-        console.log(`💰 Empenho ${empenhoServicos}: Consumido R$ ${valorServicosFinal.toFixed(2)}, Saldo restante: R$ ${(valorDisponivel - valorServicosFinal).toFixed(2)}`);
-        observacoesWebhook.push(`[EMPENHO] Serviços: ${empenhoServicos} - Consumido: R$ ${valorServicosFinal.toFixed(2)}`);
-      } else {
+          console.log(`⚠️  Saldo insuficiente no empenho ${empenhoServicos}. Disponível: R$ ${valorDisponivel.toFixed(2)}, Necessário: R$ ${valorServicosFinal.toFixed(2)}`);
+          observacoesWebhook.push(`[AVISO] Empenho de serviços ${empenhoServicos}: Saldo insuficiente (Disponível: R$ ${valorDisponivel.toFixed(2)}, Usado: R$ ${valorServicosFinal.toFixed(2)})`);
+        } else {
+          // Consumir saldo do empenho
+          empenhoEncontrado.valorUtilizado += valorServicosFinal;
+          await clienteCompleto.save();
+          console.log(`💰 Empenho ${empenhoServicos}: Consumido R$ ${valorServicosFinal.toFixed(2)}, Saldo restante: R$ ${(valorDisponivel - valorServicosFinal).toFixed(2)}`);
+          observacoesWebhook.push(`[EMPENHO] Serviços: ${empenhoServicos} - Consumido: R$ ${valorServicosFinal.toFixed(2)}`);
+        }      } else {
         console.log(`⚠️  Empenho de serviços "${empenhoServicos}" não encontrado ou inativo. OS será criada sem validação de saldo.`);
         observacoesWebhook.push(`[AVISO] Empenho de serviços ${empenhoServicos} não encontrado no sistema`);
       }

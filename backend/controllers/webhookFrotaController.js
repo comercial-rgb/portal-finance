@@ -30,6 +30,7 @@ exports.receberOSFrota = async (req, res) => {
       valorFinal,
       notaFiscalPeca,
       notaFiscalServico,
+      notasFiscais, // Array de notas fiscais
       placa,
       veiculo,
       contrato,
@@ -257,14 +258,39 @@ exports.receberOSFrota = async (req, res) => {
       valorServicoSemDesconto ? valorServicoSemDesconto * (1 - (descontoPercentual || 0) / 100) : 0
     );
 
-    // 9. Preparar observações (incluir as do webhook + observações originais)
+    // 9. Processar notas fiscais do array (se vier)
+    let nfPecas = notaFiscalPeca || '';
+    let nfServicos = notaFiscalServico || '';
+    
+    if (notasFiscais && Array.isArray(notasFiscais) && notasFiscais.length > 0) {
+      // Separar notas por tipo
+      const nfPecasArray = notasFiscais.filter(nf => 
+        nf.tipo && (nf.tipo.toLowerCase().includes('peça') || nf.tipo.toLowerCase().includes('peca'))
+      );
+      const nfServicosArray = notasFiscais.filter(nf => 
+        nf.tipo && nf.tipo.toLowerCase().includes('servi')
+      );
+      
+      // Extrair números das notas
+      if (nfPecasArray.length > 0) {
+        nfPecas = nfPecasArray.map(nf => nf.numero).join(', ');
+        console.log(`📄 Notas Fiscais de Peças: ${nfPecas}`);
+      }
+      
+      if (nfServicosArray.length > 0) {
+        nfServicos = nfServicosArray.map(nf => nf.numero).join(', ');
+        console.log(`📄 Notas Fiscais de Serviços: ${nfServicos}`);
+      }
+    }
+
+    // 10. Preparar observações (incluir as do webhook + observações originais)
     let observacoesFinais = observacoes || '';
     if (observacoesWebhook.length > 0) {
       const divergencias = '\n[WEBHOOK] ' + observacoesWebhook.join('\n[WEBHOOK] ');
       observacoesFinais = observacoesFinais ? observacoesFinais + divergencias : divergencias.trim();
     }
 
-    // 10. Criar Ordem de Serviço
+    // 11. Criar Ordem de Serviço
     const ordemServico = new OrdemServico({
       codigo: codigo,
       numeroOrdemServico: numeroOrdemServico || codigo,
@@ -289,8 +315,8 @@ exports.receberOSFrota = async (req, res) => {
       valorPecasComDesconto: valorPecasComDesconto !== undefined ? valorPecasComDesconto : valorPecasCalc,
       valorServicoComDesconto: valorServicoComDesconto !== undefined ? valorServicoComDesconto : valorServicoCalc,
       valorFinal: valorFinal !== undefined ? valorFinal : (valorPecasCalc + valorServicoCalc),
-      notaFiscalPeca: notaFiscalPeca || '',
-      notaFiscalServico: notaFiscalServico || '',
+      notaFiscalPeca: nfPecas,
+      notaFiscalServico: nfServicos,
       observacoes: observacoesFinais,
       status: 'Autorizada' // Sempre autorizada quando vem do webhook
     });

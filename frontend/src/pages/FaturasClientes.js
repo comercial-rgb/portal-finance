@@ -113,7 +113,9 @@ function FaturasClientes() {
   const loadFiltrados = async () => {
     try {
       setLoading(true);
-      const params = {};
+      const params = {
+        limit: 1000  // Garantir que busque todos os registros
+      };
       if (filtros.codigo) params.codigo = filtros.codigo;
       if (filtros.cliente) params.cliente = filtros.cliente;
       if (filtros.fornecedor) params.fornecedor = filtros.fornecedor;

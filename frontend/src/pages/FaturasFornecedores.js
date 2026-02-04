@@ -818,6 +818,9 @@ function FaturasFornecedores() {
                 <button className="btn-secondary" onClick={handleLimpar}>Limpar</button>
                 <button className="btn-primary" onClick={handleFiltrar}>Filtrar</button>
               </div>
+              <div className="filtro-info" style={{ marginTop: '10px', padding: '10px', background: '#e3f2fd', borderRadius: '4px', fontSize: '13px', color: '#1976d2' }}>
+                ℹ️ <strong>Critérios de elegibilidade:</strong> Esta tela exibe apenas ordens com status <strong>Autorizada</strong>, <strong>Aguardando pagamento</strong> ou <strong>Paga</strong> que ainda <strong>não foram faturadas para o fornecedor</strong>.
+              </div>
             </div>
 
             <div className="ordens-list">

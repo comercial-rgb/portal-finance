@@ -1051,6 +1051,106 @@ function FaturasFornecedores() {
                         </span>
                       </span>
                     </label>
+                    <label style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      padding: '10px', 
+                      border: '1px solid #ddd', 
+                      borderRadius: '6px', 
+                      cursor: 'pointer',
+                      backgroundColor: tipoPagamento === 'dias30' ? '#e3f2fd' : 'white',
+                      transition: 'all 0.2s'
+                    }}>
+                      <input
+                        type="radio"
+                        name="tipoPagamento"
+                        value="dias30"
+                        checked={tipoPagamento === 'dias30'}
+                        onChange={(e) => setTipoPagamento(e.target.value)}
+                        style={{ marginRight: '10px', width: '16px', height: '16px', cursor: 'pointer' }}
+                      />
+                      <span style={{ flex: 1 }}>
+                        <strong>30 Dias Após Fatura</strong> - Taxa: {clienteTaxaInfo.taxasAntecipacao?.dias30 || 10}%
+                        <span style={{ fontSize: '0.85rem', color: '#666', display: 'block' }}>
+                          Pagamento 30 dias após emissão da fatura
+                        </span>
+                      </span>
+                    </label>
+                    <label style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      padding: '10px', 
+                      border: '1px solid #ddd', 
+                      borderRadius: '6px', 
+                      cursor: 'pointer',
+                      backgroundColor: tipoPagamento === 'dias40' ? '#e3f2fd' : 'white',
+                      transition: 'all 0.2s'
+                    }}>
+                      <input
+                        type="radio"
+                        name="tipoPagamento"
+                        value="dias40"
+                        checked={tipoPagamento === 'dias40'}
+                        onChange={(e) => setTipoPagamento(e.target.value)}
+                        style={{ marginRight: '10px', width: '16px', height: '16px', cursor: 'pointer' }}
+                      />
+                      <span style={{ flex: 1 }}>
+                        <strong>40 Dias Após Fatura</strong> - Taxa: {clienteTaxaInfo.taxasAntecipacao?.dias40 || 8}%
+                        <span style={{ fontSize: '0.85rem', color: '#666', display: 'block' }}>
+                          Pagamento 40 dias após emissão da fatura
+                        </span>
+                      </span>
+                    </label>
+                    <label style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      padding: '10px', 
+                      border: '1px solid #ddd', 
+                      borderRadius: '6px', 
+                      cursor: 'pointer',
+                      backgroundColor: tipoPagamento === 'dias50' ? '#e3f2fd' : 'white',
+                      transition: 'all 0.2s'
+                    }}>
+                      <input
+                        type="radio"
+                        name="tipoPagamento"
+                        value="dias50"
+                        checked={tipoPagamento === 'dias50'}
+                        onChange={(e) => setTipoPagamento(e.target.value)}
+                        style={{ marginRight: '10px', width: '16px', height: '16px', cursor: 'pointer' }}
+                      />
+                      <span style={{ flex: 1 }}>
+                        <strong>50 Dias Após Fatura</strong> - Taxa: {clienteTaxaInfo.taxasAntecipacao?.dias50 || 6}%
+                        <span style={{ fontSize: '0.85rem', color: '#666', display: 'block' }}>
+                          Pagamento 50 dias após emissão da fatura
+                        </span>
+                      </span>
+                    </label>
+                    <label style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      padding: '10px', 
+                      border: '1px solid #ddd', 
+                      borderRadius: '6px', 
+                      cursor: 'pointer',
+                      backgroundColor: tipoPagamento === 'dias60' ? '#e3f2fd' : 'white',
+                      transition: 'all 0.2s'
+                    }}>
+                      <input
+                        type="radio"
+                        name="tipoPagamento"
+                        value="dias60"
+                        checked={tipoPagamento === 'dias60'}
+                        onChange={(e) => setTipoPagamento(e.target.value)}
+                        style={{ marginRight: '10px', width: '16px', height: '16px', cursor: 'pointer' }}
+                      />
+                      <span style={{ flex: 1 }}>
+                        <strong>60 Dias Após Fatura</strong> - Taxa: {clienteTaxaInfo.taxasAntecipacao?.dias60 || 0}%
+                        <span style={{ fontSize: '0.85rem', color: '#666', display: 'block' }}>
+                          Pagamento 60 dias após emissão da fatura
+                        </span>
+                      </span>
+                    </label>
                   </div>
                 </div>
               )}

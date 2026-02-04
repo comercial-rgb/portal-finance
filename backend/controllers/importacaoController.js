@@ -3,6 +3,23 @@ const Cliente = require('../models/Cliente');
 const Fornecedor = require('../models/Fornecedor');
 const { Tipo, TipoServicoSolicitado } = require('../models/TipoServico');
 
+// Função para converter valores em formato brasileiro (R$ 1.234,56) para número
+const limparValorMonetario = (valor) => {
+  if (!valor || valor === '') return 0;
+  
+  // Remove R$, espaços, e pontos (milhares)
+  let valorLimpo = String(valor)
+    .replace(/R\$\s*/g, '')
+    .replace(/\./g, '')
+    .trim();
+  
+  // Substitui vírgula decimal por ponto
+  valorLimpo = valorLimpo.replace(',', '.');
+  
+  const numero = parseFloat(valorLimpo);
+  return isNaN(numero) ? 0 : numero;
+};
+
 exports.importarOrdensServico = async (req, res) => {
   try {
     console.log('📦 Iniciando importação em lote de OS...');
@@ -173,8 +190,8 @@ exports.importarOrdensServico = async (req, res) => {
           }
         }
 
-        const valorPecas = parseFloat(os.valorPecas || 0);
-        const valorServico = parseFloat(os.valorServico || 0);
+        const valorPecas = limparValorMonetario(os.valorPecas);
+        const valorServico = limparValorMonetario(os.valorServico);
         
         const descontoPecasPerc = cliente.descontoPecas || 0;
         const descontoServicoPerc = cliente.descontoServicos || 0;

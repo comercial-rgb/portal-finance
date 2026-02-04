@@ -10,6 +10,8 @@ const normalizarNomeEmpresa = (nome) => {
   return nome
     .toLowerCase()
     .trim()
+    .normalize('NFD') // Decompõe caracteres acentuados (á → a + ´)
+    .replace(/[\u0300-\u036f]/g, '') // Remove marcas diacríticas (acentos, cedilha, til)
     .replace(/\b(ltda|s\/a|s\.a\.|me|epp|eireli)\b/gi, '') // Remove tipos societários
     .replace(/[-.]/g, ' ') // Remove hífens e pontos
     .replace(/\s+/g, ' ') // Normaliza espaços múltiplos

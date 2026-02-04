@@ -33,6 +33,7 @@ const pagamentoRoutes = require('./routes/pagamentoRoutes');
 const notaFiscalClienteRoutes = require('./routes/notaFiscalClienteRoutes');
 const webhookFrotaRoutes = require('./routes/webhookFrotaRoutes');
 const importacaoRoutes = require('./routes/importacaoRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
@@ -111,6 +112,8 @@ app.use('/api/notas-fiscais-clientes', notaFiscalClienteRoutes);
 app.use('/api/webhook/frota', webhookFrotaRoutes);
 // Importação em lote de OS (apenas admin)
 app.use('/api/importacao', importacaoRoutes);
+// Rotas administrativas (apenas super_admin)
+app.use('/api/admin', adminRoutes);
 
 // Rota de teste e health check
 app.get('/api/health', (req, res) => {

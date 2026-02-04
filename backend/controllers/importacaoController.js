@@ -18,6 +18,40 @@ const normalizarNomeEmpresa = (nome) => {
     .trim();
 };
 
+// Função para extrair palavras-chave significativas
+const extrairPalavrasChave = (nome) => {
+  if (!nome) return [];
+  
+  const normalizado = normalizarNomeEmpresa(nome);
+  const palavrasIgnoradas = ['servicos', 'servico', 'comercio', 'comercial', 'e', 'de', 'da', 'do', 'dos', 'das', 'ltda', 'eireli', 'epp'];
+  
+  return normalizado
+    .split(' ')
+    .filter(p => p.length >= 2 && !palavrasIgnoradas.includes(p));
+};
+
+// Função para calcular similaridade entre dois nomes
+const calcularSimilaridade = (nome1, nome2) => {
+  const palavras1 = extrairPalavrasChave(nome1);
+  const palavras2 = extrairPalavrasChave(nome2);
+  
+  if (palavras1.length === 0 || palavras2.length === 0) return 0;
+  
+  let matches = 0;
+  for (const p1 of palavras1) {
+    for (const p2 of palavras2) {
+      // Match exato ou uma palavra contém a outra
+      if (p1 === p2 || p1.includes(p2) || p2.includes(p1)) {
+        matches++;
+        break;
+      }
+    }
+  }
+  
+  // Retorna percentual de palavras que fizeram match
+  return matches / Math.max(palavras1.length, palavras2.length);
+};
+
 // Função para converter data brasileira (DD/MM/YYYY) para formato ISO
 const converterDataBrasileira = (data) => {
   if (!data) return null;
@@ -144,7 +178,7 @@ exports.importarOrdensServico = async (req, res) => {
           ]
         });
 
-        // Se não encontrar, busca com nome normalizado
+        // Se não encontrar, busca com nome normalizado (includes)
         if (!cliente) {
           const nomeNormalizado = normalizarNomeEmpresa(os.clienteNome);
           const todosClientes = await Cliente.find({});
@@ -157,13 +191,42 @@ exports.importarOrdensServico = async (req, res) => {
                    fantasiaNormalizada.includes(nomeNormalizado) || 
                    nomeNormalizado.includes(fantasiaNormalizada);
           });
+        }
+        
+        // Se ainda não encontrar, busca por similaridade de palavras-chave
+        if (!cliente) {
+          console.log(`⚠️  Busca exata falhou, tentando busca por similaridade...`);
+          const todosClientes = await Cliente.find({});
           
-          if (!cliente) {
-            throw new Error(`Cliente "${os.clienteNome}" não encontrado no sistema. Cadastre o cliente antes de importar.`);
+          let melhorMatch = null;
+          let melhorScore = 0;
+          
+          for (const c of todosClientes) {
+            const scoreRazao = calcularSimilaridade(os.clienteNome, c.razaoSocial);
+            const scoreFantasia = calcularSimilaridade(os.clienteNome, c.nomeFantasia);
+            const score = Math.max(scoreRazao, scoreFantasia);
+            
+            if (score > melhorScore && score >= 0.4) { // Mínimo 40% de similaridade
+              melhorScore = score;
+              melhorMatch = c;
+            }
           }
           
+          if (melhorMatch) {
+            cliente = melhorMatch;
+            console.log(`✅ Cliente encontrado por similaridade (${Math.round(melhorScore * 100)}%): "${cliente.nomeFantasia}" (buscado: "${os.clienteNome}")`);
+          }
+        }
+        
+        if (!cliente) {
+          throw new Error(`Cliente "${os.clienteNome}" não encontrado no sistema. Cadastre o cliente antes de importar.`);
+        }
+        
+        if (!cliente.nomeFantasia) {
           console.log(`⚠️  Cliente encontrado com nome aproximado: "${cliente.nomeFantasia}" (buscado: "${os.clienteNome}")`);
         } else {
+          console.log(`✅ Cliente encontrado: "${cliente.nomeFantasia}" (ID: ${cliente._id})`);
+        }
           console.log(`✅ Cliente encontrado: "${cliente.nomeFantasia}" (ID: ${cliente._id})`);
         }
         
@@ -180,7 +243,7 @@ exports.importarOrdensServico = async (req, res) => {
           ]
         });
 
-        // Se não encontrar, busca com nome normalizado
+        // Se não encontrar, busca com nome normalizado (includes)
         if (!fornecedor) {
           const nomeNormalizado = normalizarNomeEmpresa(os.fornecedorNome);
           const todosFornecedores = await Fornecedor.find({});
@@ -193,14 +256,60 @@ exports.importarOrdensServico = async (req, res) => {
                    fantasiaNormalizada.includes(nomeNormalizado) || 
                    nomeNormalizado.includes(fantasiaNormalizada);
           });
+        }
+        
+        // Se ainda não encontrar, busca por similaridade de palavras-chave
+        if (!fornecedor) {
+          console.log(`⚠️  Busca exata falhou, tentando busca por similaridade...`);
+          const palavrasChaveBusca = extrairPalavrasChave(os.fornecedorNome);
+          console.log(`🔑 Palavras-chave extraídas de "${os.fornecedorNome}": [${palavrasChaveBusca.join(', ')}]`);
           
-          if (!fornecedor) {
-            // Lista fornecedores disponíveis para ajudar o usuário
-            const fornecedoresDisponiveis = await Fornecedor.find({}, 'nomeFantasia razaoSocial').limit(10);
-            const lista = fornecedoresDisponiveis.map(f => f.nomeFantasia || f.razaoSocial).join(', ');
-            throw new Error(`Fornecedor "${os.fornecedorNome}" não encontrado. Exemplos cadastrados: ${lista}`);
+          const todosFornecedores = await Fornecedor.find({});
+          
+          let melhorMatch = null;
+          let melhorScore = 0;
+          let topMatches = []; // Para debug
+          
+          for (const f of todosFornecedores) {
+            const scoreRazao = calcularSimilaridade(os.fornecedorNome, f.razaoSocial);
+            const scoreFantasia = calcularSimilaridade(os.fornecedorNome, f.nomeFantasia);
+            const score = Math.max(scoreRazao, scoreFantasia);
+            
+            // Armazena top 3 para debug
+            if (score > 0) {
+              topMatches.push({ nome: f.nomeFantasia || f.razaoSocial, score });
+              topMatches.sort((a, b) => b.score - a.score);
+              if (topMatches.length > 3) topMatches.pop();
+            }
+            
+            if (score > melhorScore && score >= 0.4) { // Mínimo 40% de similaridade
+              melhorScore = score;
+              melhorMatch = f;
+            }
           }
           
+          // Log dos top matches para debug
+          if (topMatches.length > 0) {
+            console.log(`📊 Top matches encontrados:`);
+            topMatches.forEach(m => {
+              console.log(`   - ${m.nome}: ${Math.round(m.score * 100)}%`);
+            });
+          }
+          
+          if (melhorMatch) {
+            fornecedor = melhorMatch;
+            console.log(`✅ Fornecedor encontrado por similaridade (${Math.round(melhorScore * 100)}%): "${fornecedor.nomeFantasia}" (buscado: "${os.fornecedorNome}")`);
+          }
+        }
+        
+        if (!fornecedor) {
+          // Lista fornecedores disponíveis para ajudar o usuário
+          const fornecedoresDisponiveis = await Fornecedor.find({}, 'nomeFantasia razaoSocial').limit(15);
+          const lista = fornecedoresDisponiveis.map(f => f.nomeFantasia || f.razaoSocial).join(', ');
+          throw new Error(`Fornecedor "${os.fornecedorNome}" não encontrado. Exemplos cadastrados: ${lista}`);
+        }
+        
+        if (!fornecedor.nomeFantasia) {
           console.log(`⚠️  Fornecedor encontrado com nome aproximado: "${fornecedor.nomeFantasia}" (buscado: "${os.fornecedorNome}")`);
         } else {
           console.log(`✅ Fornecedor encontrado: "${fornecedor.nomeFantasia}" (ID: ${fornecedor._id})`);

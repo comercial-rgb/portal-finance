@@ -204,7 +204,11 @@ exports.updateCliente = async (req, res) => {
       updatePayload.taxasAntecipacao = {
         aVista: sanitizeNumber(req.body.taxasAntecipacao.aVista, cliente.taxasAntecipacao?.aVista ?? 15),
         aposFechamento: sanitizeNumber(req.body.taxasAntecipacao.aposFechamento, cliente.taxasAntecipacao?.aposFechamento ?? 13),
-        aprazado: sanitizeNumber(req.body.taxasAntecipacao.aprazado, cliente.taxasAntecipacao?.aprazado ?? 0)
+        aprazado: sanitizeNumber(req.body.taxasAntecipacao.aprazado, cliente.taxasAntecipacao?.aprazado ?? 0),
+        dias30: sanitizeNumber(req.body.taxasAntecipacao.dias30, cliente.taxasAntecipacao?.dias30 ?? 0),
+        dias40: sanitizeNumber(req.body.taxasAntecipacao.dias40, cliente.taxasAntecipacao?.dias40 ?? 0),
+        dias50: sanitizeNumber(req.body.taxasAntecipacao.dias50, cliente.taxasAntecipacao?.dias50 ?? 0),
+        dias60: sanitizeNumber(req.body.taxasAntecipacao.dias60, cliente.taxasAntecipacao?.dias60 ?? 0)
       };
     }
 

@@ -128,6 +128,24 @@ function Faturados() {
     navigate(`/faturados/editar/${faturaId}`);
   };
 
+  const handleExcluirFatura = async (faturaId, numeroFatura) => {
+    if (!window.confirm(`⚠️ Tem certeza que deseja excluir a fatura ${numeroFatura}?\n\nAs ordens de serviço voltarão a ficar elegíveis para novas faturas.`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await api.delete(`/faturas/${faturaId}`);
+      toast.success('✅ Fatura excluída com sucesso! As ordens agora estão elegíveis novamente.');
+      loadFaturas(); // Recarregar lista
+    } catch (error) {
+      console.error('Erro ao excluir fatura:', error);
+      toast.error('❌ Erro ao excluir fatura: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="page-container">
       <Header user={user} />
@@ -269,6 +287,21 @@ function Faturados() {
                                   <circle cx="12" cy="12" r="3"></circle>
                                 </svg>
                               </button>
+                              {!isReadOnly && (
+                                <button
+                                  className="btn-icon btn-delete"
+                                  onClick={() => handleExcluirFatura(fatura._id, fatura.numeroFatura)}
+                                  title="Excluir Fatura"
+                                  style={{ marginLeft: '8px' }}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                                  </svg>
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>

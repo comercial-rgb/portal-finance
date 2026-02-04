@@ -242,6 +242,14 @@
   background: rgba(0, 91, 237, 0.1);
 }
 
+.btn-icon.btn-delete {
+  color: #dc2626;
+}
+
+.btn-icon.btn-delete:hover {
+  background: rgba(220, 38, 38, 0.1);
+}
+
 /* Estado vazio */
 .empty-state {
   text-align: center;

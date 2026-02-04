@@ -408,6 +408,18 @@ function FaturasFornecedores() {
         case 'aprazado':
           taxa = clienteTaxaInfo.taxasAntecipacao?.aprazado || 0;
           break;
+        case 'dias30':
+          taxa = clienteTaxaInfo.taxasAntecipacao?.dias30 || 0;
+          break;
+        case 'dias40':
+          taxa = clienteTaxaInfo.taxasAntecipacao?.dias40 || 0;
+          break;
+        case 'dias50':
+          taxa = clienteTaxaInfo.taxasAntecipacao?.dias50 || 0;
+          break;
+        case 'dias60':
+          taxa = clienteTaxaInfo.taxasAntecipacao?.dias60 || 0;
+          break;
         default:
           taxa = 0;
       }

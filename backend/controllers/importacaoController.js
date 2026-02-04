@@ -3,6 +3,19 @@ const Cliente = require('../models/Cliente');
 const Fornecedor = require('../models/Fornecedor');
 const { Tipo, TipoServicoSolicitado } = require('../models/TipoServico');
 
+// Função para normalizar nomes de empresas para comparação
+const normalizarNomeEmpresa = (nome) => {
+  if (!nome) return '';
+  
+  return nome
+    .toLowerCase()
+    .trim()
+    .replace(/\b(ltda|s\/a|s\.a\.|me|epp|eireli)\b/gi, '') // Remove tipos societários
+    .replace(/[-.]/g, ' ') // Remove hífens e pontos
+    .replace(/\s+/g, ' ') // Normaliza espaços múltiplos
+    .trim();
+};
+
 // Função para converter valores em formato brasileiro (R$ 1.234,56) para número
 const limparValorMonetario = (valor) => {
   if (!valor || valor === '') return 0;
@@ -77,6 +90,7 @@ exports.importarOrdensServico = async (req, res) => {
 
         console.log(`🔍 Buscando cliente: "${os.clienteNome}"`);
         
+        // Busca exata primeiro
         let cliente = await Cliente.findOne({ 
           $or: [
             { razaoSocial: { $regex: new RegExp(`^${os.clienteNome.trim()}$`, 'i') } },
@@ -84,19 +98,25 @@ exports.importarOrdensServico = async (req, res) => {
           ]
         });
 
+        // Se não encontrar, busca com nome normalizado
         if (!cliente) {
-          cliente = await Cliente.findOne({ 
-            $or: [
-              { razaoSocial: { $regex: new RegExp(os.clienteNome.trim(), 'i') } },
-              { nomeFantasia: { $regex: new RegExp(os.clienteNome.trim(), 'i') } }
-            ]
+          const nomeNormalizado = normalizarNomeEmpresa(os.clienteNome);
+          const todosClientes = await Cliente.find({}, 'razaoSocial nomeFantasia');
+          
+          cliente = todosClientes.find(c => {
+            const razaoNormalizada = normalizarNomeEmpresa(c.razaoSocial);
+            const fantasiaNormalizada = normalizarNomeEmpresa(c.nomeFantasia);
+            return razaoNormalizada.includes(nomeNormalizado) || 
+                   nomeNormalizado.includes(razaoNormalizada) ||
+                   fantasiaNormalizada.includes(nomeNormalizado) || 
+                   nomeNormalizado.includes(fantasiaNormalizada);
           });
           
           if (!cliente) {
             throw new Error(`Cliente "${os.clienteNome}" não encontrado no sistema. Cadastre o cliente antes de importar.`);
           }
           
-          console.log(`⚠️  Cliente encontrado com nome aproximado: "${cliente.nomeFantasia}"`);
+          console.log(`⚠️  Cliente encontrado com nome aproximado: "${cliente.nomeFantasia}" (buscado: "${os.clienteNome}")`);
         } else {
           console.log(`✅ Cliente encontrado: "${cliente.nomeFantasia}" (ID: ${cliente._id})`);
         }
@@ -111,13 +131,18 @@ exports.importarOrdensServico = async (req, res) => {
           ]
         });
 
-        // Se não encontrar, busca parcial
+        // Se não encontrar, busca com nome normalizado
         if (!fornecedor) {
-          fornecedor = await Fornecedor.findOne({ 
-            $or: [
-              { razaoSocial: { $regex: new RegExp(os.fornecedorNome.trim(), 'i') } },
-              { nomeFantasia: { $regex: new RegExp(os.fornecedorNome.trim(), 'i') } }
-            ]
+          const nomeNormalizado = normalizarNomeEmpresa(os.fornecedorNome);
+          const todosFornecedores = await Fornecedor.find({}, 'razaoSocial nomeFantasia');
+          
+          fornecedor = todosFornecedores.find(f => {
+            const razaoNormalizada = normalizarNomeEmpresa(f.razaoSocial);
+            const fantasiaNormalizada = normalizarNomeEmpresa(f.nomeFantasia);
+            return razaoNormalizada.includes(nomeNormalizado) || 
+                   nomeNormalizado.includes(razaoNormalizada) ||
+                   fantasiaNormalizada.includes(nomeNormalizado) || 
+                   nomeNormalizado.includes(fantasiaNormalizada);
           });
           
           if (!fornecedor) {
@@ -127,7 +152,7 @@ exports.importarOrdensServico = async (req, res) => {
             throw new Error(`Fornecedor "${os.fornecedorNome}" não encontrado. Exemplos cadastrados: ${lista}`);
           }
           
-          console.log(`⚠️  Fornecedor encontrado com nome aproximado: "${fornecedor.nomeFantasia}"`);
+          console.log(`⚠️  Fornecedor encontrado com nome aproximado: "${fornecedor.nomeFantasia}" (buscado: "${os.fornecedorNome}")`);
         } else {
           console.log(`✅ Fornecedor encontrado: "${fornecedor.nomeFantasia}" (ID: ${fornecedor._id})`);
         }

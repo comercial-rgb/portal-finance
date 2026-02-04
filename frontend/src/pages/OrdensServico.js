@@ -87,8 +87,8 @@ function OrdensServico() {
   const downloadTemplate = () => {
     const template = [
       'N° Ordem de Serviço *;Data de Referência *;Cliente *;Fornecedor *;Tipo de Serviço Solicitado *;Tipo *;Centro de Custo *;Subunidade;Placa;Veículo;Valor Peças (R$);Valor Serviço (R$);N° Nota Fiscal Peça;N° Nota Fiscal Serviço',
-      'OS/2024/001;2024-01-15;Cliente ABC Ltda;Fornecedor XYZ;Manutenção Preventiva;Peças e Serviços;Frota Leve;Região Sul;ABC-1234;Fiat Strada 2020;R$ 1.000,00;R$ 500,00;NFe-12345;NFe-12346',
-      'OS/2024/002;2024-01-20;Cliente ABC Ltda;Fornecedor XYZ;Manutenção Corretiva;Peças;Frota Pesada;;DEF-5678;Mercedes Actros 2019;R$ 2.500,00;0;NFe-12347;'
+      'OS/2024/001;15/01/2024;Cliente ABC Ltda;Fornecedor XYZ;Manutenção Preventiva;Peças e Serviços;Frota Leve;Região Sul;ABC-1234;Fiat Strada 2020;R$ 1.000,00;R$ 500,00;NFe-12345;NFe-12346',
+      'OS/2024/002;20/01/2024;Cliente ABC Ltda;Fornecedor XYZ;Manutenção Corretiva;Peças;Frota Pesada;;DEF-5678;Mercedes Actros 2019;R$ 2.500,00;0;NFe-12347;'
     ].join('\n');
 
     const blob = new Blob(['\ufeff' + template], { type: 'text/csv;charset=utf-8;' });

@@ -16,6 +16,37 @@ const normalizarNomeEmpresa = (nome) => {
     .trim();
 };
 
+// Função para converter data brasileira (DD/MM/YYYY) para formato ISO
+const converterDataBrasileira = (data) => {
+  if (!data) return null;
+  
+  // Se já é uma data válida, retorna
+  if (data instanceof Date) return data;
+  
+  const dataStr = String(data).trim();
+  
+  // Tenta formato brasileiro DD/MM/YYYY
+  const matchBR = dataStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (matchBR) {
+    const [, dia, mes, ano] = matchBR;
+    return new Date(`${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`);
+  }
+  
+  // Tenta formato ISO YYYY-MM-DD
+  const matchISO = dataStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (matchISO) {
+    return new Date(dataStr);
+  }
+  
+  // Tenta parsing direto
+  const dataConvertida = new Date(dataStr);
+  if (!isNaN(dataConvertida.getTime())) {
+    return dataConvertida;
+  }
+  
+  return null;
+};
+
 // Função para converter valores em formato brasileiro (R$ 1.234,56) para número
 const limparValorMonetario = (valor) => {
   if (!valor || valor === '') return 0;
@@ -64,6 +95,13 @@ exports.importarOrdensServico = async (req, res) => {
         if (!os.dataReferencia) {
           throw new Error('Data de Referência é obrigatória');
         }
+        
+        // Converte data para formato aceito pelo MongoDB
+        const dataReferencia = converterDataBrasileira(os.dataReferencia);
+        if (!dataReferencia || isNaN(dataReferencia.getTime())) {
+          throw new Error(`Data de Referência inválida: "${os.dataReferencia}". Use formato DD/MM/YYYY ou YYYY-MM-DD`);
+        }
+        
         if (!os.clienteNome) {
           throw new Error('Cliente é obrigatório');
         }
@@ -232,7 +270,7 @@ exports.importarOrdensServico = async (req, res) => {
 
         const novaOS = new OrdemServico({
           numeroOrdemServico: os.numeroOrdemServico,
-          dataReferencia: os.dataReferencia,
+          dataReferencia: dataReferencia,
           cliente: cliente._id,
           fornecedor: fornecedor._id,
           tipoServicoSolicitado: tipoServicoSolicitadoObj._id,

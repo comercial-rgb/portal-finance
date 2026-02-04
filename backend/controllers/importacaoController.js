@@ -139,7 +139,7 @@ exports.importarOrdensServico = async (req, res) => {
         // Se não encontrar, busca com nome normalizado
         if (!cliente) {
           const nomeNormalizado = normalizarNomeEmpresa(os.clienteNome);
-          const todosClientes = await Cliente.find({}, 'razaoSocial nomeFantasia');
+          const todosClientes = await Cliente.find({});
           
           cliente = todosClientes.find(c => {
             const razaoNormalizada = normalizarNomeEmpresa(c.razaoSocial);
@@ -172,7 +172,7 @@ exports.importarOrdensServico = async (req, res) => {
         // Se não encontrar, busca com nome normalizado
         if (!fornecedor) {
           const nomeNormalizado = normalizarNomeEmpresa(os.fornecedorNome);
-          const todosFornecedores = await Fornecedor.find({}, 'razaoSocial nomeFantasia');
+          const todosFornecedores = await Fornecedor.find({});
           
           fornecedor = todosFornecedores.find(f => {
             const razaoNormalizada = normalizarNomeEmpresa(f.razaoSocial);

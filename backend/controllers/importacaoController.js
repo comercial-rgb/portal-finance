@@ -158,6 +158,9 @@ exports.importarOrdensServico = async (req, res) => {
         } else {
           console.log(`✅ Cliente encontrado: "${cliente.nomeFantasia}" (ID: ${cliente._id})`);
         }
+        
+        // Log dos descontos do cliente
+        console.log(`📊 Descontos cadastrados no cliente: descontoPecas=${cliente.descontoPecas}%, descontoServicos=${cliente.descontoServicos}%`);
 
         console.log(`🔍 Buscando fornecedor: "${os.fornecedorNome}"`);
         

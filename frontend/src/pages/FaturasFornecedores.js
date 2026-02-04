@@ -296,6 +296,12 @@ function FaturasFornecedores() {
       toast.warning('Selecione pelo menos uma ordem de serviço');
       return;
     }
+    
+    console.log('=== ABRINDO MODAL FATURA ===');
+    console.log('clienteTaxaInfo atual:', clienteTaxaInfo);
+    console.log('tipoPagamento atual:', tipoPagamento);
+    console.log('============================');
+    
     setShowFaturaModal(true);
   };
 

@@ -124,40 +124,12 @@ function FaturasClientes() {
       let ordensData = response.data.ordensServico || response.data;
       ordensData = Array.isArray(ordensData) ? ordensData : [];
       
-      console.log('=== FATURAS CLIENTES - loadFiltrados ===');
-      console.log('Total de ordens retornadas do backend:', ordensData.length);
-      console.log('Filtros aplicados:', filtros);
-      
-      // Análise detalhada antes de filtrar
-      const faturadas = ordensData.filter(o => o.faturadoCliente === true);
-      const naoAutorizadas = ordensData.filter(o => o.status !== 'Autorizada' && o.status !== 'Aguardando pagamento' && o.status !== 'Paga');
-      
-      console.log('📊 Análise das 31 ordens:');
-      console.log(`  - Ordens JÁ FATURADAS para cliente (faturadoCliente=true): ${faturadas.length}`);
-      if (faturadas.length > 0) {
-        console.log('    ⚠️ IMPORTANTE: Essas ordens já foram faturadas anteriormente!');
-        console.log('    💡 Para verificar, acesse: Notas Fiscais Clientes ou veja os códigos abaixo:');
-        console.log('    Códigos das ordens faturadas:', faturadas.map(o => o.numeroOrdemServico || o.codigo).join(', '));
-        console.table(faturadas.map(o => ({ 
-          Código: o.numeroOrdemServico || o.codigo, 
-          Status: o.status,
-          FaturadoCliente: o.faturadoCliente,
-          Cliente: o.cliente?.razaoSocial || o.cliente?.nomeFantasia
-        })));
-      }
-      console.log(`  - Ordens com STATUS INADEQUADO (não é Autorizada/Aguardando pagamento/Paga): ${naoAutorizadas.length}`);
-      if (naoAutorizadas.length > 0) {
-        console.log('    Status encontrados:', naoAutorizadas.map(o => ({ codigo: o.numeroOrdemServico, status: o.status })));
-      }
-      
       // FILTRO CRÍTICO: Aplicar os mesmos filtros do loadData inicial
       // - Não pode ter faturadoCliente = true
       // - Status "Autorizada" OU Status "Aguardando pagamento" ou "Paga"
-      const antesFiltro = ordensData.length;
       ordensData = ordensData.filter(o => 
         !o.faturadoCliente && (o.status === 'Autorizada' || o.status === 'Aguardando pagamento' || o.status === 'Paga')
       );
-      console.log(`✅ Após filtro de elegibilidade: ${antesFiltro} → ${ordensData.length} ordens elegíveis`);
       
       // Filtros adicionais no frontend (exceto cliente que já vem filtrado do backend)
       if (filtros.tipo) {

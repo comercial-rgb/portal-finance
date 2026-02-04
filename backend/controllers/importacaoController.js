@@ -160,7 +160,7 @@ exports.importarOrdensServico = async (req, res) => {
         }
         
         // Log dos descontos do cliente
-        console.log(`📊 Descontos cadastrados no cliente: descontoPecas=${cliente.descontoPecas}%, descontoServicos=${cliente.descontoServicos}%`);
+        console.log(`📊 Descontos cadastrados no cliente: percentualDesconto=${cliente.percentualDesconto}%`);
 
         console.log(`🔍 Buscando fornecedor: "${os.fornecedorNome}"`);
         
@@ -266,13 +266,13 @@ exports.importarOrdensServico = async (req, res) => {
         
         console.log(`💰 Valores originais: Peças R$ ${valorPecas.toFixed(2)} | Serviço R$ ${valorServico.toFixed(2)}`);
         
-        const descontoPecasPerc = cliente.descontoPecas || 0;
-        const descontoServicoPerc = cliente.descontoServicos || 0;
+        // Usar percentualDesconto do cliente para ambos (peças e serviços)
+        const descontoPercentual = cliente.percentualDesconto || 0;
 
-        console.log(`🎯 Descontos do cliente: Peças ${descontoPecasPerc}% | Serviço ${descontoServicoPerc}%`);
+        console.log(`🎯 Desconto do cliente: ${descontoPercentual}% (aplicado em peças e serviços)`);
 
-        const valorPecasComDesconto = valorPecas - (valorPecas * descontoPecasPerc / 100);
-        const valorServicoComDesconto = valorServico - (valorServico * descontoServicoPerc / 100);
+        const valorPecasComDesconto = valorPecas - (valorPecas * descontoPercentual / 100);
+        const valorServicoComDesconto = valorServico - (valorServico * descontoPercentual / 100);
         const valorFinal = valorPecasComDesconto + valorServicoComDesconto;
 
         console.log(`💵 Valores com desconto: Peças R$ ${valorPecasComDesconto.toFixed(2)} | Serviço R$ ${valorServicoComDesconto.toFixed(2)}`);
@@ -291,8 +291,8 @@ exports.importarOrdensServico = async (req, res) => {
           veiculo: os.veiculo || '',
           valorPecas: valorPecas,
           valorServico: valorServico,
-          descontoPecasPerc: descontoPecasPerc,
-          descontoServicoPerc: descontoServicoPerc,
+          descontoPecasPerc: descontoPercentual,
+          descontoServicoPerc: descontoPercentual,
           valorPecasComDesconto: valorPecasComDesconto,
           valorServicoComDesconto: valorServicoComDesconto,
           valorFinal: valorFinal,

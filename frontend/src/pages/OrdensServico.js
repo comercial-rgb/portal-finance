@@ -210,7 +210,7 @@ function OrdensServico() {
         return;
       }
 
-      const response = await api.post('/api/importacao/ordens-servico', {
+      const response = await api.post('/importacao/ordens-servico', {
         ordensServico
       });
 

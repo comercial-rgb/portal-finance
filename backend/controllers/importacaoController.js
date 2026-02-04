@@ -103,6 +103,7 @@ exports.importarOrdensServico = async (req, res) => {
 
         console.log(`🔍 Buscando fornecedor: "${os.fornecedorNome}"`);
         
+        // Busca exata primeiro
         let fornecedor = await Fornecedor.findOne({ 
           $or: [
             { razaoSocial: { $regex: new RegExp(`^${os.fornecedorNome.trim()}$`, 'i') } },
@@ -110,6 +111,7 @@ exports.importarOrdensServico = async (req, res) => {
           ]
         });
 
+        // Se não encontrar, busca parcial
         if (!fornecedor) {
           fornecedor = await Fornecedor.findOne({ 
             $or: [
@@ -119,7 +121,10 @@ exports.importarOrdensServico = async (req, res) => {
           });
           
           if (!fornecedor) {
-            throw new Error(`Fornecedor "${os.fornecedorNome}" não encontrado no sistema. Cadastre o fornecedor antes de importar.`);
+            // Lista fornecedores disponíveis para ajudar o usuário
+            const fornecedoresDisponiveis = await Fornecedor.find({}, 'nomeFantasia razaoSocial').limit(10);
+            const lista = fornecedoresDisponiveis.map(f => f.nomeFantasia || f.razaoSocial).join(', ');
+            throw new Error(`Fornecedor "${os.fornecedorNome}" não encontrado. Exemplos cadastrados: ${lista}`);
           }
           
           console.log(`⚠️  Fornecedor encontrado com nome aproximado: "${fornecedor.nomeFantasia}"`);
@@ -177,12 +182,12 @@ exports.importarOrdensServico = async (req, res) => {
           }
           
           const subunidadeExiste = centroCusto.subunidades.some(sub => 
-            sub.toLowerCase().trim() === os.subunidade.toLowerCase().trim()
+            sub.nome && sub.nome.toLowerCase().trim() === os.subunidade.toLowerCase().trim()
           );
 
           if (!subunidadeExiste) {
             console.log(`⚠️  Subunidade "${os.subunidade}" não existe, criando...`);
-            centroCusto.subunidades.push(os.subunidade.trim());
+            centroCusto.subunidades.push({ nome: os.subunidade.trim() });
             await cliente.save();
             console.log(`✅ Subunidade criada: ${os.subunidade}`);
           } else {

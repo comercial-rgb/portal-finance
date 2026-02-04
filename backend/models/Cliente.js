@@ -203,6 +203,12 @@ const ClienteSchema = new mongoose.Schema({
       min: 0,
       max: 100
     },
+    dias30: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100
+    },
     dias40: {
       type: Number,
       default: 0,

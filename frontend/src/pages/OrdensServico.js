@@ -106,31 +106,70 @@ function OrdensServico() {
 
   const processarCSV = (texto) => {
     const linhas = texto.split('\n').filter(linha => linha.trim());
+    
+    if (linhas.length < 2) {
+      toast.error('Arquivo CSV vazio ou sem dados');
+      return [];
+    }
+    
     const ordensServico = [];
+    const errosValidacao = [];
     
     for (let i = 1; i < linhas.length; i++) {
-      const valores = linhas[i].split(',').map(v => v.trim());
-      
-      if (valores.length < 7) continue;
-      
-      const os = {
-        numeroOrdemServico: valores[0],
-        dataReferencia: valores[1],
-        clienteNome: valores[2],
-        fornecedorNome: valores[3],
-        tipoServicoSolicitado: valores[4],
-        tipo: valores[5],
-        centroCusto: valores[6],
-        subunidade: valores[7] || '',
-        placa: valores[8] || '',
-        veiculo: valores[9] || '',
-        valorPecas: valores[10] || '0',
-        valorServico: valores[11] || '0',
-        notaFiscalPeca: valores[12] || '',
-        notaFiscalServico: valores[13] || ''
-      };
-      
-      ordensServico.push(os);
+      try {
+        // Parse CSV considerando valores entre aspas
+        const valores = linhas[i].match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g) || [];
+        const valoresLimpos = valores.map(v => v.replace(/^"|"$/g, '').trim());
+        
+        if (valoresLimpos.length < 7) {
+          errosValidacao.push(`Linha ${i + 1}: Dados insuficientes (mínimo 7 campos obrigatórios)`);
+          continue;
+        }
+        
+        const os = {
+          numeroOrdemServico: valoresLimpos[0] || '',
+          dataReferencia: valoresLimpos[1] || '',
+          clienteNome: valoresLimpos[2] || '',
+          fornecedorNome: valoresLimpos[3] || '',
+          tipoServicoSolicitado: valoresLimpos[4] || '',
+          tipo: valoresLimpos[5] || '',
+          centroCusto: valoresLimpos[6] || '',
+          subunidade: valoresLimpos[7] || '',
+          placa: valoresLimpos[8] || '',
+          veiculo: valoresLimpos[9] || '',
+          valorPecas: valoresLimpos[10] || '0',
+          valorServico: valoresLimpos[11] || '0',
+          notaFiscalPeca: valoresLimpos[12] || '',
+          notaFiscalServico: valoresLimpos[13] || ''
+        };
+        
+        // Validações básicas no frontend
+        if (!os.numeroOrdemServico) {
+          errosValidacao.push(`Linha ${i + 1}: N° Ordem de Serviço é obrigatório`);
+          continue;
+        }
+        if (!os.dataReferencia) {
+          errosValidacao.push(`Linha ${i + 1}: Data de Referência é obrigatória`);
+          continue;
+        }
+        if (!os.clienteNome) {
+          errosValidacao.push(`Linha ${i + 1}: Cliente é obrigatório`);
+          continue;
+        }
+        if (!os.fornecedorNome) {
+          errosValidacao.push(`Linha ${i + 1}: Fornecedor é obrigatório`);
+          continue;
+        }
+        
+        ordensServico.push(os);
+      } catch (error) {
+        errosValidacao.push(`Linha ${i + 1}: Erro ao processar dados - ${error.message}`);
+      }
+    }
+    
+    if (errosValidacao.length > 0) {
+      console.warn('Erros de validação no CSV:', errosValidacao);
+      toast.warning(`${errosValidacao.length} linha(s) com problema foram ignoradas`);
     }
     
     return ordensServico;

@@ -65,38 +65,74 @@ exports.importarOrdensServico = async (req, res) => {
           throw new Error(`OS já cadastrada: ${os.numeroOrdemServico}`);
         }
 
-        // 1. Buscar Cliente
+        // 1. Buscar Cliente (validação rigorosa)
+        console.log(`🔍 Buscando cliente: "${os.clienteNome}"`);
+        
         let cliente = await Cliente.findOne({ 
           $or: [
-            { razaoSocial: { $regex: new RegExp(`^${os.clienteNome}$`, 'i') } },
-            { nomeFantasia: { $regex: new RegExp(`^${os.clienteNome}$`, 'i') } }
+            { razaoSocial: { $regex: new RegExp(`^${os.clienteNome.trim()}$`, 'i') } },
+            { nomeFantasia: { $regex: new RegExp(`^${os.clienteNome.trim()}$`, 'i') } }
           ]
         });
 
         if (!cliente) {
-          throw new Error(`Cliente "${os.clienteNome}" não encontrado`);
+          // Tentar busca parcial como fallback
+          cliente = await Cliente.findOne({ 
+            $or: [
+              { razaoSocial: { $regex: new RegExp(os.clienteNome.trim(), 'i') } },
+              { nomeFantasia: { $regex: new RegExp(os.clienteNome.trim(), 'i') } }
+            ]
+          });
+          
+          if (!cliente) {
+            throw new Error(`Cliente "${os.clienteNome}" não encontrado no sistema. Cadastre o cliente antes de importar.`);
+          }
+          
+          console.log(`⚠️  Cliente encontrado com nome aproximado: "${cliente.nomeFantasia}"`);
+        } else {
+          console.log(`✅ Cliente encontrado: "${cliente.nomeFantasia}" (ID: ${cliente._id})`);
         }
 
-        // 2. Buscar Fornecedor
+        // 2. Buscar Fornecedor (validação rigorosa)
+        console.log(`🔍 Buscando fornecedor: "${os.fornecedorNome}"`);
+        
         let fornecedor = await Fornecedor.findOne({ 
           $or: [
-            { razaoSocial: { $regex: new RegExp(`^${os.fornecedorNome}$`, 'i') } },
-            { nomeFantasia: { $regex: new RegExp(`^${os.fornecedorNome}$`, 'i') } }
+            { razaoSocial: { $regex: new RegExp(`^${os.fornecedorNome.trim()}$`, 'i') } },
+            { nomeFantasia: { $regex: new RegExp(`^${os.fornecedorNome.trim()}$`, 'i') } }
           ]
         });
 
         if (!fornecedor) {
-          throw new Error(`Fornecedor "${os.fornecedorNome}" não encontrado`);
-        }
+          // Tentar busca parcial como fallback
+          fornecedor = await Fornecedor.findOne({ 
+            $or: [
+              { razaoSocial: { $regex: new RegExp(os.fornecedorNome.trim(), 'i') } },
+              { nomeFantasia: { $regex: new RegExp(os.fornecedorNome.trim(), 'i') } }
+            ]
+          });
+          
+          if (!fornecedor) {
+            throw new E/criar Centro de Custo no cliente
+        console.log(`🔍 Verificando centro de custo: "${os.centroCusto}" no cliente ${cliente.nomeFantasia}`);
+        
+        let centroCusto = cliente.centrosCusto.find(cc => 
+          cc.nome.toLowerCase().trim() === os.centroCusto.toLowerCase().trim()
+        );
 
-        // 3. Buscar ou criar Tipo de Serviço Solicitado
-        let tipoServicoSolicitadoObj = await TipoServicoSolicitado.findOne({
-          nome: { $regex: new RegExp(`^${os.tipoServicoSolicitado}$`, 'i') }
-        });
-
-        if (!tipoServicoSolicitadoObj) {
-          tipoServicoSolicitadoObj = new TipoServicoSolicitado({ 
-            nome: os.tipoServicoSolicitado 
+        if (!centroCusto) {
+          console.log(`⚠️  Centro de Custo "${os.centroCusto}" não existe, criando...`);
+          cliente.centrosCusto.push({ nome: os.centroCusto.trim(), subunidades: [] });
+          await cliente.save();
+          console.log(`✅ Centro de Custo criado: ${os.centroCusto}`);
+          
+          // Recarregar cliente
+          cliente = await Cliente.findById(cliente._id);
+          centroCusto = cliente.centrosCusto.find(cc => 
+            cc.nome.toLowerCase().trim() === os.centroCusto.toLowerCase().trim()
+          );
+        } else {
+          console.log(`✅ Centro de Custo já existe: ${centroCusto.nome}`  nome: os.tipoServicoSolicitado 
           });
           await tipoServicoSolicitadoObj.save();
           console.log(`✅ Tipo de Serviço Solicitado criado: ${os.tipoServicoSolicitado}`);
@@ -129,14 +165,23 @@ exports.importarOrdensServico = async (req, res) => {
           centroCusto = cliente.centrosCusto.find(cc => 
             cc.nome.toLowerCase() === os.centroCusto.toLowerCase()
           );
-        }
-
-        // 6. Verificar/criar Subunidade se informada
-        if (os.subunidade && os.subunidade.trim()) {
+        }ole.log(`🔍 Verificando subunidade: "${os.subunidade}"`);
+          
+          if (!centroCusto.subunidades) {
+            centroCusto.subunidades = [];
+          }
+          
           const subunidadeExiste = centroCusto.subunidades.some(sub => 
-            sub.toLowerCase() === os.subunidade.toLowerCase()
+            sub.toLowerCase().trim() === os.subunidade.toLowerCase().trim()
           );
 
+          if (!subunidadeExiste) {
+            console.log(`⚠️  Subunidade "${os.subunidade}" não existe, criando...`);
+            centroCusto.subunidades.push(os.subunidade.trim());
+            await cliente.save();
+            console.log(`✅ Subunidade criada: ${os.subunidade}`);
+          } else {
+            console.log(`✅ Subunidade já existe
           if (!subunidadeExiste) {
             centroCusto.subunidades.push(os.subunidade);
             await cliente.save();
@@ -192,7 +237,12 @@ exports.importarOrdensServico = async (req, res) => {
           cliente: cliente.nomeFantasia,
           fornecedor: fornecedor.nomeFantasia,
           valorFinal: valorFinal.toFixed(2)
-        });
+        ole.log(`\n📊 Resumo da importação:`);
+    console.log(`   ✅ Sucessos: ${resultados.sucesso.length}`);
+    console.log(`   ❌ Erros: ${resultados.erros.length}`);
+    console.log(`   📦 Total: ${resultados.total}`);
+    
+    cons});
 
       } catch (error) {
         console.error(`❌ Erro na linha ${linha}:`, error.message);

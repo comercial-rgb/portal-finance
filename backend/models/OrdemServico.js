@@ -176,21 +176,31 @@ const ordemServicoSchema = new mongoose.Schema({
 ordemServicoSchema.pre('validate', async function(next) {
   if (!this.codigo) {
     try {
-      // Buscar a última OS por código para garantir sequência única
-      const ultimaOS = await mongoose.model('OrdemServico')
-        .findOne()
-        .sort({ codigo: -1 })
-        .select('codigo')
-        .lean();
-      
-      let proximoNumero = 1;
-      if (ultimaOS && ultimaOS.codigo) {
-        const numeroAtual = parseInt(ultimaOS.codigo.replace('OS-', ''));
-        proximoNumero = numeroAtual + 1;
+      // Se não tem código mas tem numeroOrdemServico, usa o numeroOrdemServico como código
+      if (this.numeroOrdemServico) {
+        this.codigo = this.numeroOrdemServico;
+        console.log(`📝 Usando numeroOrdemServico como código: ${this.codigo}`);
+      } else {
+        // Caso contrário, gera código automático sequencial
+        // Buscar a última OS com código no formato sequencial OS-XXXXXX (6 dígitos)
+        const todasOS = await mongoose.model('OrdemServico')
+          .find({
+            codigo: /^OS-\d{6}$/  // Regex: OS- seguido de exatamente 6 dígitos
+          })
+          .select('codigo')
+          .lean();
+        
+        let proximoNumero = 1;
+        if (todasOS && todasOS.length > 0) {
+          // Extrair números e encontrar o maior
+          const numeros = todasOS.map(os => parseInt(os.codigo.replace('OS-', '')));
+          const maiorNumero = Math.max(...numeros);
+          proximoNumero = maiorNumero + 1;
+        }
+        
+        this.codigo = `OS-${String(proximoNumero).padStart(6, '0')}`;
+        console.log(`📝 Código gerado automaticamente: ${this.codigo}`);
       }
-      
-      this.codigo = `OS-${String(proximoNumero).padStart(6, '0')}`;
-      console.log(`📝 Código gerado: ${this.codigo}`);
     } catch (error) {
       console.error('❌ Erro ao gerar código:', error);
       return next(error);

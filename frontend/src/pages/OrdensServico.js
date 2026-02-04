@@ -21,6 +21,10 @@ function OrdensServico() {
     fornecedor: '',
     status: ''
   });
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [arquivo, setArquivo] = useState(null);
+  const [importando, setImportando] = useState(false);
+  const [resultadosImportacao, setResultadosImportacao] = useState(null);
 
   const ordensPorPagina = 15;
 
@@ -77,6 +81,105 @@ function OrdensServico() {
 
   const handleRelatorio = () => {
     toast.info('Funcionalidade de relatório em desenvolvimento');
+  };
+
+  // Funções de importação
+  const downloadTemplate = () => {
+    const template = [
+      'N° Ordem de Serviço *,Data de Referência *,Cliente *,Fornecedor *,Tipo de Serviço Solicitado *,Tipo *,Centro de Custo *,Subunidade,Placa,Veículo,Valor Peças (R$),Valor Serviço (R$),N° Nota Fiscal Peça,N° Nota Fiscal Serviço',
+      'OS/2024/001,2024-01-15,Cliente ABC Ltda,Fornecedor XYZ,Manutenção Preventiva,Peças e Serviços,Frota Leve,Região Sul,ABC-1234,Fiat Strada 2020,1000.00,500.00,NFe-12345,NFe-12346',
+      'OS/2024/002,2024-01-20,Cliente ABC Ltda,Fornecedor XYZ,Manutenção Corretiva,Peças,Frota Pesada,,DEF-5678,Mercedes Actros 2019,2500.00,0,NFe-12347,'
+    ].join('\n');
+
+    const blob = new Blob(['\ufeff' + template], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'template_importacao_os.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.info('📥 Template baixado com sucesso!');
+  };
+
+  const processarCSV = (texto) => {
+    const linhas = texto.split('\n').filter(linha => linha.trim());
+    const ordensServico = [];
+    
+    for (let i = 1; i < linhas.length; i++) {
+      const valores = linhas[i].split(',').map(v => v.trim());
+      
+      if (valores.length < 7) continue;
+      
+      const os = {
+        numeroOrdemServico: valores[0],
+        dataReferencia: valores[1],
+        clienteNome: valores[2],
+        fornecedorNome: valores[3],
+        tipoServicoSolicitado: valores[4],
+        tipo: valores[5],
+        centroCusto: valores[6],
+        subunidade: valores[7] || '',
+        placa: valores[8] || '',
+        veiculo: valores[9] || '',
+        valorPecas: valores[10] || '0',
+        valorServico: valores[11] || '0',
+        notaFiscalPeca: valores[12] || '',
+        notaFiscalServico: valores[13] || ''
+      };
+      
+      ordensServico.push(os);
+    }
+    
+    return ordensServico;
+  };
+
+  const handleImportar = async () => {
+    if (!arquivo) {
+      toast.error('Selecione um arquivo CSV para importar');
+      return;
+    }
+
+    setImportando(true);
+    setResultadosImportacao(null);
+
+    try {
+      const texto = await arquivo.text();
+      const ordensServico = processarCSV(texto);
+
+      if (ordensServico.length === 0) {
+        toast.error('Nenhuma OS válida encontrada no arquivo');
+        setImportando(false);
+        return;
+      }
+
+      const response = await api.post('/api/importacao/ordens-servico', {
+        ordensServico
+      });
+
+      setResultadosImportacao(response.data.resultados);
+      
+      if (response.data.resultados.erros.length === 0) {
+        toast.success(response.data.message);
+        loadOrdensServico(); // Recarregar lista
+      } else {
+        toast.warning(response.data.message);
+      }
+
+    } catch (error) {
+      console.error('Erro ao importar:', error);
+      toast.error(error.response?.data?.message || 'Erro ao importar OS');
+    } finally {
+      setImportando(false);
+    }
+  };
+
+  const fecharModalImportacao = () => {
+    setShowImportModal(false);
+    setArquivo(null);
+    setResultadosImportacao(null);
   };
 
   const handleDelete = async (id) => {
@@ -142,9 +245,16 @@ function OrdensServico() {
                 <p>Gerencie as ordens de serviço do sistema</p>
               </div>
               {!isReadOnly && (
-                <button className="btn-primary" onClick={() => navigate('/ordens-servico/novo')}>
-                  + Nova Ordem de Serviço
-                </button>
+                <div className="header-actions">
+                  {(user?.role === 'super_admin' || user?.role === 'admin') && (
+                    <button className="btn-secondary" onClick={() => setShowImportModal(true)}>
+                      📥 Importar OS
+                    </button>
+                  )}
+                  <button className="btn-primary" onClick={() => navigate('/ordens-servico/novo')}>
+                    + Nova Ordem de Serviço
+                  </button>
+                </div>
               )}
             </div>
 
@@ -313,6 +423,102 @@ function OrdensServico() {
         </main>
       </div>
       <Footer />
+
+      {/* Modal de Importação */}
+      {showImportModal && (
+        <div className="modal-overlay" onClick={fecharModalImportacao}>
+          <div className="modal-import" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>📦 Importar Ordens de Serviço</h2>
+              <button className="btn-close" onClick={fecharModalImportacao}>×</button>
+            </div>
+            
+            <div className="modal-body">
+              {!resultadosImportacao ? (
+                <>
+                  <div className="import-instructions">
+                    <h3>📋 Instruções</h3>
+                    <ol>
+                      <li>Baixe o template CSV clicando no botão abaixo</li>
+                      <li>Preencha com os dados das OS (não remova o cabeçalho)</li>
+                      <li>Campos com * são obrigatórios</li>
+                      <li>Use formato de data: YYYY-MM-DD (ex: 2024-01-15)</li>
+                      <li>Valores use ponto decimal (ex: 1000.00)</li>
+                    </ol>
+                    <button className="btn-download" onClick={downloadTemplate}>
+                      📥 Baixar Template CSV
+                    </button>
+                  </div>
+
+                  <div className="import-upload">
+                    <h3>📤 Selecione o arquivo CSV</h3>
+                    <input
+                      type="file"
+                      accept=".csv"
+                      onChange={(e) => setArquivo(e.target.files[0])}
+                      id="arquivo-import"
+                      className="file-input"
+                    />
+                    <label htmlFor="arquivo-import" className="file-label">
+                      {arquivo ? `📄 ${arquivo.name}` : '📂 Escolher arquivo CSV'}
+                    </label>
+                  </div>
+                </>
+              ) : (
+                <div className="import-results">
+                  <h3>📊 Resultados da Importação</h3>
+                  <div className="results-summary">
+                    <div className="summary-card success">
+                      <span className="number">{resultadosImportacao.sucesso.length}</span>
+                      <span className="label">Sucessos</span>
+                    </div>
+                    <div className="summary-card error">
+                      <span className="number">{resultadosImportacao.erros.length}</span>
+                      <span className="label">Erros</span>
+                    </div>
+                    <div className="summary-card total">
+                      <span className="number">{resultadosImportacao.total}</span>
+                      <span className="label">Total</span>
+                    </div>
+                  </div>
+
+                  {resultadosImportacao.erros.length > 0 && (
+                    <div className="errors-list">
+                      <h4>❌ Erros:</h4>
+                      {resultadosImportacao.erros.map((erro, idx) => (
+                        <div key={idx} className="error-item">
+                          <strong>Linha {erro.linha}:</strong> {erro.erro}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              {!resultadosImportacao ? (
+                <>
+                  <button className="btn-cancel" onClick={fecharModalImportacao}>
+                    Cancelar
+                  </button>
+                  <button 
+                    className="btn-import" 
+                    onClick={handleImportar}
+                    disabled={!arquivo || importando}
+                  >
+                    {importando ? '⏳ Importando...' : '🚀 Importar'}
+                  </button>
+                </>
+              ) : (
+                <button className="btn-primary" onClick={fecharModalImportacao}>
+                  Fechar
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

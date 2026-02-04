@@ -161,6 +161,29 @@
   border-color: var(--azul-tech);
 }
 
+.btn-warning {
+  padding: 0.75rem 1.5rem;
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: #ffc107;
+  color: #fff;
+  border-color: #e0a800;
+}
+
+.btn-warning:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .loading {
   text-align: center;
   padding: 3rem;

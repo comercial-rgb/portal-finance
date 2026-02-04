@@ -217,10 +217,16 @@ exports.criar = async (req, res) => {
       // Pega o cliente da primeira ordem (todas devem ser do mesmo cliente)
       const clienteOS = ordensServico[0].cliente;
       
+      console.log('🔍 DEBUG TAXA - Cliente:', clienteOS?.nomeFantasia);
+      console.log('🔍 DEBUG TAXA - tipoTaxa:', clienteOS?.tipoTaxa);
+      console.log('🔍 DEBUG TAXA - tipoPagamento:', tipoPagamento);
+      console.log('🔍 DEBUG TAXA - taxasAntecipacao:', JSON.stringify(clienteOS?.taxasAntecipacao));
+      
       if (clienteOS?.tipoTaxa === 'operacao') {
         // Taxa de Operação fixa
         const taxaPerc = clienteOS.taxaOperacao || 15;
         valorTaxasOperacao = (valorComDesconto * taxaPerc) / 100;
+        console.log('💰 Taxa Operação:', taxaPerc + '%', '=', valorTaxasOperacao);
       } else if (clienteOS?.tipoTaxa === 'antecipacao_variavel' && tipoPagamento) {
         // Taxa Antecipação Variável - requer tipoPagamento
         let taxaPerc = 0;
@@ -245,6 +251,7 @@ exports.criar = async (req, res) => {
             break;
         }
         valorTaxasOperacao = (valorComDesconto * taxaPerc) / 100;
+        console.log('💰 Taxa Antecipação Variável:', tipoPagamento, '=', taxaPerc + '%', '=', valorTaxasOperacao);
       }
     }
     

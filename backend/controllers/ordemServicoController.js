@@ -97,12 +97,19 @@ exports.getOrdensServico = async (req, res) => {
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
+    // Recalcula valorFinal dinamicamente baseado nos valores com desconto
+    const ordensComValorRecalculado = ordensServico.map(os => {
+      const osObj = os.toObject();
+      osObj.valorFinal = (osObj.valorPecasComDesconto || 0) + (osObj.valorServicoComDesconto || 0);
+      return osObj;
+    });
+
     console.log(`✅ Encontradas ${ordensServico.length} ordens de serviço`);
 
     const count = await OrdemServico.countDocuments(query);
 
     res.json({
-      ordensServico,
+      ordensServico: ordensComValorRecalculado,
       totalPages: Math.ceil(count / limit),
       currentPage: page,
       total: count

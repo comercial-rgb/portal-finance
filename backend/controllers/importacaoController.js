@@ -261,12 +261,19 @@ exports.importarOrdensServico = async (req, res) => {
         const valorPecas = limparValorMonetario(os.valorPecas);
         const valorServico = limparValorMonetario(os.valorServico);
         
+        console.log(`💰 Valores originais: Peças R$ ${valorPecas.toFixed(2)} | Serviço R$ ${valorServico.toFixed(2)}`);
+        
         const descontoPecasPerc = cliente.descontoPecas || 0;
         const descontoServicoPerc = cliente.descontoServicos || 0;
+
+        console.log(`🎯 Descontos do cliente: Peças ${descontoPecasPerc}% | Serviço ${descontoServicoPerc}%`);
 
         const valorPecasComDesconto = valorPecas - (valorPecas * descontoPecasPerc / 100);
         const valorServicoComDesconto = valorServico - (valorServico * descontoServicoPerc / 100);
         const valorFinal = valorPecasComDesconto + valorServicoComDesconto;
+
+        console.log(`💵 Valores com desconto: Peças R$ ${valorPecasComDesconto.toFixed(2)} | Serviço R$ ${valorServicoComDesconto.toFixed(2)}`);
+        console.log(`💰 Valor Final: R$ ${valorFinal.toFixed(2)}`);
 
         const novaOS = new OrdemServico({
           numeroOrdemServico: os.numeroOrdemServico,
@@ -293,6 +300,10 @@ exports.importarOrdensServico = async (req, res) => {
         });
 
         await novaOS.save();
+        
+        // Recarrega para verificar se salvou corretamente
+        const osVerificacao = await OrdemServico.findById(novaOS._id);
+        console.log(`🔍 Verificação após save: valorFinal=${osVerificacao.valorFinal.toFixed(2)}, valorPecasComDesconto=${osVerificacao.valorPecasComDesconto.toFixed(2)}, valorServicoComDesconto=${osVerificacao.valorServicoComDesconto.toFixed(2)}`);
         
         console.log(`✅ OS criada com sucesso: ${novaOS.codigo}`);
         

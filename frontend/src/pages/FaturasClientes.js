@@ -121,6 +121,13 @@ function FaturasClientes() {
       let ordensData = response.data.ordensServico || response.data;
       ordensData = Array.isArray(ordensData) ? ordensData : [];
       
+      // FILTRO CRÍTICO: Aplicar os mesmos filtros do loadData inicial
+      // - Não pode ter faturadoCliente = true
+      // - Status "Autorizada" OU Status "Aguardando pagamento" ou "Paga"
+      ordensData = ordensData.filter(o => 
+        !o.faturadoCliente && (o.status === 'Autorizada' || o.status === 'Aguardando pagamento' || o.status === 'Paga')
+      );
+      
       // Filtros adicionais no frontend
       if (filtros.cliente) {
         console.log('Filtrando por cliente:', filtros.cliente);

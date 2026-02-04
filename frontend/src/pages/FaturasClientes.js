@@ -128,6 +128,20 @@ function FaturasClientes() {
       console.log('Total de ordens retornadas do backend:', ordensData.length);
       console.log('Filtros aplicados:', filtros);
       
+      // Análise detalhada antes de filtrar
+      const faturadas = ordensData.filter(o => o.faturadoCliente === true);
+      const naoAutorizadas = ordensData.filter(o => o.status !== 'Autorizada' && o.status !== 'Aguardando pagamento' && o.status !== 'Paga');
+      
+      console.log('📊 Análise das 31 ordens:');
+      console.log(`  - Ordens JÁ FATURADAS para cliente (faturadoCliente=true): ${faturadas.length}`);
+      if (faturadas.length > 0) {
+        console.log('    Exemplos:', faturadas.slice(0, 3).map(o => ({ codigo: o.numeroOrdemServico, faturadoCliente: o.faturadoCliente })));
+      }
+      console.log(`  - Ordens com STATUS INADEQUADO (não é Autorizada/Aguardando pagamento/Paga): ${naoAutorizadas.length}`);
+      if (naoAutorizadas.length > 0) {
+        console.log('    Status encontrados:', naoAutorizadas.map(o => ({ codigo: o.numeroOrdemServico, status: o.status })));
+      }
+      
       // FILTRO CRÍTICO: Aplicar os mesmos filtros do loadData inicial
       // - Não pode ter faturadoCliente = true
       // - Status "Autorizada" OU Status "Aguardando pagamento" ou "Paga"
@@ -135,7 +149,7 @@ function FaturasClientes() {
       ordensData = ordensData.filter(o => 
         !o.faturadoCliente && (o.status === 'Autorizada' || o.status === 'Aguardando pagamento' || o.status === 'Paga')
       );
-      console.log(`Após filtro de elegibilidade: ${antesFiltro} → ${ordensData.length} ordens`);
+      console.log(`✅ Após filtro de elegibilidade: ${antesFiltro} → ${ordensData.length} ordens elegíveis`);
       
       // Filtros adicionais no frontend (exceto cliente que já vem filtrado do backend)
       if (filtros.tipo) {

@@ -1257,13 +1257,13 @@ function ClienteForm() {
                         <label>30 Dias Após Fatura (%)</label>
                         <input
                           type="number"
-                          name="taxasAntecipacao.aprazado"
-                          value={formData.taxasAntecipacao.aprazado}
+                          name="taxasAntecipacao.dias30"
+                          value={formData.taxasAntecipacao.dias30}
                           onChange={handleTaxaChange}
                           min="0"
                           max="100"
                           step="0.01"
-                          placeholder="0"
+                          placeholder="10"
                         />
                       </div>
                       <div className="form-group">

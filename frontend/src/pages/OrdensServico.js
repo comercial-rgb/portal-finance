@@ -240,32 +240,6 @@ function OrdensServico() {
     setResultadosImportacao(null);
   };
 
-  const handleRecalcularValores = async () => {
-    if (!window.confirm('Deseja recalcular os valores finais de TODAS as ordens de serviço?\n\nIsso pode levar alguns minutos.')) {
-      return;
-    }
-
-    setRecalculando(true);
-
-    try {
-      const response = await api.post('/admin/recalcular-valores-finais');
-      
-      toast.success(`✅ ${response.data.message}`);
-      
-      if (response.data.resumo) {
-        toast.info(`📊 Atualizadas: ${response.data.resumo.atualizadas} | Já corretas: ${response.data.resumo.jaCorretas}`);
-      }
-
-      // Recarregar lista para mostrar valores atualizados
-      loadOrdensServico();
-    } catch (error) {
-      console.error('❌ Erro ao recalcular:', error);
-      toast.error(error.response?.data?.message || 'Erro ao recalcular valores');
-    } finally {
-      setRecalculando(false);
-    }
-  };
-
   const handleDelete = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir esta ordem de serviço?')) {
       try {

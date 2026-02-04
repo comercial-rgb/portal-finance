@@ -231,8 +231,17 @@ exports.criar = async (req, res) => {
           case 'aposFechamento':
             taxaPerc = clienteOS.taxasAntecipacao?.aposFechamento || 13;
             break;
-          case 'aprazado':
-            taxaPerc = clienteOS.taxasAntecipacao?.aprazado || 0;
+          case 'dias30':
+            taxaPerc = clienteOS.taxasAntecipacao?.dias30 || 10;
+            break;
+          case 'dias40':
+            taxaPerc = clienteOS.taxasAntecipacao?.dias40 || 8;
+            break;
+          case 'dias50':
+            taxaPerc = clienteOS.taxasAntecipacao?.dias50 || 6;
+            break;
+          case 'dias60':
+            taxaPerc = clienteOS.taxasAntecipacao?.dias60 || 0;
             break;
         }
         valorTaxasOperacao = (valorComDesconto * taxaPerc) / 100;
@@ -305,8 +314,17 @@ exports.criar = async (req, res) => {
               case 'aposFechamento':
                 taxaAplicada = ordem.cliente.taxasAntecipacao?.aposFechamento || 13;
                 break;
-              case 'aprazado':
-                taxaAplicada = ordem.cliente.taxasAntecipacao?.aprazado || 0;
+              case 'dias30':
+                taxaAplicada = ordem.cliente.taxasAntecipacao?.dias30 || 10;
+                break;
+              case 'dias40':
+                taxaAplicada = ordem.cliente.taxasAntecipacao?.dias40 || 8;
+                break;
+              case 'dias50':
+                taxaAplicada = ordem.cliente.taxasAntecipacao?.dias50 || 6;
+                break;
+              case 'dias60':
+                taxaAplicada = ordem.cliente.taxasAntecipacao?.dias60 || 0;
                 break;
             }
           }

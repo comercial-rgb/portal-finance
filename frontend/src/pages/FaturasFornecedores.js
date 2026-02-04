@@ -1033,31 +1033,6 @@ function FaturasFornecedores() {
                       border: '1px solid #ddd', 
                       borderRadius: '6px', 
                       cursor: 'pointer',
-                      backgroundColor: tipoPagamento === 'aprazado' ? '#e3f2fd' : 'white',
-                      transition: 'all 0.2s'
-                    }}>
-                      <input
-                        type="radio"
-                        name="tipoPagamento"
-                        value="aprazado"
-                        checked={tipoPagamento === 'aprazado'}
-                        onChange={(e) => setTipoPagamento(e.target.value)}
-                        style={{ marginRight: '10px', width: '16px', height: '16px', cursor: 'pointer' }}
-                      />
-                      <span style={{ flex: 1 }}>
-                        <strong>Aprazado</strong> - Taxa: {clienteTaxaInfo.taxasAntecipacao?.aprazado || 0}%
-                        <span style={{ fontSize: '0.85rem', color: '#666', display: 'block' }}>
-                          Pagamento conforme prazo acordado
-                        </span>
-                      </span>
-                    </label>
-                    <label style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      padding: '10px', 
-                      border: '1px solid #ddd', 
-                      borderRadius: '6px', 
-                      cursor: 'pointer',
                       backgroundColor: tipoPagamento === 'dias30' ? '#e3f2fd' : 'white',
                       transition: 'all 0.2s'
                     }}>

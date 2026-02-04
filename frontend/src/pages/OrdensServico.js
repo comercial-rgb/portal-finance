@@ -105,7 +105,9 @@ function OrdensServico() {
   };
 
   const processarCSV = (texto) => {
+    console.log('🔍 Iniciando processamento CSV...');
     const linhas = texto.split('\n').filter(linha => linha.trim());
+    console.log(`📊 Total de linhas: ${linhas.length}`);
     
     if (linhas.length < 2) {
       toast.error('Arquivo CSV vazio ou sem dados');
@@ -114,6 +116,8 @@ function OrdensServico() {
 
     // Detecta o separador (ponto-e-vírgula para PT-BR, vírgula para EN)
     const separador = linhas[0].includes(';') ? ';' : ',';
+    console.log(`🔧 Separador detectado: "${separador}"`);
+    console.log(`📋 Cabeçalho: ${linhas[0].substring(0, 100)}...`);
     
     const ordensServico = [];
     const errosValidacao = [];
@@ -192,8 +196,13 @@ function OrdensServico() {
     setResultadosImportacao(null);
 
     try {
+      console.log('📄 Lendo arquivo:', arquivo.name, arquivo.type, arquivo.size);
+      
       const texto = await arquivo.text();
+      console.log('📝 Conteúdo lido:', texto.substring(0, 200));
+      
       const ordensServico = processarCSV(texto);
+      console.log('✅ OS processadas:', ordensServico.length);
 
       if (ordensServico.length === 0) {
         toast.error('Nenhuma OS válida encontrada no arquivo');
@@ -215,8 +224,11 @@ function OrdensServico() {
       }
 
     } catch (error) {
-      console.error('Erro ao importar:', error);
-      toast.error(error.response?.data?.message || 'Erro ao importar OS');
+      console.error('❌ Erro ao importar:', error);
+      console.error('Stack:', error.stack);
+      
+      const mensagemErro = error.response?.data?.message || error.message || 'Erro ao importar OS';
+      toast.error(`Erro: ${mensagemErro}`);
     } finally {
       setImportando(false);
     }

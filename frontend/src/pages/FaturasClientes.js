@@ -135,7 +135,15 @@ function FaturasClientes() {
       console.log('📊 Análise das 31 ordens:');
       console.log(`  - Ordens JÁ FATURADAS para cliente (faturadoCliente=true): ${faturadas.length}`);
       if (faturadas.length > 0) {
-        console.log('    Exemplos:', faturadas.slice(0, 3).map(o => ({ codigo: o.numeroOrdemServico, faturadoCliente: o.faturadoCliente })));
+        console.log('    ⚠️ IMPORTANTE: Essas ordens já foram faturadas anteriormente!');
+        console.log('    💡 Para verificar, acesse: Notas Fiscais Clientes ou veja os códigos abaixo:');
+        console.log('    Códigos das ordens faturadas:', faturadas.map(o => o.numeroOrdemServico || o.codigo).join(', '));
+        console.table(faturadas.map(o => ({ 
+          Código: o.numeroOrdemServico || o.codigo, 
+          Status: o.status,
+          FaturadoCliente: o.faturadoCliente,
+          Cliente: o.cliente?.razaoSocial || o.cliente?.nomeFantasia
+        })));
       }
       console.log(`  - Ordens com STATUS INADEQUADO (não é Autorizada/Aguardando pagamento/Paga): ${naoAutorizadas.length}`);
       if (naoAutorizadas.length > 0) {

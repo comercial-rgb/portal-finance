@@ -115,6 +115,7 @@ function FaturasClientes() {
       setLoading(true);
       const params = {};
       if (filtros.codigo) params.codigo = filtros.codigo;
+      if (filtros.cliente) params.cliente = filtros.cliente;
       if (filtros.fornecedor) params.fornecedor = filtros.fornecedor;
       
       const response = await api.get('/ordens-servico', { params });

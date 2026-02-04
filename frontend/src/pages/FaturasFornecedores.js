@@ -117,6 +117,14 @@ function FaturasFornecedores() {
       
       const response = await api.get('/ordens-servico', { params });
       let ordensData = response.data.ordensServico || response.data;
+      ordensData = Array.isArray(ordensData) ? ordensData : [];
+      
+      // FILTRO CRÍTICO: Aplicar os mesmos filtros do loadData inicial
+      // - Não pode ter faturadoFornecedor = true
+      // - Status "Autorizada" OU Status "Aguardando pagamento" ou "Paga"
+      ordensData = ordensData.filter(o => 
+        !o.faturadoFornecedor && (o.status === 'Autorizada' || o.status === 'Aguardando pagamento' || o.status === 'Paga')
+      );
       
       if (filtros.dataInicio) {
         ordensData = ordensData.filter(o => 

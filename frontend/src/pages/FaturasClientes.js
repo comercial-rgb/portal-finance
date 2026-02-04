@@ -129,16 +129,7 @@ function FaturasClientes() {
         !o.faturadoCliente && (o.status === 'Autorizada' || o.status === 'Aguardando pagamento' || o.status === 'Paga')
       );
       
-      // Filtros adicionais no frontend
-      if (filtros.cliente) {
-        console.log('Filtrando por cliente:', filtros.cliente);
-        ordensData = ordensData.filter(o => {
-          const clienteId = o.cliente?._id || o.cliente;
-          console.log('Comparando:', clienteId, 'com', filtros.cliente, '=', clienteId === filtros.cliente);
-          return clienteId === filtros.cliente;
-        });
-        console.log('Ordens filtradas por cliente:', ordensData.length);
-      }
+      // Filtros adicionais no frontend (exceto cliente que já vem filtrado do backend)
       if (filtros.tipo) {
         ordensData = ordensData.filter(o => o.tipo?._id === filtros.tipo);
       }

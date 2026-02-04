@@ -29,13 +29,19 @@ const converterDataBrasileira = (data) => {
   const matchBR = dataStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (matchBR) {
     const [, dia, mes, ano] = matchBR;
-    return new Date(`${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`);
+    // CORRIGIDO: Usa construtor com parâmetros separados para evitar problema de fuso horário
+    // new Date(ano, mes - 1, dia) cria data no fuso local, não UTC
+    const dataLocal = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia), 12, 0, 0);
+    console.log(`📅 Data convertida: ${dia}/${mes}/${ano} -> ${dataLocal.toISOString()} (local: ${dataLocal.toLocaleDateString('pt-BR')})`);
+    return dataLocal;
   }
   
   // Tenta formato ISO YYYY-MM-DD
   const matchISO = dataStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
   if (matchISO) {
-    return new Date(dataStr);
+    const [, ano, mes, dia] = matchISO;
+    // Também usa construtor com parâmetros para consistência
+    return new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia), 12, 0, 0);
   }
   
   // Tenta parsing direto

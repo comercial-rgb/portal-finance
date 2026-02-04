@@ -124,12 +124,18 @@ function FaturasClientes() {
       let ordensData = response.data.ordensServico || response.data;
       ordensData = Array.isArray(ordensData) ? ordensData : [];
       
+      console.log('=== FATURAS CLIENTES - loadFiltrados ===');
+      console.log('Total de ordens retornadas do backend:', ordensData.length);
+      console.log('Filtros aplicados:', filtros);
+      
       // FILTRO CRÍTICO: Aplicar os mesmos filtros do loadData inicial
       // - Não pode ter faturadoCliente = true
       // - Status "Autorizada" OU Status "Aguardando pagamento" ou "Paga"
+      const antesFiltro = ordensData.length;
       ordensData = ordensData.filter(o => 
         !o.faturadoCliente && (o.status === 'Autorizada' || o.status === 'Aguardando pagamento' || o.status === 'Paga')
       );
+      console.log(`Após filtro de elegibilidade: ${antesFiltro} → ${ordensData.length} ordens`);
       
       // Filtros adicionais no frontend (exceto cliente que já vem filtrado do backend)
       if (filtros.tipo) {

@@ -161,6 +161,13 @@ function FaturasFornecedores() {
       const ordensParaFatura = ordensServico.filter(o => newSelectedOrdens.includes(o._id));
       const clienteId = ordensParaFatura[0]?.cliente?._id || ordensParaFatura[0]?.cliente;
       const clienteInfo = clientes.find(c => c._id === clienteId);
+      
+      console.log('=== DEBUG CLIENTE INFO ===');
+      console.log('Cliente encontrado:', clienteInfo?.razaoSocial);
+      console.log('Tipo Taxa:', clienteInfo?.tipoTaxa);
+      console.log('Taxas Antecipação:', clienteInfo?.taxasAntecipacao);
+      console.log('=========================');
+      
       setClienteTaxaInfo(clienteInfo);
       
       // Reset tipo pagamento se cliente mudou ou não tem taxa variável
@@ -1192,8 +1199,16 @@ function FaturasFornecedores() {
                   
                   // Calcular porcentagem da taxa de operação para exibição
                   let taxaPercentual = 0;
+                  
+                  console.log('=== DEBUG TAXA PERCENTUAL ===');
+                  console.log('clienteTaxaInfo:', clienteTaxaInfo);
+                  console.log('tipoTaxa:', clienteTaxaInfo?.tipoTaxa);
+                  console.log('tipoPagamento selecionado:', tipoPagamento);
+                  console.log('taxasAntecipacao:', clienteTaxaInfo?.taxasAntecipacao);
+                  
                   if (clienteTaxaInfo?.tipoTaxa === 'operacao') {
                     taxaPercentual = clienteTaxaInfo.taxaOperacao || 15;
+                    console.log('✓ Usando taxa operação fixa:', taxaPercentual);
                   } else if (clienteTaxaInfo?.tipoTaxa === 'antecipacao_variavel' && tipoPagamento) {
                     switch (tipoPagamento) {
                       case 'aVista':
@@ -1220,9 +1235,13 @@ function FaturasFornecedores() {
                       default:
                         taxaPercentual = 0;
                     }
+                    console.log('✓ Usando taxa antecipação variável:', taxaPercentual, 'para tipo:', tipoPagamento);
+                  } else {
+                    console.log('✗ Não calculou taxa - tipoTaxa:', clienteTaxaInfo?.tipoTaxa, 'tipoPagamento:', tipoPagamento);
                   }
                   
-                  console.log('Taxa Percentual Calculada:', taxaPercentual);
+                  console.log('Taxa Percentual Final:', taxaPercentual);
+                  console.log('============================');
 
                   return (
                     <>

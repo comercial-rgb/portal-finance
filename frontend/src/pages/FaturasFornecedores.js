@@ -1195,12 +1195,30 @@ function FaturasFornecedores() {
                   if (clienteTaxaInfo?.tipoTaxa === 'operacao') {
                     taxaPercentual = clienteTaxaInfo.taxaOperacao || 15;
                   } else if (clienteTaxaInfo?.tipoTaxa === 'antecipacao_variavel' && tipoPagamento) {
-                    if (tipoPagamento === 'aVista') {
-                      taxaPercentual = clienteTaxaInfo.taxasAntecipacao?.aVista || 15;
-                    } else if (tipoPagamento === 'aposFechamento') {
-                      taxaPercentual = clienteTaxaInfo.taxasAntecipacao?.aposFechamento || 13;
-                    } else if (tipoPagamento === 'aprazado') {
-                      taxaPercentual = clienteTaxaInfo.taxasAntecipacao?.aprazado || 0;
+                    switch (tipoPagamento) {
+                      case 'aVista':
+                        taxaPercentual = clienteTaxaInfo.taxasAntecipacao?.aVista || 15;
+                        break;
+                      case 'aposFechamento':
+                        taxaPercentual = clienteTaxaInfo.taxasAntecipacao?.aposFechamento || 13;
+                        break;
+                      case 'aprazado':
+                        taxaPercentual = clienteTaxaInfo.taxasAntecipacao?.aprazado || 0;
+                        break;
+                      case 'dias30':
+                        taxaPercentual = clienteTaxaInfo.taxasAntecipacao?.dias30 || 0;
+                        break;
+                      case 'dias40':
+                        taxaPercentual = clienteTaxaInfo.taxasAntecipacao?.dias40 || 0;
+                        break;
+                      case 'dias50':
+                        taxaPercentual = clienteTaxaInfo.taxasAntecipacao?.dias50 || 0;
+                        break;
+                      case 'dias60':
+                        taxaPercentual = clienteTaxaInfo.taxasAntecipacao?.dias60 || 0;
+                        break;
+                      default:
+                        taxaPercentual = 0;
                     }
                   }
                   

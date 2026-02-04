@@ -15,6 +15,7 @@ function OrdensServico() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [selectedOrdens, setSelectedOrdens] = useState([]);
   const [filtros, setFiltros] = useState({
     codigo: '',
     cliente: '',
@@ -55,8 +56,8 @@ function OrdensServico() {
   const loadDadosFiltros = async () => {
     try {
       const [clientesRes, fornecedoresRes, tiposRes, tiposServicoRes, ordensRes] = await Promise.all([
-        api.get('/clientes'),
-        api.get('/fornecedores'),
+        api.get('/clientes?limit=1000'),
+        api.get('/fornecedores?limit=1000'),
         api.get('/tipo-servicos/tipos'),
         api.get('/tipo-servicos/tipos-servico-solicitado'),
         api.get('/ordens-servico?limit=1000')
@@ -64,6 +65,8 @@ function OrdensServico() {
 
       const clientesData = clientesRes.data.clientes || clientesRes.data;
       setClientes(Array.isArray(clientesData) ? clientesData : []);
+      console.log('📋 Clientes carregados para filtro:', clientesData.length);
+      console.log('Amostra de clientes:', clientesData.slice(0, 3).map(c => c.razaoSocial || c.nomeFantasia));
 
       const fornecedoresData = fornecedoresRes.data.fornecedores || fornecedoresRes.data;
       setFornecedores(Array.isArray(fornecedoresData) ? fornecedoresData : []);
@@ -341,6 +344,47 @@ function OrdensServico() {
     }
   };
 
+  const toggleOrdemSelection = (ordemId) => {
+    setSelectedOrdens(prev => 
+      prev.includes(ordemId)
+        ? prev.filter(id => id !== ordemId)
+        : [...prev, ordemId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedOrdens.length === ordensServico.length) {
+      setSelectedOrdens([]);
+    } else {
+      setSelectedOrdens(ordensServico.map(o => o._id));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedOrdens.length === 0) {
+      toast.warning('Selecione pelo menos uma ordem de serviço para excluir');
+      return;
+    }
+
+    const confirmacao = window.confirm(
+      `Tem certeza que deseja excluir ${selectedOrdens.length} ordem(ns) de serviço selecionada(s)? Esta ação não pode ser desfeita.`
+    );
+
+    if (!confirmacao) return;
+
+    try {
+      await api.post('/ordens-servico/delete-multiple', {
+        ids: selectedOrdens
+      });
+      toast.success(`${selectedOrdens.length} ordem(ns) de serviço excluída(s) com sucesso!`);
+      setSelectedOrdens([]);
+      loadOrdensServico();
+    } catch (error) {
+      toast.error('Erro ao excluir ordens de serviço');
+      console.error(error);
+    }
+  };
+
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -522,10 +566,35 @@ function OrdensServico() {
               <div className="loading">Carregando...</div>
             ) : (
               <>
+                {!isReadOnly && selectedOrdens.length > 0 && (
+                  <div className="selected-actions">
+                    <span>
+                      {selectedOrdens.length} ordem(ns) selecionada(s)
+                    </span>
+                    <button 
+                      className="btn-delete"
+                      onClick={handleDeleteSelected}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      </svg>
+                      Excluir Selecionadas
+                    </button>
+                  </div>
+                )}
                 <div className="table-container">
                   <table className="data-table">
                     <thead>
                       <tr>
+                        <th style={{ width: '40px' }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedOrdens.length === ordensServico.length && ordensServico.length > 0}
+                            onChange={toggleSelectAll}
+                            title="Selecionar todos"
+                          />
+                        </th>
                         <th>Código</th>
                         <th>Cliente</th>
                         <th>Fornecedor</th>
@@ -539,13 +608,21 @@ function OrdensServico() {
                     <tbody>
                       {ordensServico.length === 0 ? (
                         <tr>
-                          <td colSpan="8" style={{ textAlign: 'center', padding: '2rem' }}>
+                          <td colSpan="9" style={{ textAlign: 'center', padding: '2rem' }}>
                             Nenhuma ordem de serviço encontrada
                           </td>
                         </tr>
                       ) : (
                         ordensServico.map((ordem) => (
-                          <tr key={ordem._id}>
+                          <tr key={ordem._id} className={selectedOrdens.includes(ordem._id) ? 'selected' : ''}>
+                            <td>
+                              <input
+                                type="checkbox"
+                                checked={selectedOrdens.includes(ordem._id)}
+                                onChange={() => toggleOrdemSelection(ordem._id)}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </td>
                             <td><strong>{ordem.numeroOrdemServico}</strong></td>
                             <td>{ordem.cliente?.razaoSocial || ordem.cliente?.nomeFantasia}</td>
                             <td title={ordem.fornecedor?.nomeFantasia || ordem.fornecedor?.razaoSocial}>

@@ -350,3 +350,80 @@ exports.updateStatus = async (req, res) => {
     res.status(400).json({ message: 'Erro ao atualizar status', error: error.message });
   }
 };
+
+exports.deleteMultiple = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'Nenhum ID fornecido para exclusão' });
+    }
+
+    console.log(`🗑️ Excluindo ${ids.length} ordem(ns) de serviço...`);
+
+    const results = {
+      success: [],
+      errors: []
+    };
+
+    // Processar cada ordem de serviço
+    for (const id of ids) {
+      try {
+        const ordemServico = await OrdemServico.findById(id);
+        
+        if (!ordemServico) {
+          results.errors.push({
+            id,
+            message: 'Ordem de serviço não encontrada'
+          });
+          continue;
+        }
+
+        // Estornar valores dos empenhos antes de deletar
+        if (ordemServico.empenhoPecas && ordemServico.valorPecasComDesconto > 0) {
+          await estornarValorEmpenho(
+            ordemServico.cliente,
+            ordemServico.contratoEmpenhoPecas,
+            ordemServico.empenhoPecas,
+            ordemServico.valorPecasComDesconto
+          );
+        }
+
+        if (ordemServico.empenhoServicos && ordemServico.valorServicoComDesconto > 0) {
+          await estornarValorEmpenho(
+            ordemServico.cliente,
+            ordemServico.contratoEmpenhoServicos,
+            ordemServico.empenhoServicos,
+            ordemServico.valorServicoComDesconto
+          );
+        }
+
+        await OrdemServico.findByIdAndDelete(id);
+        results.success.push({
+          id,
+          codigo: ordemServico.numeroOrdemServico || ordemServico.codigo
+        });
+      } catch (error) {
+        console.error(`Erro ao excluir OS ${id}:`, error);
+        results.errors.push({
+          id,
+          message: error.message
+        });
+      }
+    }
+
+    const message = `${results.success.length} ordem(ns) excluída(s) com sucesso` +
+      (results.errors.length > 0 ? `, ${results.errors.length} erro(s)` : '');
+
+    res.json({
+      message,
+      results
+    });
+  } catch (error) {
+    console.error('Erro ao excluir ordens de serviço em massa:', error);
+    res.status(500).json({ 
+      message: 'Erro ao excluir ordens de serviço', 
+      error: error.message 
+    });
+  }
+};

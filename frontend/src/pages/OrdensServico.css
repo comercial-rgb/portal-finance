@@ -48,6 +48,79 @@
   color: #f59e0b;
 }
 
+/* Estilos para seleção múltipla */
+.selected-actions {
+  padding: 15px;
+  margin-bottom: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.selected-actions span {
+  font-weight: 500;
+  color: #495057;
+}
+
+.btn-delete {
+  background-color: #dc3545;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+}
+
+.btn-delete:hover {
+  background-color: #c82333;
+}
+
+.btn-delete:active {
+  transform: scale(0.98);
+}
+
+/* Estilos para checkboxes */
+.data-table input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--azul-principal);
+}
+
+.data-table thead input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+/* Linha selecionada */
+.data-table tbody tr.selected {
+  background-color: rgba(0, 91, 237, 0.05);
+}
+
+.data-table tbody tr:hover {
+  background-color: rgba(0, 91, 237, 0.02);
+}
+
 .page-header {
   display: flex;
   justify-content: space-between;

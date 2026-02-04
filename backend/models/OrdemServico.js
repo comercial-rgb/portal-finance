@@ -153,7 +153,7 @@ const ordemServicoSchema = new mongoose.Schema({
   },
   tipoPagamento: {
     type: String,
-    enum: ['aVista', 'aposFechamento', 'aprazado', null],
+    enum: ['aVista', 'aposFechamento', 'aprazado', 'dias30', 'dias40', 'dias50', 'dias60', null],
     default: null,
     description: 'Tipo de pagamento escolhido pelo fornecedor (para clientes com taxa antecipação variável)'
   },

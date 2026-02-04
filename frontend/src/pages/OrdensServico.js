@@ -25,7 +25,6 @@ function OrdensServico() {
   const [arquivo, setArquivo] = useState(null);
   const [importando, setImportando] = useState(false);
   const [resultadosImportacao, setResultadosImportacao] = useState(null);
-  const [recalculando, setRecalculando] = useState(false);
 
   const ordensPorPagina = 15;
 
@@ -332,20 +331,9 @@ function OrdensServico() {
               {!isReadOnly && (
                 <div className="header-actions">
                   {(user?.role === 'super_admin' || user?.role === 'admin') && (
-                    <>
-                      <button className="btn-secondary" onClick={() => setShowImportModal(true)}>
-                        📥 Importar OS
-                      </button>
-                      {user?.role === 'super_admin' && (
-                        <button 
-                          className="btn-warning" 
-                          onClick={handleRecalcularValores}
-                          disabled={recalculando}
-                        >
-                          {recalculando ? '⏳ Recalculando...' : '🔄 Recalcular Valores'}
-                        </button>
-                      )}
-                    </>
+                    <button className="btn-secondary" onClick={() => setShowImportModal(true)}>
+                      📥 Importar OS
+                    </button>
                   )}
                   <button className="btn-primary" onClick={() => navigate('/ordens-servico/novo')}>
                     + Nova Ordem de Serviço

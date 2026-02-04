@@ -222,13 +222,7 @@ exports.importarOrdensServico = async (req, res) => {
           throw new Error(`Cliente "${os.clienteNome}" não encontrado no sistema. Cadastre o cliente antes de importar.`);
         }
         
-        if (!cliente.nomeFantasia) {
-          console.log(`⚠️  Cliente encontrado com nome aproximado: "${cliente.nomeFantasia}" (buscado: "${os.clienteNome}")`);
-        } else {
-          console.log(`✅ Cliente encontrado: "${cliente.nomeFantasia}" (ID: ${cliente._id})`);
-        }
-          console.log(`✅ Cliente encontrado: "${cliente.nomeFantasia}" (ID: ${cliente._id})`);
-        }
+        console.log(`✅ Cliente encontrado: "${cliente.nomeFantasia}" (ID: ${cliente._id})`);
         
         // Log dos descontos do cliente
         console.log(`📊 Descontos cadastrados no cliente: percentualDesconto=${cliente.percentualDesconto}%`);
@@ -309,11 +303,7 @@ exports.importarOrdensServico = async (req, res) => {
           throw new Error(`Fornecedor "${os.fornecedorNome}" não encontrado. Exemplos cadastrados: ${lista}`);
         }
         
-        if (!fornecedor.nomeFantasia) {
-          console.log(`⚠️  Fornecedor encontrado com nome aproximado: "${fornecedor.nomeFantasia}" (buscado: "${os.fornecedorNome}")`);
-        } else {
-          console.log(`✅ Fornecedor encontrado: "${fornecedor.nomeFantasia}" (ID: ${fornecedor._id})`);
-        }
+        console.log(`✅ Fornecedor encontrado: "${fornecedor.nomeFantasia}" (ID: ${fornecedor._id})`);
 
         let tipoServicoSolicitadoObj = await TipoServicoSolicitado.findOne({
           nome: { $regex: new RegExp(`^${os.tipoServicoSolicitado}$`, 'i') }

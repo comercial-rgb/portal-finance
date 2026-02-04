@@ -19,8 +19,20 @@ function OrdensServico() {
     codigo: '',
     cliente: '',
     fornecedor: '',
-    status: ''
+    tipo: '',
+    tipoServico: '',
+    centroCusto: '',
+    subunidade: '',
+    status: '',
+    dataInicio: '',
+    dataFim: ''
   });
+  const [clientes, setClientes] = useState([]);
+  const [fornecedores, setFornecedores] = useState([]);
+  const [tipos, setTipos] = useState([]);
+  const [tiposServico, setTiposServico] = useState([]);
+  const [centrosCustoDisponiveis, setCentrosCustoDisponiveis] = useState([]);
+  const [subunidadesDisponiveis, setSubunidadesDisponiveis] = useState([]);
   const [showImportModal, setShowImportModal] = useState(false);
   const [arquivo, setArquivo] = useState(null);
   const [importando, setImportando] = useState(false);
@@ -31,21 +43,92 @@ function OrdensServico() {
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
     setUser(currentUser);
+    loadDadosFiltros();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     loadOrdensServico();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
+  const loadDadosFiltros = async () => {
+    try {
+      const [clientesRes, fornecedoresRes, tiposRes, tiposServicoRes, ordensRes] = await Promise.all([
+        api.get('/clientes'),
+        api.get('/fornecedores'),
+        api.get('/tipo-servicos/tipos'),
+        api.get('/tipo-servicos/tipos-servico-solicitado'),
+        api.get('/ordens-servico?limit=1000')
+      ]);
+
+      const clientesData = clientesRes.data.clientes || clientesRes.data;
+      setClientes(Array.isArray(clientesData) ? clientesData : []);
+
+      const fornecedoresData = fornecedoresRes.data.fornecedores || fornecedoresRes.data;
+      setFornecedores(Array.isArray(fornecedoresData) ? fornecedoresData : []);
+
+      setTipos(Array.isArray(tiposRes.data) ? tiposRes.data : []);
+      setTiposServico(Array.isArray(tiposServicoRes.data) ? tiposServicoRes.data : []);
+
+      // Extrair centros de custo e subunidades únicos
+      const ordensData = ordensRes.data.ordensServico || ordensRes.data;
+      const ordensArray = Array.isArray(ordensData) ? ordensData : [];
+      const centrosCusto = [...new Set(ordensArray.map(o => o.centroCusto).filter(Boolean))];
+      const subunidades = [...new Set(ordensArray.map(o => o.subunidade).filter(Boolean))];
+      setCentrosCustoDisponiveis(centrosCusto);
+      setSubunidadesDisponiveis(subunidades);
+
+      loadOrdensServico();
+    } catch (error) {
+      console.error('Erro ao carregar dados dos filtros:', error);
+      loadOrdensServico();
+    }
+  };
+
   const loadOrdensServico = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/ordens-servico', {
-        params: {
-          page: currentPage,
-          limit: ordensPorPagina,
-          ...filtros
-        }
-      });
-      setOrdensServico(response.data.ordensServico || response.data);
+      const params = {
+        page: currentPage,
+        limit: ordensPorPagina
+      };
+
+      // Adicionar filtros se preenchidos
+      if (filtros.codigo) params.codigo = filtros.codigo;
+      if (filtros.cliente) params.cliente = filtros.cliente;
+      if (filtros.fornecedor) params.fornecedor = filtros.fornecedor;
+      if (filtros.status) params.status = filtros.status;
+
+      const response = await api.get('/ordens-servico', { params });
+      let ordensData = response.data.ordensServico || response.data;
+      ordensData = Array.isArray(ordensData) ? ordensData : [];
+
+      // Aplicar filtros adicionais no frontend
+      if (filtros.tipo) {
+        ordensData = ordensData.filter(o => o.tipo?._id === filtros.tipo);
+      }
+      if (filtros.tipoServico) {
+        ordensData = ordensData.filter(o => o.tipoServicoSolicitado?._id === filtros.tipoServico);
+      }
+      if (filtros.centroCusto) {
+        ordensData = ordensData.filter(o => o.centroCusto === filtros.centroCusto);
+      }
+      if (filtros.subunidade) {
+        ordensData = ordensData.filter(o => o.subunidade === filtros.subunidade);
+      }
+      if (filtros.dataInicio) {
+        ordensData = ordensData.filter(o => 
+          new Date(o.dataReferencia || o.createdAt) >= new Date(filtros.dataInicio)
+        );
+      }
+      if (filtros.dataFim) {
+        ordensData = ordensData.filter(o => 
+          new Date(o.dataReferencia || o.createdAt) <= new Date(filtros.dataFim + 'T23:59:59')
+        );
+      }
+
+      setOrdensServico(ordensData);
       setTotalPages(response.data.totalPages || 1);
     } catch (error) {
       toast.error('Erro ao carregar ordens de serviço');
@@ -73,7 +156,13 @@ function OrdensServico() {
       codigo: '',
       cliente: '',
       fornecedor: '',
-      status: ''
+      tipo: '',
+      tipoServico: '',
+      centroCusto: '',
+      subunidade: '',
+      status: '',
+      dataInicio: '',
+      dataFim: ''
     });
     setCurrentPage(1);
     setTimeout(() => loadOrdensServico(), 100);
@@ -330,6 +419,60 @@ function OrdensServico() {
                   />
                 </div>
                 <div className="form-group">
+                  <label>Cliente</label>
+                  <select name="cliente" value={filtros.cliente} onChange={handleFiltroChange}>
+                    <option value="">Todos</option>
+                    {Array.isArray(clientes) && clientes.map(c => (
+                      <option key={c._id} value={c._id}>{c.razaoSocial || c.nomeFantasia}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Fornecedor</label>
+                  <select name="fornecedor" value={filtros.fornecedor} onChange={handleFiltroChange}>
+                    <option value="">Todos</option>
+                    {Array.isArray(fornecedores) && fornecedores.map(f => (
+                      <option key={f._id} value={f._id}>{f.razaoSocial || f.nomeFantasia}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Tipo</label>
+                  <select name="tipo" value={filtros.tipo} onChange={handleFiltroChange}>
+                    <option value="">Todos</option>
+                    {Array.isArray(tipos) && tipos.map(t => (
+                      <option key={t._id} value={t._id}>{t.nome}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Tipo de Solicitação</label>
+                  <select name="tipoServico" value={filtros.tipoServico} onChange={handleFiltroChange}>
+                    <option value="">Todos</option>
+                    {Array.isArray(tiposServico) && tiposServico.map(ts => (
+                      <option key={ts._id} value={ts._id}>{ts.nome}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Centro de Custo</label>
+                  <select name="centroCusto" value={filtros.centroCusto} onChange={handleFiltroChange}>
+                    <option value="">Todos</option>
+                    {centrosCustoDisponiveis.map((cc, index) => (
+                      <option key={index} value={cc}>{cc}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Subunidade</label>
+                  <select name="subunidade" value={filtros.subunidade} onChange={handleFiltroChange}>
+                    <option value="">Todas</option>
+                    {subunidadesDisponiveis.map((sub, index) => (
+                      <option key={index} value={sub}>{sub}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
                   <label>Status</label>
                   <select
                     name="status"
@@ -339,9 +482,30 @@ function OrdensServico() {
                     <option value="">Todos</option>
                     <option value="Aberta">Aberta</option>
                     <option value="Em Andamento">Em Andamento</option>
+                    <option value="Autorizada">Autorizada</option>
+                    <option value="Aguardando pagamento">Aguardando pagamento</option>
+                    <option value="Paga">Paga</option>
                     <option value="Concluída">Concluída</option>
                     <option value="Cancelada">Cancelada</option>
                   </select>
+                </div>
+                <div className="form-group">
+                  <label>Data Início</label>
+                  <input
+                    type="date"
+                    name="dataInicio"
+                    value={filtros.dataInicio}
+                    onChange={handleFiltroChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Data Fim</label>
+                  <input
+                    type="date"
+                    name="dataFim"
+                    value={filtros.dataFim}
+                    onChange={handleFiltroChange}
+                  />
                 </div>
               </div>
               <div className="filtros-actions">

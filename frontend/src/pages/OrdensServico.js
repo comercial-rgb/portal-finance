@@ -216,35 +216,43 @@ function OrdensServico() {
     
     for (let i = 1; i < linhas.length; i++) {
       try {
-        // Parse CSV considerando valores entre aspas
-        const regex = separador === ';' 
-          ? /(".*?"|[^;]+)(?=\s*;|\s*$)/g 
-          : /(".*?"|[^,]+)(?=\s*,|\s*$)/g;
+        // Usa split() para manter campos vazios - CORRIGIDO
+        // Remove aspas duplas e trim em cada valor
+        const valores = linhas[i].split(separador).map(v => {
+          let valor = v.trim();
+          // Remove aspas duplas no início e fim
+          if (valor.startsWith('"') && valor.endsWith('"')) {
+            valor = valor.substring(1, valor.length - 1);
+          }
+          return valor.trim();
+        });
         
-        const valores = linhas[i].match(regex) || [];
-        const valoresLimpos = valores.map(v => v.replace(/^"|"$/g, '').trim());
+        console.log(`📝 Linha ${i + 1}: ${valores.length} campos detectados`);
         
-        if (valoresLimpos.length < 7) {
-          errosValidacao.push(`Linha ${i + 1}: Dados insuficientes (mínimo 7 campos obrigatórios)`);
+        if (valores.length < 7) {
+          errosValidacao.push(`Linha ${i + 1}: Dados insuficientes (mínimo 7 campos obrigatórios, encontrado ${valores.length})`);
+          console.warn(`⚠️ Linha ${i + 1} com apenas ${valores.length} campos:`, valores);
           continue;
         }
         
         const os = {
-          numeroOrdemServico: valoresLimpos[0] || '',
-          dataReferencia: valoresLimpos[1] || '',
-          clienteNome: valoresLimpos[2] || '',
-          fornecedorNome: valoresLimpos[3] || '',
-          tipoServicoSolicitado: valoresLimpos[4] || '',
-          tipo: valoresLimpos[5] || '',
-          centroCusto: valoresLimpos[6] || '',
-          subunidade: valoresLimpos[7] || '',
-          placa: valoresLimpos[8] || '',
-          veiculo: valoresLimpos[9] || '',
-          valorPecas: valoresLimpos[10] || '0',
-          valorServico: valoresLimpos[11] || '0',
-          notaFiscalPeca: valoresLimpos[12] || '',
-          notaFiscalServico: valoresLimpos[13] || ''
+          numeroOrdemServico: valores[0] || '',
+          dataReferencia: valores[1] || '',
+          clienteNome: valores[2] || '',
+          fornecedorNome: valores[3] || '',
+          tipoServicoSolicitado: valores[4] || '',
+          tipo: valores[5] || '',
+          centroCusto: valores[6] || '',
+          subunidade: valores[7] || '',
+          placa: valores[8] || '',
+          veiculo: valores[9] || '',
+          valorPecas: valores[10] || '0',
+          valorServico: valores[11] || '0',
+          notaFiscalPeca: valores[12] || '',
+          notaFiscalServico: valores[13] || ''
         };
+        
+        console.log(`✅ OS ${os.numeroOrdemServico}: Placa="${os.placa}", Veículo="${os.veiculo}", Subunidade="${os.subunidade}"`);
         
         // Validações básicas no frontend
         if (!os.numeroOrdemServico) {
@@ -275,6 +283,7 @@ function OrdensServico() {
       toast.warning(`${errosValidacao.length} linha(s) com problema foram ignoradas`);
     }
     
+    console.log(`✅ Total de OS processadas: ${ordensServico.length}`);
     return ordensServico;
   };
 

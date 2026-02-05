@@ -449,22 +449,31 @@ function FaturadoDetalhes() {
               if (impostos.impostosMunicipais) {
                 const percIRPecas = impostos.impostosMunicipais.pecas?.ir || 0;
                 const percIRServicos = impostos.impostosMunicipais.servicos?.ir || 0;
-                const irMunPecas = valorPecas * percIRPecas / 100;
-                const irMunServicos = valorServico * percIRServicos / 100;
+                const irMunPecas = Math.round(valorPecas * percIRPecas) / 100;
+                const irMunServicos = Math.round(valorServico * percIRServicos) / 100;
                 const totalIR = irMunPecas + irMunServicos;
                 
                 if (totalIR > 0) {
                   total += totalIR;
                   const existe = detalhamento.find(d => d.titulo.startsWith('IR Municipal'));
                   if (!existe) {
-                    detalhamento.push({
-                      titulo: `IR Municipal (${formatarPercentual(percIRPecas)}% Peças + ${formatarPercentual(percIRServicos)}% Serviços)`,
-                      valor: totalIR,
-                      subitens: [
-                        { texto: `Peças: ${formatarValor(valorPecas)} × ${formatarPercentual(percIRPecas)}% = ${formatarValor(irMunPecas)}`, valor: irMunPecas },
-                        { texto: `Serviços: ${formatarValor(valorServico)} × ${formatarPercentual(percIRServicos)}% = ${formatarValor(irMunServicos)}`, valor: irMunServicos }
-                      ]
-                    });
+                    const subitens = [];
+                    if (irMunPecas > 0) {
+                      subitens.push({ texto: `Peças: ${formatarValor(valorPecas)} × ${formatarPercentual(percIRPecas)}% = ${formatarValor(irMunPecas)}`, valor: irMunPecas });
+                    }
+                    if (irMunServicos > 0) {
+                      subitens.push({ texto: `Serviços: ${formatarValor(valorServico)} × ${formatarPercentual(percIRServicos)}% = ${formatarValor(irMunServicos)}`, valor: irMunServicos });
+                    }
+                    if (subitens.length > 0) {
+                      const tituloPartes = [];
+                      if (irMunPecas > 0) tituloPartes.push(`${formatarPercentual(percIRPecas)}% Peças`);
+                      if (irMunServicos > 0) tituloPartes.push(`${formatarPercentual(percIRServicos)}% Serviços`);
+                      detalhamento.push({
+                        titulo: `IR Municipal (${tituloPartes.join(' + ')})`,
+                        valor: totalIR,
+                        subitens
+                      });
+                    }
                   }
                 }
               }
@@ -475,22 +484,31 @@ function FaturadoDetalhes() {
                 const estaduaisServicos = impostos.impostosEstaduais.servicos || {};
                 const percTotalPecas = (estaduaisPecas.ir || 0) + (estaduaisPecas.pis || 0) + (estaduaisPecas.cofins || 0) + (estaduaisPecas.csll || 0);
                 const percTotalServicos = (estaduaisServicos.ir || 0) + (estaduaisServicos.pis || 0) + (estaduaisServicos.cofins || 0) + (estaduaisServicos.csll || 0);
-                const totalEstPecas = valorPecas * percTotalPecas / 100;
-                const totalEstServicos = valorServico * percTotalServicos / 100;
+                const totalEstPecas = Math.round(valorPecas * percTotalPecas) / 100;
+                const totalEstServicos = Math.round(valorServico * percTotalServicos) / 100;
                 const totalEst = totalEstPecas + totalEstServicos;
                 
                 if (totalEst > 0) {
                   total += totalEst;
                   const existe = detalhamento.find(d => d.titulo.startsWith('Impostos Estaduais'));
                   if (!existe) {
-                    detalhamento.push({
-                      titulo: `Impostos Estaduais (${formatarPercentual(percTotalPecas)}% Peças + ${formatarPercentual(percTotalServicos)}% Serviços)`,
-                      valor: totalEst,
-                      subitens: [
-                        { texto: `Peças: ${formatarValor(valorPecas)} × ${formatarPercentual(percTotalPecas)}% = ${formatarValor(totalEstPecas)}`, valor: totalEstPecas },
-                        { texto: `Serviços: ${formatarValor(valorServico)} × ${formatarPercentual(percTotalServicos)}% = ${formatarValor(totalEstServicos)}`, valor: totalEstServicos }
-                      ]
-                    });
+                    const subitens = [];
+                    if (totalEstPecas > 0) {
+                      subitens.push({ texto: `Peças: ${formatarValor(valorPecas)} × ${formatarPercentual(percTotalPecas)}% = ${formatarValor(totalEstPecas)}`, valor: totalEstPecas });
+                    }
+                    if (totalEstServicos > 0) {
+                      subitens.push({ texto: `Serviços: ${formatarValor(valorServico)} × ${formatarPercentual(percTotalServicos)}% = ${formatarValor(totalEstServicos)}`, valor: totalEstServicos });
+                    }
+                    if (subitens.length > 0) {
+                      const tituloPartes = [];
+                      if (totalEstPecas > 0) tituloPartes.push(`${formatarPercentual(percTotalPecas)}% Peças`);
+                      if (totalEstServicos > 0) tituloPartes.push(`${formatarPercentual(percTotalServicos)}% Serviços`);
+                      detalhamento.push({
+                        titulo: `Impostos Estaduais (${tituloPartes.join(' + ')})`,
+                        valor: totalEst,
+                        subitens
+                      });
+                    }
                   }
                 }
               }
@@ -501,22 +519,31 @@ function FaturadoDetalhes() {
                 const federaisServicos = impostos.impostosFederais.servicos || {};
                 const percTotalPecas = (federaisPecas.ir || 0) + (federaisPecas.pis || 0) + (federaisPecas.cofins || 0) + (federaisPecas.csll || 0);
                 const percTotalServicos = (federaisServicos.ir || 0) + (federaisServicos.pis || 0) + (federaisServicos.cofins || 0) + (federaisServicos.csll || 0);
-                const totalFedPecas = valorPecas * percTotalPecas / 100;
-                const totalFedServicos = valorServico * percTotalServicos / 100;
+                const totalFedPecas = Math.round(valorPecas * percTotalPecas) / 100;
+                const totalFedServicos = Math.round(valorServico * percTotalServicos) / 100;
                 const totalFed = totalFedPecas + totalFedServicos;
                 
                 if (totalFed > 0) {
                   total += totalFed;
                   const existe = detalhamento.find(d => d.titulo.startsWith('Impostos Federais'));
                   if (!existe) {
-                    detalhamento.push({
-                      titulo: `Impostos Federais (${formatarPercentual(percTotalPecas)}% Peças + ${formatarPercentual(percTotalServicos)}% Serviços)`,
-                      valor: totalFed,
-                      subitens: [
-                        { texto: `Peças: R$ ${formatarPercentual(valorPecas)} × ${formatarPercentual(percTotalPecas)}% = R$ ${formatarPercentual(totalFedPecas)}`, valor: totalFedPecas },
-                        { texto: `Serviços: R$ ${formatarPercentual(valorServico)} × ${formatarPercentual(percTotalServicos)}% = R$ ${formatarPercentual(totalFedServicos)}`, valor: totalFedServicos }
-                      ]
-                    });
+                    const subitens = [];
+                    if (totalFedPecas > 0) {
+                      subitens.push({ texto: `Peças: ${formatarValor(valorPecas)} × ${formatarPercentual(percTotalPecas)}% = ${formatarValor(totalFedPecas)}`, valor: totalFedPecas });
+                    }
+                    if (totalFedServicos > 0) {
+                      subitens.push({ texto: `Serviços: ${formatarValor(valorServico)} × ${formatarPercentual(percTotalServicos)}% = ${formatarValor(totalFedServicos)}`, valor: totalFedServicos });
+                    }
+                    if (subitens.length > 0) {
+                      const tituloPartes = [];
+                      if (totalFedPecas > 0) tituloPartes.push(`${formatarPercentual(percTotalPecas)}% Peças`);
+                      if (totalFedServicos > 0) tituloPartes.push(`${formatarPercentual(percTotalServicos)}% Serviços`);
+                      detalhamento.push({
+                        titulo: `Impostos Federais (${tituloPartes.join(' + ')})`,
+                        valor: totalFed,
+                        subitens
+                      });
+                    }
                   }
                 }
               }
@@ -524,7 +551,7 @@ function FaturadoDetalhes() {
             case 'retencoes':
               if (impostos.retencoesOrgao) {
                 const percRetencoes = impostos.retencoesOrgao.percentual || 0;
-                const retencoes = (valorPecas + valorServico) * percRetencoes / 100;
+                const retencoes = Math.round((valorPecas + valorServico) * percRetencoes) / 100;
                 
                 if (retencoes > 0) {
                   total += retencoes;
@@ -534,7 +561,7 @@ function FaturadoDetalhes() {
                       titulo: `Retenções Órgão (${percRetencoes}%)`,
                       valor: retencoes,
                       subitens: [
-                        { texto: `Total (Peças + Serviços): R$ ${formatarPercentual(valorPecas + valorServico)} × ${percRetencoes}% = R$ ${formatarPercentual(retencoes)}`, valor: retencoes }
+                        { texto: `Total (Peças + Serviços): ${formatarValor(valorPecas + valorServico)} × ${percRetencoes}% = ${formatarValor(retencoes)}`, valor: retencoes }
                       ]
                     });
                   }
@@ -579,7 +606,7 @@ function FaturadoDetalhes() {
             case 'municipais':
               if (impostos.impostosMunicipais) {
                 const percIRPecas = impostos.impostosMunicipais.pecas?.ir || 0;
-                const irMunPecas = valorPecas * percIRPecas / 100;
+                const irMunPecas = Math.round(valorPecas * percIRPecas) / 100;
                 
                 if (irMunPecas > 0) {
                   total += irMunPecas;
@@ -589,7 +616,7 @@ function FaturadoDetalhes() {
                       titulo: `IR Municipal (${percIRPecas}% Peças)`,
                       valor: irMunPecas,
                       subitens: [
-                        { texto: `Peças: R$ ${formatarPercentual(valorPecas)} × ${percIRPecas}% = R$ ${formatarPercentual(irMunPecas)}`, valor: irMunPecas }
+                        { texto: `Peças: ${formatarValor(valorPecas)} × ${percIRPecas}% = ${formatarValor(irMunPecas)}`, valor: irMunPecas }
                       ]
                     });
                   }
@@ -600,7 +627,7 @@ function FaturadoDetalhes() {
               if (impostos.impostosEstaduais) {
                 const estaduaisPecas = impostos.impostosEstaduais.pecas || {};
                 const percTotalPecas = (estaduaisPecas.ir || 0) + (estaduaisPecas.pis || 0) + (estaduaisPecas.cofins || 0) + (estaduaisPecas.csll || 0);
-                const totalEstPecas = valorPecas * percTotalPecas / 100;
+                const totalEstPecas = Math.round(valorPecas * percTotalPecas) / 100;
                 
                 if (totalEstPecas > 0) {
                   total += totalEstPecas;
@@ -610,7 +637,7 @@ function FaturadoDetalhes() {
                       titulo: `Impostos Estaduais (${formatarPercentual(percTotalPecas)}% Peças)`,
                       valor: totalEstPecas,
                       subitens: [
-                        { texto: `Peças: R$ ${formatarPercentual(valorPecas)} × ${formatarPercentual(percTotalPecas)}% = R$ ${formatarPercentual(totalEstPecas)}`, valor: totalEstPecas }
+                        { texto: `Peças: ${formatarValor(valorPecas)} × ${formatarPercentual(percTotalPecas)}% = ${formatarValor(totalEstPecas)}`, valor: totalEstPecas }
                       ]
                     });
                   }
@@ -621,7 +648,7 @@ function FaturadoDetalhes() {
               if (impostos.impostosFederais) {
                 const federaisPecas = impostos.impostosFederais.pecas || {};
                 const percTotalPecas = (federaisPecas.ir || 0) + (federaisPecas.pis || 0) + (federaisPecas.cofins || 0) + (federaisPecas.csll || 0);
-                const totalFedPecas = valorPecas * percTotalPecas / 100;
+                const totalFedPecas = Math.round(valorPecas * percTotalPecas) / 100;
                 
                 if (totalFedPecas > 0) {
                   total += totalFedPecas;
@@ -631,7 +658,7 @@ function FaturadoDetalhes() {
                       titulo: `Impostos Federais (${formatarPercentual(percTotalPecas)}% Peças)`,
                       valor: totalFedPecas,
                       subitens: [
-                        { texto: `Peças: R$ ${formatarPercentual(valorPecas)} × ${formatarPercentual(percTotalPecas)}% = R$ ${formatarPercentual(totalFedPecas)}`, valor: totalFedPecas }
+                        { texto: `Peças: ${formatarValor(valorPecas)} × ${formatarPercentual(percTotalPecas)}% = ${formatarValor(totalFedPecas)}`, valor: totalFedPecas }
                       ]
                     });
                   }
@@ -641,7 +668,7 @@ function FaturadoDetalhes() {
             case 'retencoes':
               if (impostos.retencoesOrgao) {
                 const percRetencoes = impostos.retencoesOrgao.percentual || 0;
-                const retencoes = valorPecas * percRetencoes / 100;
+                const retencoes = Math.round(valorPecas * percRetencoes) / 100;
                 
                 if (retencoes > 0) {
                   total += retencoes;
@@ -651,7 +678,7 @@ function FaturadoDetalhes() {
                       titulo: `Retenções Órgão (${percRetencoes}%)`,
                       valor: retencoes,
                       subitens: [
-                        { texto: `Peças: R$ ${formatarPercentual(valorPecas)} × ${percRetencoes}% = R$ ${formatarPercentual(retencoes)}`, valor: retencoes }
+                        { texto: `Peças: ${formatarValor(valorPecas)} × ${percRetencoes}% = ${formatarValor(retencoes)}`, valor: retencoes }
                       ]
                     });
                   }
@@ -692,8 +719,8 @@ function FaturadoDetalhes() {
           switch (tipo) {
             case 'municipais':
               if (impostos.impostosMunicipais) {
-                const percIRServico = impostos.impostosMunicipais.servico?.ir || 0;
-                const irMunServico = valorServico * percIRServico / 100;
+                const percIRServico = impostos.impostosMunicipais.servicos?.ir || 0;
+                const irMunServico = Math.round(valorServico * percIRServico) / 100;
                 
                 if (irMunServico > 0) {
                   total += irMunServico;
@@ -707,9 +734,9 @@ function FaturadoDetalhes() {
               break;
             case 'estaduais':
               if (impostos.impostosEstaduais) {
-                const estaduaisServico = impostos.impostosEstaduais.servico || {};
+                const estaduaisServico = impostos.impostosEstaduais.servicos || {};
                 const percTotalServico = (estaduaisServico.ir || 0) + (estaduaisServico.pis || 0) + (estaduaisServico.cofins || 0) + (estaduaisServico.csll || 0);
-                const totalEstServico = valorServico * percTotalServico / 100;
+                const totalEstServico = Math.round(valorServico * percTotalServico) / 100;
                 
                 if (totalEstServico > 0) {
                   total += totalEstServico;
@@ -723,9 +750,9 @@ function FaturadoDetalhes() {
               break;
             case 'federais':
               if (impostos.impostosFederais) {
-                const federaisServico = impostos.impostosFederais.servico || {};
+                const federaisServico = impostos.impostosFederais.servicos || {};
                 const percTotalServico = (federaisServico.ir || 0) + (federaisServico.pis || 0) + (federaisServico.cofins || 0) + (federaisServico.csll || 0);
-                const totalFedServico = valorServico * percTotalServico / 100;
+                const totalFedServico = Math.round(valorServico * percTotalServico) / 100;
                 
                 if (totalFedServico > 0) {
                   total += totalFedServico;
@@ -740,7 +767,7 @@ function FaturadoDetalhes() {
             case 'retencoes':
               if (impostos.retencoesOrgao) {
                 const percRetencoes = impostos.retencoesOrgao.percentual || 0;
-                const retencoes = valorServico * percRetencoes / 100;
+                const retencoes = Math.round(valorServico * percRetencoes) / 100;
                 
                 if (retencoes > 0) {
                   total += retencoes;
@@ -768,7 +795,7 @@ function FaturadoDetalhes() {
         titulo: `IR Municipal (${dados.perc}% Serviços)`,
         valor: dados.valor,
         subitens: [
-          { texto: `Serviços: R$ ${formatarPercentual(dados.servico)} × ${dados.perc}% = R$ ${formatarPercentual(dados.valor)}`, valor: dados.valor }
+          { texto: `Serviços: ${formatarValor(dados.servico)} × ${dados.perc}% = ${formatarValor(dados.valor)}`, valor: dados.valor }
         ]
       });
     }
@@ -779,7 +806,7 @@ function FaturadoDetalhes() {
         titulo: `Impostos Estaduais (${formatarPercentual(dados.perc)}% Serviços)`,
         valor: dados.valor,
         subitens: [
-          { texto: `Serviços: R$ ${formatarPercentual(dados.servico)} × ${formatarPercentual(dados.perc)}% = R$ ${formatarPercentual(dados.valor)}`, valor: dados.valor }
+          { texto: `Serviços: ${formatarValor(dados.servico)} × ${formatarPercentual(dados.perc)}% = ${formatarValor(dados.valor)}`, valor: dados.valor }
         ]
       });
     }
@@ -790,7 +817,7 @@ function FaturadoDetalhes() {
         titulo: `Impostos Federais (${formatarPercentual(dados.perc)}% Serviços)`,
         valor: dados.valor,
         subitens: [
-          { texto: `Serviços: R$ ${formatarPercentual(dados.servico)} × ${formatarPercentual(dados.perc)}% = R$ ${formatarPercentual(dados.valor)}`, valor: dados.valor }
+          { texto: `Serviços: ${formatarValor(dados.servico)} × ${formatarPercentual(dados.perc)}% = ${formatarValor(dados.valor)}`, valor: dados.valor }
         ]
       });
     }

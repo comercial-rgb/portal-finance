@@ -253,12 +253,13 @@ exports.receberOSFrota = async (req, res) => {
     }
 
     // 8. Calcular valores (com fallback caso não venham calculados)
+    // Arredondamento correto para evitar diferenças de centavos
     const valorPecasCalc = valorPecasComDesconto ?? (
-      valorPecasSemDesconto ? valorPecasSemDesconto * (1 - (descontoPercentual || 0) / 100) : 0
+      valorPecasSemDesconto ? Math.round(valorPecasSemDesconto * (1 - (descontoPercentual || 0) / 100) * 100) / 100 : 0
     );
     
     const valorServicoCalc = valorServicoComDesconto ?? (
-      valorServicoSemDesconto ? valorServicoSemDesconto * (1 - (descontoPercentual || 0) / 100) : 0
+      valorServicoSemDesconto ? Math.round(valorServicoSemDesconto * (1 - (descontoPercentual || 0) / 100) * 100) / 100 : 0
     );
 
     // 9. Processar notas fiscais do array (se vier)
@@ -321,7 +322,7 @@ exports.receberOSFrota = async (req, res) => {
       // Valores simplificados (preferidos)
       valorTotalSemDesconto: valorTotalSemDesconto || (valorPecasSemDesconto || 0) + (valorServicoSemDesconto || 0),
       descontoPercentual: descontoPercentual || 0,
-      valorFinal: valorFinal !== undefined ? valorFinal : (valorPecasCalc + valorServicoCalc),
+      valorFinal: valorFinal !== undefined ? valorFinal : Math.round((valorPecasCalc + valorServicoCalc) * 100) / 100,
       notaFiscalPeca: nfPecas,
       notaFiscalServico: nfServicos,
       observacoes: observacoesFinais,

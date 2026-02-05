@@ -378,9 +378,9 @@ exports.importarOrdensServico = async (req, res) => {
 
         console.log(`🎯 Desconto do cliente: ${descontoPercentual}% (aplicado em peças e serviços)`);
 
-        const valorPecasComDesconto = valorPecas - (valorPecas * descontoPercentual / 100);
-        const valorServicoComDesconto = valorServico - (valorServico * descontoPercentual / 100);
-        const valorFinal = valorPecasComDesconto + valorServicoComDesconto;
+        const valorPecasComDesconto = Math.round((valorPecas - (valorPecas * descontoPercentual / 100)) * 100) / 100;
+        const valorServicoComDesconto = Math.round((valorServico - (valorServico * descontoPercentual / 100)) * 100) / 100;
+        const valorFinal = Math.round((valorPecasComDesconto + valorServicoComDesconto) * 100) / 100;
 
         console.log(`💵 Valores com desconto: Peças R$ ${valorPecasComDesconto.toFixed(2)} | Serviço R$ ${valorServicoComDesconto.toFixed(2)}`);
         console.log(`💰 Valor Final: R$ ${valorFinal.toFixed(2)}`);

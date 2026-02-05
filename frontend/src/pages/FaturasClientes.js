@@ -42,6 +42,11 @@ function FaturasClientes() {
   const [centrosCustoDisponiveis, setCentrosCustoDisponiveis] = useState([]);
   const [subunidadesDisponiveis, setSubunidadesDisponiveis] = useState([]);
 
+  // Função auxiliar para formatar valores em Real Brasileiro
+  const formatarValorBRL = (valor) => {
+    return (valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
     setUser(currentUser);
@@ -232,12 +237,19 @@ function FaturasClientes() {
                   if (impostos.impostosMunicipais) {
                     const percPecas = impostos.impostosMunicipais.pecas?.ir || 1.20;
                     const percServicos = impostos.impostosMunicipais.servicos?.ir || 4.80;
-                    const irPecas = valorPecasOrdem * percPecas / 100;
-                    const irServicos = valorServicoOrdem * percServicos / 100;
+                    const irPecas = Math.round(valorPecasOrdem * percPecas) / 100;
+                    const irServicos = Math.round(valorServicoOrdem * percServicos) / 100;
                     const totalMun = irPecas + irServicos;
                     total += totalMun;
                     if (totalMun > 0) {
-                      detalhamento.push(`  • Municipal - Peças (${percPecas.toFixed(2)}%): R$ ${irPecas.toFixed(2)} | Serviços (${percServicos.toFixed(2)}%): R$ ${irServicos.toFixed(2)}`);
+                      // Mostrar apenas os tipos relevantes
+                      if (irPecas > 0 && irServicos > 0) {
+                        detalhamento.push(`  • Municipal - Peças (${percPecas.toFixed(2)}%): R$ ${formatarValorBRL(irPecas)} | Serviços (${percServicos.toFixed(2)}%): R$ ${formatarValorBRL(irServicos)}`);
+                      } else if (irPecas > 0) {
+                        detalhamento.push(`  • Municipal - Peças (${percPecas.toFixed(2)}%): R$ ${formatarValorBRL(irPecas)}`);
+                      } else if (irServicos > 0) {
+                        detalhamento.push(`  • Municipal - Serviços (${percServicos.toFixed(2)}%): R$ ${formatarValorBRL(irServicos)}`);
+                      }
                     }
                   }
                   break;
@@ -247,12 +259,19 @@ function FaturasClientes() {
                     const estaduaisServicos = impostos.impostosEstaduais.servicos || {};
                     const percTotalPecas = (estaduaisPecas.ir || 0) + (estaduaisPecas.pis || 0) + (estaduaisPecas.cofins || 0) + (estaduaisPecas.csll || 0);
                     const percTotalServicos = (estaduaisServicos.ir || 0) + (estaduaisServicos.pis || 0) + (estaduaisServicos.cofins || 0) + (estaduaisServicos.csll || 0);
-                    const totalEstPecas = valorPecasOrdem * percTotalPecas / 100;
-                    const totalEstServicos = valorServicoOrdem * percTotalServicos / 100;
+                    const totalEstPecas = Math.round(valorPecasOrdem * percTotalPecas) / 100;
+                    const totalEstServicos = Math.round(valorServicoOrdem * percTotalServicos) / 100;
                     const totalEst = totalEstPecas + totalEstServicos;
                     total += totalEst;
                     if (totalEst > 0) {
-                      detalhamento.push(`  • Estadual - Peças (${percTotalPecas.toFixed(2)}%): R$ ${totalEstPecas.toFixed(2)} | Serviços (${percTotalServicos.toFixed(2)}%): R$ ${totalEstServicos.toFixed(2)}`);
+                      // Mostrar apenas os tipos relevantes
+                      if (totalEstPecas > 0 && totalEstServicos > 0) {
+                        detalhamento.push(`  • Estadual - Peças (${percTotalPecas.toFixed(2)}%): R$ ${formatarValorBRL(totalEstPecas)} | Serviços (${percTotalServicos.toFixed(2)}%): R$ ${formatarValorBRL(totalEstServicos)}`);
+                      } else if (totalEstPecas > 0) {
+                        detalhamento.push(`  • Estadual - Peças (${percTotalPecas.toFixed(2)}%): R$ ${formatarValorBRL(totalEstPecas)}`);
+                      } else if (totalEstServicos > 0) {
+                        detalhamento.push(`  • Estadual - Serviços (${percTotalServicos.toFixed(2)}%): R$ ${formatarValorBRL(totalEstServicos)}`);
+                      }
                     }
                   }
                   break;
@@ -262,22 +281,29 @@ function FaturasClientes() {
                     const federaisServicos = impostos.impostosFederais.servicos || {};
                     const percTotalPecas = (federaisPecas.ir || 0) + (federaisPecas.pis || 0) + (federaisPecas.cofins || 0) + (federaisPecas.csll || 0);
                     const percTotalServicos = (federaisServicos.ir || 0) + (federaisServicos.pis || 0) + (federaisServicos.cofins || 0) + (federaisServicos.csll || 0);
-                    const totalFedPecas = valorPecasOrdem * percTotalPecas / 100;
-                    const totalFedServicos = valorServicoOrdem * percTotalServicos / 100;
+                    const totalFedPecas = Math.round(valorPecasOrdem * percTotalPecas) / 100;
+                    const totalFedServicos = Math.round(valorServicoOrdem * percTotalServicos) / 100;
                     const totalFed = totalFedPecas + totalFedServicos;
                     total += totalFed;
                     if (totalFed > 0) {
-                      detalhamento.push(`  • Federal - Peças (${percTotalPecas.toFixed(2)}%): R$ ${totalFedPecas.toFixed(2)} | Serviços (${percTotalServicos.toFixed(2)}%): R$ ${totalFedServicos.toFixed(2)}`);
+                      // Mostrar apenas os tipos relevantes
+                      if (totalFedPecas > 0 && totalFedServicos > 0) {
+                        detalhamento.push(`  • Federal - Peças (${percTotalPecas.toFixed(2)}%): R$ ${formatarValorBRL(totalFedPecas)} | Serviços (${percTotalServicos.toFixed(2)}%): R$ ${formatarValorBRL(totalFedServicos)}`);
+                      } else if (totalFedPecas > 0) {
+                        detalhamento.push(`  • Federal - Peças (${percTotalPecas.toFixed(2)}%): R$ ${formatarValorBRL(totalFedPecas)}`);
+                      } else if (totalFedServicos > 0) {
+                        detalhamento.push(`  • Federal - Serviços (${percTotalServicos.toFixed(2)}%): R$ ${formatarValorBRL(totalFedServicos)}`);
+                      }
                     }
                   }
                   break;
                 case 'retencoes':
                   if (impostos.retencoesOrgao) {
                     const percentual = impostos.retencoesOrgao.percentual || 0;
-                    const retencoes = (valorPecasOrdem + valorServicoOrdem) * percentual / 100;
+                    const retencoes = Math.round((valorPecasOrdem + valorServicoOrdem) * percentual) / 100;
                     total += retencoes;
                     if (retencoes > 0) {
-                      detalhamento.push(`  • Retenções Órgão (${percentual.toFixed(2)}%): R$ ${retencoes.toFixed(2)}`);
+                      detalhamento.push(`  • Retenções Órgão (${percentual.toFixed(2)}%): R$ ${formatarValorBRL(retencoes)}`);
                     }
                   }
                   break;
@@ -607,13 +633,13 @@ function FaturasClientes() {
         ordem.numeroOrdemServico || '-',
         ordem.fornecedor?.razaoSocial || ordem.fornecedor?.nomeFantasia || '-',
         ordem.placa || '-',
-        `R$ ${(ordem.valorPecas || 0).toFixed(2)}`,
+        `R$ ${formatarValorBRL(ordem.valorPecas)}`,
         `${(ordem.descontoPecasPerc || 0).toFixed(1)}%`,
-        `R$ ${(ordem.valorPecasComDesconto || 0).toFixed(2)}`,
-        `R$ ${(ordem.valorServico || 0).toFixed(2)}`,
+        `R$ ${formatarValorBRL(ordem.valorPecasComDesconto)}`,
+        `R$ ${formatarValorBRL(ordem.valorServico)}`,
         `${(ordem.descontoServicoPerc || 0).toFixed(1)}%`,
-        `R$ ${(ordem.valorServicoComDesconto || 0).toFixed(2)}`,
-        `R$ ${(ordem.valorFinal || 0).toFixed(2)}`
+        `R$ ${formatarValorBRL(ordem.valorServicoComDesconto)}`,
+        `R$ ${formatarValorBRL(ordem.valorFinal)}`
       ]);
       columnStyles = {
         0: { cellWidth: 18 }, 1: { cellWidth: 35 }, 2: { cellWidth: 15 },
@@ -626,9 +652,9 @@ function FaturasClientes() {
         ordem.numeroOrdemServico || '-',
         ordem.fornecedor?.razaoSocial || ordem.fornecedor?.nomeFantasia || '-',
         ordem.placa || '-',
-        `R$ ${(ordem.valorPecas || 0).toFixed(2)}`,
+        `R$ ${formatarValorBRL(ordem.valorPecas)}`,
         `${(ordem.descontoPecasPerc || 0).toFixed(1)}%`,
-        `R$ ${(ordem.valorPecasComDesconto || 0).toFixed(2)}`
+        `R$ ${formatarValorBRL(ordem.valorPecasComDesconto)}`
       ]);
       columnStyles = {
         0: { cellWidth: 25 }, 1: { cellWidth: 55 }, 2: { cellWidth: 20 },
@@ -640,9 +666,9 @@ function FaturasClientes() {
         ordem.numeroOrdemServico || '-',
         ordem.fornecedor?.razaoSocial || ordem.fornecedor?.nomeFantasia || '-',
         ordem.placa || '-',
-        `R$ ${(ordem.valorServico || 0).toFixed(2)}`,
+        `R$ ${formatarValorBRL(ordem.valorServico)}`,
         `${(ordem.descontoServicoPerc || 0).toFixed(1)}%`,
-        `R$ ${(ordem.valorServicoComDesconto || 0).toFixed(2)}`
+        `R$ ${formatarValorBRL(ordem.valorServicoComDesconto)}`
       ]);
       columnStyles = {
         0: { cellWidth: 25 }, 1: { cellWidth: 55 }, 2: { cellWidth: 20 },
@@ -718,7 +744,7 @@ function FaturasClientes() {
     
     if (tipoFatura === 'completa' || tipoFatura === 'pecas') {
       doc.text('Valor Peças Total:', 25, finalY);
-      doc.text(`R$ ${valorTotalPecas.toFixed(2)}`, 185, finalY, { align: 'right' });
+      doc.text(`R$ ${formatarValorBRL(valorTotalPecas)}`, 185, finalY, { align: 'right' });
       doc.setDrawColor(224, 224, 224);
       doc.line(20, finalY + 2, 190, finalY + 2);
       finalY += 7;
@@ -726,14 +752,14 @@ function FaturasClientes() {
     
     if (tipoFatura === 'completa' || tipoFatura === 'servicos') {
       doc.text('Valor Serviços Total:', 25, finalY);
-      doc.text(`R$ ${valorTotalServicos.toFixed(2)}`, 185, finalY, { align: 'right' });
+      doc.text(`R$ ${formatarValorBRL(valorTotalServicos)}`, 185, finalY, { align: 'right' });
       doc.setDrawColor(224, 224, 224);
       doc.line(20, finalY + 2, 190, finalY + 2);
       finalY += 7;
     }
     
     doc.text('Desconto Contrato:', 25, finalY);
-    doc.text(`- R$ ${descontoTotal.toFixed(2)}`, 185, finalY, { align: 'right' });
+    doc.text(`- R$ ${formatarValorBRL(descontoTotal)}`, 185, finalY, { align: 'right' });
     doc.setDrawColor(224, 224, 224);
     doc.line(20, finalY + 2, 190, finalY + 2);
     finalY += 7;
@@ -744,7 +770,7 @@ function FaturasClientes() {
     doc.setFont(undefined, 'bold');
     doc.setFontSize(10);
     doc.text('Valor com Desconto:', 25, finalY);
-    doc.text(`R$ ${valorComDesconto.toFixed(2)}`, 185, finalY, { align: 'right' });
+    doc.text(`R$ ${formatarValorBRL(valorComDesconto)}`, 185, finalY, { align: 'right' });
     doc.setDrawColor(0, 91, 237);
     doc.setLineWidth(1);
     doc.line(20, finalY + 2, 190, finalY + 2);
@@ -786,7 +812,7 @@ function FaturasClientes() {
       doc.setFontSize(9);
       doc.setFont(undefined, 'bold');
       doc.text('Total Impostos:', 25, finalY);
-      doc.text(`- R$ ${totalImpostos.toFixed(2)}`, 185, finalY, { align: 'right' });
+      doc.text(`- R$ ${formatarValorBRL(totalImpostos)}`, 185, finalY, { align: 'right' });
       finalY += 8;
     }
     
@@ -802,7 +828,7 @@ function FaturasClientes() {
     doc.setTextColor(255, 255, 255);
     doc.setFont(undefined, 'bold');
     doc.text('VALOR DEVIDO:', 25, finalY);
-    doc.text(`R$ ${valorDevido.toFixed(2)}`, 185, finalY, { align: 'right' });
+    doc.text(`R$ ${formatarValorBRL(valorDevido)}`, 185, finalY, { align: 'right' });
 
     doc.save(`fatura_cliente_${numeroFatura}.pdf`);
     toast.success('PDF gerado com sucesso!');

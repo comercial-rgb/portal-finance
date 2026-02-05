@@ -155,13 +155,13 @@ exports.criar = async (req, res) => {
     const ordensComValores = ordensServico.map(os => {
       const valorPecas = os.valorPecas || 0;
       const valorServico = os.valorServico || 0;
-      const descontoPecas = (valorPecas * (os.descontoPecasPerc || 0)) / 100;
-      const descontoServico = (valorServico * (os.descontoServicoPerc || 0)) / 100;
-      const valorOS = (valorPecas + valorServico) - (descontoPecas + descontoServico);
+      const descontoPecas = Math.round((valorPecas * (os.descontoPecasPerc || 0)) / 100 * 100) / 100;
+      const descontoServico = Math.round((valorServico * (os.descontoServicoPerc || 0)) / 100 * 100) / 100;
+      const valorOS = Math.round(((valorPecas + valorServico) - (descontoPecas + descontoServico)) * 100) / 100;
       
       // Calcular impostos para esta OS
-      const valorPecasComDesconto = valorPecas - descontoPecas;
-      const valorServicoComDesconto = valorServico - descontoServico;
+      const valorPecasComDesconto = Math.round((valorPecas - descontoPecas) * 100) / 100;
+      const valorServicoComDesconto = Math.round((valorServico - descontoServico) * 100) / 100;
       let impostosOS = 0;
       
       // Buscar cliente e fornecedor populados
@@ -176,26 +176,26 @@ exports.criar = async (req, res) => {
         clienteOS.tipoImposto.forEach(tipoImposto => {
           if (tipoImposto === 'municipais' && impostos.impostosMunicipais) {
             // Municipal: apenas IR
-            impostosOS += valorPecasComDesconto * (impostos.impostosMunicipais.pecas?.ir || 0) / 100;
-            impostosOS += valorServicoComDesconto * (impostos.impostosMunicipais.servicos?.ir || 0) / 100;
+            impostosOS += Math.round(valorPecasComDesconto * (impostos.impostosMunicipais.pecas?.ir || 0) / 100 * 100) / 100;
+            impostosOS += Math.round(valorServicoComDesconto * (impostos.impostosMunicipais.servicos?.ir || 0) / 100 * 100) / 100;
           }
           if (tipoImposto === 'estaduais' && impostos.impostosEstaduais) {
             // Estadual: IR + PIS + COFINS + CSLL
             const pecas = impostos.impostosEstaduais.pecas || {};
             const servicos = impostos.impostosEstaduais.servicos || {};
-            impostosOS += valorPecasComDesconto * ((pecas.ir || 0) + (pecas.pis || 0) + (pecas.cofins || 0) + (pecas.csll || 0)) / 100;
-            impostosOS += valorServicoComDesconto * ((servicos.ir || 0) + (servicos.pis || 0) + (servicos.cofins || 0) + (servicos.csll || 0)) / 100;
+            impostosOS += Math.round(valorPecasComDesconto * ((pecas.ir || 0) + (pecas.pis || 0) + (pecas.cofins || 0) + (pecas.csll || 0)) / 100 * 100) / 100;
+            impostosOS += Math.round(valorServicoComDesconto * ((servicos.ir || 0) + (servicos.pis || 0) + (servicos.cofins || 0) + (servicos.csll || 0)) / 100 * 100) / 100;
           }
           if (tipoImposto === 'federais' && impostos.impostosFederais) {
             // Federal: IR + PIS + COFINS + CSLL
             const pecas = impostos.impostosFederais.pecas || {};
             const servicos = impostos.impostosFederais.servicos || {};
-            impostosOS += valorPecasComDesconto * ((pecas.ir || 0) + (pecas.pis || 0) + (pecas.cofins || 0) + (pecas.csll || 0)) / 100;
-            impostosOS += valorServicoComDesconto * ((servicos.ir || 0) + (servicos.pis || 0) + (servicos.cofins || 0) + (servicos.csll || 0)) / 100;
+            impostosOS += Math.round(valorPecasComDesconto * ((pecas.ir || 0) + (pecas.pis || 0) + (pecas.cofins || 0) + (pecas.csll || 0)) / 100 * 100) / 100;
+            impostosOS += Math.round(valorServicoComDesconto * ((servicos.ir || 0) + (servicos.pis || 0) + (servicos.cofins || 0) + (servicos.csll || 0)) / 100 * 100) / 100;
           }
           if (tipoImposto === 'retencoes' && impostos.retencoesOrgao) {
             // Retenções: aplicar sobre o total
-            impostosOS += (valorPecasComDesconto + valorServicoComDesconto) * (impostos.retencoesOrgao.percentual || 0) / 100;
+            impostosOS += Math.round((valorPecasComDesconto + valorServicoComDesconto) * (impostos.retencoesOrgao.percentual || 0) / 100 * 100) / 100;
           }
         });
       }
@@ -225,7 +225,7 @@ exports.criar = async (req, res) => {
       if (clienteOS?.tipoTaxa === 'operacao') {
         // Taxa de Operação fixa
         const taxaPerc = clienteOS.taxaOperacao || 15;
-        valorTaxasOperacao = (valorComDesconto * taxaPerc) / 100;
+        valorTaxasOperacao = Math.round((valorComDesconto * taxaPerc) / 100 * 100) / 100;
         console.log('💰 Taxa Operação:', taxaPerc + '%', '=', valorTaxasOperacao);
       } else if (clienteOS?.tipoTaxa === 'antecipacao_variavel' && tipoPagamento) {
         // Taxa Antecipação Variável - requer tipoPagamento
@@ -250,13 +250,13 @@ exports.criar = async (req, res) => {
             taxaPerc = clienteOS.taxasAntecipacao?.dias60 || 0;
             break;
         }
-        valorTaxasOperacao = (valorComDesconto * taxaPerc) / 100;
+        valorTaxasOperacao = Math.round((valorComDesconto * taxaPerc) / 100 * 100) / 100;
         console.log('💰 Taxa Antecipação Variável:', tipoPagamento, '=', taxaPerc + '%', '=', valorTaxasOperacao);
       }
     }
     
     // Valor devido final
-    const valorDevido = valorComDesconto - valorImpostos - valorTaxasOperacao;
+    const valorDevido = Math.round((valorComDesconto - valorImpostos - valorTaxasOperacao) * 100) / 100;
     
     // Criar fatura
     const novaFatura = new Fatura({

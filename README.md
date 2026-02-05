@@ -111,8 +111,7 @@ node backend/scripts/createSuperAdmin.js
 ```
 
 **Credenciais padrão:**
-- Email: `admin@instasolutions.com`
-- Senha: `admin123456`
+- Email: `a- Senha: `admin123456`
 
 ⚠️ **IMPORTANTE:** Altere a senha após o primeiro login!
 

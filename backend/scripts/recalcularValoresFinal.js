@@ -19,10 +19,10 @@ const recalcularValoresFinal = async () => {
       try {
         const valorFinalAntigo = os.valorFinal;
 
-        // Recalcula valores com desconto
-        os.valorPecasComDesconto = os.valorPecas - (os.valorPecas * os.descontoPecasPerc / 100);
-        os.valorServicoComDesconto = os.valorServico - (os.valorServico * os.descontoServicoPerc / 100);
-        os.valorFinal = os.valorPecasComDesconto + os.valorServicoComDesconto;
+        // Recalcula valores com desconto (com arredondamento correto)
+        os.valorPecasComDesconto = Math.round((os.valorPecas - (os.valorPecas * os.descontoPecasPerc / 100)) * 100) / 100;
+        os.valorServicoComDesconto = Math.round((os.valorServico - (os.valorServico * os.descontoServicoPerc / 100)) * 100) / 100;
+        os.valorFinal = Math.round((os.valorPecasComDesconto + os.valorServicoComDesconto) * 100) / 100;
 
         const valorFinalNovo = os.valorFinal;
 

@@ -567,18 +567,16 @@ function FaturadoDetalhes() {
                   subitens: [
                     { texto: `Total (Peças + Serviços): ${formatarValor(totalValorPecas + totalValorServico)} × ${percRetencoes}% = ${formatarValor(retencoes)}`, valor: retencoes }
                   ]
-                    });
-                  }
-                }
+                });
               }
-              break;
-            default:
-              break;
-          }
-        } catch (error) {
-          console.error(`Erro ao calcular imposto ${tipo}:`, error);
+            }
+            break;
+          default:
+            break;
         }
-      });
+      } catch (error) {
+        console.error(`Erro ao calcular imposto ${tipo}:`, error);
+      }
     });
 
     return { total, detalhamento };
@@ -699,7 +697,6 @@ function FaturadoDetalhes() {
           console.error(`Erro ao calcular imposto ${tipo}:`, error);
         }
       });
-    });
 
     return { total, detalhamento };
   };
@@ -891,13 +888,11 @@ function FaturadoDetalhes() {
     doc.text(`Telefone: ${telefone}  |  E-mail: ${email}`, 20, yPos);
     yPos += 6;
 
-    // Dados dos Centros de Custo e Subunidades
+    // Dados dos Centros de Custo (apenas nomes únicos)
     const centrosCustoData = ordensServico
       .map(item => {
         const os = item.ordemServico;
-        if (!os.centroCusto) return null;
-        const sub = os.subunidade ? ` / ${os.subunidade}` : '';
-        return os.centroCusto + sub;
+        return os.centroCusto || null;
       })
       .filter(Boolean);
     
@@ -907,24 +902,17 @@ function FaturadoDetalhes() {
       doc.setFontSize(11);
       doc.setTextColor(0, 91, 237);
       doc.setFont(undefined, 'bold');
-      doc.text('Centros de Custo / Subunidades', 20, yPos);
+      doc.text('Centros de Custo', 20, yPos);
       doc.setFont(undefined, 'normal');
       
       doc.setFontSize(9);
       doc.setTextColor(0);
       yPos += 5;
-      let linha = '';
-      centrosCustoUnicos.forEach((cc, index) => {
-        if ((index + 1) % 3 === 0 || index === centrosCustoUnicos.length - 1) {
-          linha += cc;
-          doc.text(linha, 20, yPos);
-          yPos += 5;
-          linha = '';
-        } else {
-          linha += cc + ' | ';
-        }
+      centrosCustoUnicos.forEach((cc) => {
+        doc.text(cc, 20, yPos);
+        yPos += 4;
       });
-      yPos += 3;
+      yPos += 2;
     }
 
     // Tabela de Ordens - Completa com Notas Fiscais
@@ -973,11 +961,11 @@ function FaturadoDetalhes() {
       body: tableData,
       theme: 'striped',
       headStyles: { fillColor: [37, 28, 89], fontSize: 7, fontStyle: 'bold' },
-      styles: { fontSize: 6, cellPadding: 1.5 },
+      styles: { fontSize: 6.5, cellPadding: 2 },
       columnStyles: {
-        0: { cellWidth: 16 }, 1: { cellWidth: 28 }, 2: { cellWidth: 12 }, 3: { cellWidth: 18 },
-        4: { cellWidth: 16 }, 5: { cellWidth: 10 }, 6: { cellWidth: 16 },
-        7: { cellWidth: 16 }, 8: { cellWidth: 10 }, 9: { cellWidth: 16 }, 10: { cellWidth: 16 }
+        0: { cellWidth: 17 }, 1: { cellWidth: 32 }, 2: { cellWidth: 13 }, 3: { cellWidth: 15 },
+        4: { cellWidth: 17 }, 5: { cellWidth: 11 }, 6: { cellWidth: 17 },
+        7: { cellWidth: 17 }, 8: { cellWidth: 11 }, 9: { cellWidth: 17 }, 10: { cellWidth: 17 }
       }
     });
 
@@ -1213,13 +1201,12 @@ function FaturadoDetalhes() {
     doc.text(`Telefone: ${telefone}  |  E-mail: ${email}`, 20, yPos);
     yPos += 6;
 
-    // Dados dos Centros de Custo e Subunidades
+    // Dados dos Centros de Custo (apenas nomes únicos)
     const centrosCustoData = ordensServico
+      .filter(item => (item.ordemServico.valorPecasComDesconto || 0) > 0)
       .map(item => {
         const os = item.ordemServico;
-        if (!os.centroCusto) return null;
-        const sub = os.subunidade ? ` / ${os.subunidade}` : '';
-        return os.centroCusto + sub;
+        return os.centroCusto || null;
       })
       .filter(Boolean);
     
@@ -1229,43 +1216,38 @@ function FaturadoDetalhes() {
       doc.setFontSize(11);
       doc.setTextColor(0, 91, 237);
       doc.setFont(undefined, 'bold');
-      doc.text('Centros de Custo / Subunidades', 20, yPos);
+      doc.text('Centros de Custo', 20, yPos);
       doc.setFont(undefined, 'normal');
       
       doc.setFontSize(9);
       doc.setTextColor(0);
       yPos += 5;
-      let linha = '';
-      centrosCustoUnicos.forEach((cc, index) => {
-        if ((index + 1) % 3 === 0 || index === centrosCustoUnicos.length - 1) {
-          linha += cc;
-          doc.text(linha, 20, yPos);
-          yPos += 5;
-          linha = '';
-        } else {
-          linha += cc + ' | ';
-        }
+      centrosCustoUnicos.forEach((cc) => {
+        doc.text(cc, 20, yPos);
+        yPos += 4;
       });
-      yPos += 3;
+      yPos += 2;
     }
 
-    // Tabela de Ordens - Somente Peças
-    const tableData = ordensServico.map(item => {
-      const os = item.ordemServico;
-      const entityName = fatura.tipo === 'Fornecedor' 
-        ? (os.cliente?.razaoSocial || os.cliente?.nomeFantasia || '-')
-        : (os.fornecedor?.razaoSocial || os.fornecedor?.nomeFantasia || '-');
-      
-      return [
-        os.numeroOrdemServico || '-',
-        entityName,
-        os.placa || '-',
-        os.notaFiscalPeca || '-',
-        formatarValor(os.valorPecas || 0),
-        `${formatarPercentual(os.descontoPecasPerc || 0)}%`,
-        formatarValor(os.valorPecasComDesconto || 0)
-      ];
-    });
+    // Tabela de Ordens - Somente Peças (filtra OS com valor zerado)
+    const tableData = ordensServico
+      .filter(item => (item.ordemServico.valorPecasComDesconto || 0) > 0)
+      .map(item => {
+        const os = item.ordemServico;
+        const entityName = fatura.tipo === 'Fornecedor' 
+          ? (os.cliente?.razaoSocial || os.cliente?.nomeFantasia || '-')
+          : (os.fornecedor?.razaoSocial || os.fornecedor?.nomeFantasia || '-');
+        
+        return [
+          os.numeroOrdemServico || '-',
+          entityName,
+          os.placa || '-',
+          os.notaFiscalPeca || '-',
+          formatarValor(os.valorPecas || 0),
+          `${formatarPercentual(os.descontoPecasPerc || 0)}%`,
+          formatarValor(os.valorPecasComDesconto || 0)
+        ];
+      });
 
     autoTable(doc, {
       startY: yPos,
@@ -1280,11 +1262,11 @@ function FaturadoDetalhes() {
       ]],
       body: tableData,
       theme: 'striped',
-      headStyles: { fillColor: [37, 28, 89], fontSize: 8, fontStyle: 'bold' },
-      styles: { fontSize: 7, cellPadding: 2 },
+      headStyles: { fillColor: [37, 28, 89], fontSize: 9, fontStyle: 'bold' },
+      styles: { fontSize: 8, cellPadding: 2.5 },
       columnStyles: {
-        0: { cellWidth: 20 }, 1: { cellWidth: 40 }, 2: { cellWidth: 15 },
-        3: { cellWidth: 25 }, 4: { cellWidth: 22 }, 5: { cellWidth: 15 }, 6: { cellWidth: 25 }
+        0: { cellWidth: 22 }, 1: { cellWidth: 50 }, 2: { cellWidth: 18 },
+        3: { cellWidth: 25 }, 4: { cellWidth: 20 }, 5: { cellWidth: 15 }, 6: { cellWidth: 24 }
       }
     });
 
@@ -1483,13 +1465,12 @@ function FaturadoDetalhes() {
     doc.text(`Telefone: ${telefone}  |  E-mail: ${email}`, 20, yPos);
     yPos += 6;
 
-    // Dados dos Centros de Custo e Subunidades
+    // Dados dos Centros de Custo (apenas nomes únicos)
     const centrosCustoData = ordensServico
+      .filter(item => (item.ordemServico.valorServicoComDesconto || 0) > 0)
       .map(item => {
         const os = item.ordemServico;
-        if (!os.centroCusto) return null;
-        const sub = os.subunidade ? ` / ${os.subunidade}` : '';
-        return os.centroCusto + sub;
+        return os.centroCusto || null;
       })
       .filter(Boolean);
     
@@ -1499,43 +1480,38 @@ function FaturadoDetalhes() {
       doc.setFontSize(11);
       doc.setTextColor(0, 91, 237);
       doc.setFont(undefined, 'bold');
-      doc.text('Centros de Custo / Subunidades', 20, yPos);
+      doc.text('Centros de Custo', 20, yPos);
       doc.setFont(undefined, 'normal');
       
       doc.setFontSize(9);
       doc.setTextColor(0);
       yPos += 5;
-      let linha = '';
-      centrosCustoUnicos.forEach((cc, index) => {
-        if ((index + 1) % 3 === 0 || index === centrosCustoUnicos.length - 1) {
-          linha += cc;
-          doc.text(linha, 20, yPos);
-          yPos += 5;
-          linha = '';
-        } else {
-          linha += cc + ' | ';
-        }
+      centrosCustoUnicos.forEach((cc) => {
+        doc.text(cc, 20, yPos);
+        yPos += 4;
       });
-      yPos += 3;
+      yPos += 2;
     }
 
-    // Tabela de Ordens - Somente Serviços
-    const tableData = ordensServico.map(item => {
-      const os = item.ordemServico;
-      const entityName = fatura.tipo === 'Fornecedor' 
-        ? (os.cliente?.razaoSocial || os.cliente?.nomeFantasia || '-')
-        : (os.fornecedor?.razaoSocial || os.fornecedor?.nomeFantasia || '-');
-      
-      return [
-        os.numeroOrdemServico || '-',
-        entityName,
-        os.placa || '-',
-        os.notaFiscalServico || '-',
-        formatarValor(os.valorServico || 0),
-        `${formatarPercentual(os.descontoServicoPerc || 0)}%`,
-        formatarValor(os.valorServicoComDesconto || 0)
-      ];
-    });
+    // Tabela de Ordens - Somente Serviços (filtra OS com valor zerado)
+    const tableData = ordensServico
+      .filter(item => (item.ordemServico.valorServicoComDesconto || 0) > 0)
+      .map(item => {
+        const os = item.ordemServico;
+        const entityName = fatura.tipo === 'Fornecedor' 
+          ? (os.cliente?.razaoSocial || os.cliente?.nomeFantasia || '-')
+          : (os.fornecedor?.razaoSocial || os.fornecedor?.nomeFantasia || '-');
+        
+        return [
+          os.numeroOrdemServico || '-',
+          entityName,
+          os.placa || '-',
+          os.notaFiscalServico || '-',
+          formatarValor(os.valorServico || 0),
+          `${formatarPercentual(os.descontoServicoPerc || 0)}%`,
+          formatarValor(os.valorServicoComDesconto || 0)
+        ];
+      });
 
     autoTable(doc, {
       startY: yPos,
@@ -1550,11 +1526,11 @@ function FaturadoDetalhes() {
       ]],
       body: tableData,
       theme: 'striped',
-      headStyles: { fillColor: [37, 28, 89], fontSize: 8, fontStyle: 'bold' },
-      styles: { fontSize: 7, cellPadding: 2 },
+      headStyles: { fillColor: [37, 28, 89], fontSize: 9, fontStyle: 'bold' },
+      styles: { fontSize: 8, cellPadding: 2.5 },
       columnStyles: {
-        0: { cellWidth: 20 }, 1: { cellWidth: 40 }, 2: { cellWidth: 15 },
-        3: { cellWidth: 25 }, 4: { cellWidth: 22 }, 5: { cellWidth: 15 }, 6: { cellWidth: 25 }
+        0: { cellWidth: 22 }, 1: { cellWidth: 50 }, 2: { cellWidth: 18 },
+        3: { cellWidth: 25 }, 4: { cellWidth: 20 }, 5: { cellWidth: 15 }, 6: { cellWidth: 24 }
       }
     });
 

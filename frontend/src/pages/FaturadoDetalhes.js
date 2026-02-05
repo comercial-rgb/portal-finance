@@ -955,7 +955,7 @@ function FaturadoDetalhes() {
       head: [[
         'Nº OS', 
         fatura.tipo === 'Fornecedor' ? 'Cliente' : 'Fornecedor', 
-        'Placa',
+        'Veículo',
         'NF',
         'Vlr Peças', 
         'Desc%', 
@@ -968,11 +968,11 @@ function FaturadoDetalhes() {
       body: tableData,
       theme: 'striped',
       headStyles: { fillColor: [37, 28, 89], fontSize: 7, fontStyle: 'bold' },
-      styles: { fontSize: 6.5, cellPadding: 2 },
+      styles: { fontSize: 6.5, cellPadding: 2, overflow: 'linebreak' },
       columnStyles: {
-        0: { cellWidth: 17 }, 1: { cellWidth: 32 }, 2: { cellWidth: 13 }, 3: { cellWidth: 15 },
-        4: { cellWidth: 17 }, 5: { cellWidth: 11 }, 6: { cellWidth: 17 },
-        7: { cellWidth: 17 }, 8: { cellWidth: 11 }, 9: { cellWidth: 17 }, 10: { cellWidth: 17 }
+        0: { cellWidth: 16 }, 1: { cellWidth: 28 }, 2: { cellWidth: 12 }, 3: { cellWidth: 14 },
+        4: { cellWidth: 18 }, 5: { cellWidth: 10 }, 6: { cellWidth: 19 },
+        7: { cellWidth: 18 }, 8: { cellWidth: 10 }, 9: { cellWidth: 19 }, 10: { cellWidth: 20 }
       }
     });
 
@@ -1261,7 +1261,7 @@ function FaturadoDetalhes() {
       head: [[
         'Nº OS', 
         fatura.tipo === 'Fornecedor' ? 'Cliente' : 'Fornecedor', 
-        'Placa',
+        'Veículo',
         'Nota Fiscal',
         'Valor Peças', 
         'Desconto %', 
@@ -1525,7 +1525,7 @@ function FaturadoDetalhes() {
       head: [[
         'Nº OS', 
         fatura.tipo === 'Fornecedor' ? 'Cliente' : 'Fornecedor', 
-        'Placa',
+        'Veículo',
         'Nota Fiscal',
         'Valor Serviços', 
         'Desconto %', 

@@ -131,19 +131,28 @@ exports.criar = async (req, res) => {
       });
     }
     
-    // Gerar número da fatura
-    const ultimaFatura = await Fatura.findOne()
-      .sort({ numeroFatura: -1 })
-      .select('numeroFatura')
-      .lean();
+    // Gerar número da fatura com formato C1234 (Cliente) ou F5678 (Fornecedor)
+    const prefixo = tipo === 'Cliente' ? 'C' : 'F';
+    let numeroFatura;
+    let tentativas = 0;
+    const maxTentativas = 100;
     
-    let proximoNumero = 1;
-    if (ultimaFatura && ultimaFatura.numeroFatura) {
-      const numeroAtual = parseInt(ultimaFatura.numeroFatura.replace('FAT-', ''));
-      proximoNumero = numeroAtual + 1;
-    }
-    
-    const numeroFatura = `FAT-${String(proximoNumero).padStart(6, '0')}`;
+    // Gera número único de 4 dígitos
+    do {
+      const numeroAleatorio = Math.floor(1000 + Math.random() * 9000); // Gera entre 1000 e 9999
+      numeroFatura = `${prefixo}${numeroAleatorio}`;
+      
+      // Verifica se já existe
+      const faturaExistente = await Fatura.findOne({ numeroFatura }).lean();
+      if (!faturaExistente) break;
+      
+      tentativas++;
+      if (tentativas >= maxTentativas) {
+        return res.status(500).json({ 
+          message: 'Não foi possível gerar número único para a fatura. Tente novamente.' 
+        });
+      }
+    } while (true);
     
     // Calcular valores
     let valorTotal = 0;

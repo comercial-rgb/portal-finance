@@ -805,14 +805,21 @@ function FaturadoDetalhes() {
               }
             }
             break;
-            default:
-              break;
-          }
-        } catch (error) {
-          console.error(`Erro ao calcular imposto ${tipo}:`, error);
+          default:
+            break;
         }
-      });
+      } catch (error) {
+        console.error(`Erro ao calcular imposto ${tipo}:`, error);
+      }
+    });
 
+    return { total, detalhamento };
+  };
+
+  const imprimirCompleta = () => {
+    if (!fatura) return;
+
+    const doc = new jsPDF('p', 'mm', 'a4');
     const entidade = fatura.tipo === 'Fornecedor' ? fatura.fornecedor : fatura.cliente;
 
     // Cabeçalho - InstaSolutions

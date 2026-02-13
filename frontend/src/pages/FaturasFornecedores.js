@@ -558,9 +558,9 @@ function FaturasFornecedores() {
         ordem.cliente?.razaoSocial || ordem.cliente?.nomeFantasia || '-',
         ordem.placa || '-',
         centroCusto + subunidade,
-        `R$ ${(ordem.valorPecasComDesconto || 0).toFixed(2)}`,
-        `R$ ${(ordem.valorServicoComDesconto || 0).toFixed(2)}`,
-        `R$ ${(ordem.valorFinal || 0).toFixed(2)}`
+        formatCurrency(ordem.valorPecasComDesconto || 0),
+        formatCurrency(ordem.valorServicoComDesconto || 0),
+        formatCurrency(ordem.valorFinal || 0)
       ];
     });
 
@@ -619,8 +619,9 @@ function FaturasFornecedores() {
     console.log('Total Impostos:', totalImpostos);
     console.log('Detalhes Impostos:', detalhesImpostos);
     
-    const taxaOperacao = calcularTaxaOperacao(valorTotalAposDesconto);
+    // CORREÇÃO: Taxa calculada sobre o valor APÓS impostos
     const valorAposImpostos = valorTotalAposDesconto - totalImpostos;
+    const taxaOperacao = calcularTaxaOperacao(valorAposImpostos);
     const valorDevido = valorAposImpostos - taxaOperacao;
 
     // Resumo Financeiro em formato de tabela
@@ -648,7 +649,7 @@ function FaturasFornecedores() {
     
     // Valor Total após Desconto
     doc.text('Valor Total após Desconto:', 25, finalY);
-    doc.text(`R$ ${valorTotalAposDesconto.toFixed(2)}`, 185, finalY, { align: 'right' });
+    doc.text(formatCurrency(valorTotalAposDesconto), 185, finalY, { align: 'right' });
     doc.setDrawColor(224, 224, 224);
     doc.line(20, finalY + 2, 190, finalY + 2);
     finalY += 7;
@@ -657,7 +658,7 @@ function FaturasFornecedores() {
       // Impostos & Retenções
       doc.setTextColor(200, 0, 0);
       doc.text('(-) Impostos & Retenções:', 25, finalY);
-      doc.text(`R$ ${totalImpostos.toFixed(2)}`, 185, finalY, { align: 'right' });
+      doc.text(formatCurrency(totalImpostos), 185, finalY, { align: 'right' });
       doc.setDrawColor(224, 224, 224);
       doc.line(20, finalY + 2, 190, finalY + 2);
       finalY += 7;
@@ -676,7 +677,7 @@ function FaturasFornecedores() {
       doc.setTextColor(0);
       doc.setFont(undefined, 'bold');
       doc.text('Valor após Impostos & Retenções:', 25, finalY);
-      doc.text(`R$ ${valorAposImpostos.toFixed(2)}`, 185, finalY, { align: 'right' });
+      doc.text(formatCurrency(valorAposImpostos), 185, finalY, { align: 'right' });
       doc.setDrawColor(224, 224, 224);
       doc.line(20, finalY + 2, 190, finalY + 2);
       finalY += 7;
@@ -688,14 +689,21 @@ function FaturasFornecedores() {
     if (clienteTaxaInfo?.tipoTaxa === 'operacao') {
       taxaPercent = clienteTaxaInfo.taxaOperacao || 15;
     } else if (clienteTaxaInfo?.tipoTaxa === 'antecipacao_variavel' && tipoPagamento) {
-      if (tipoPagamento === 'aVista') taxaPercent = clienteTaxaInfo.taxasAntecipacao?.aVista || 15;
-      else if (tipoPagamento === 'aposFechamento') taxaPercent = clienteTaxaInfo.taxasAntecipacao?.aposFechamento || 13;
-      else if (tipoPagamento === 'aprazado') taxaPercent = clienteTaxaInfo.taxasAntecipacao?.aprazado || 0;
+      switch (tipoPagamento) {
+        case 'aVista': taxaPercent = clienteTaxaInfo.taxasAntecipacao?.aVista || 15; break;
+        case 'aposFechamento': taxaPercent = clienteTaxaInfo.taxasAntecipacao?.aposFechamento || 13; break;
+        case 'aprazado': taxaPercent = clienteTaxaInfo.taxasAntecipacao?.aprazado || 0; break;
+        case 'dias30': taxaPercent = clienteTaxaInfo.taxasAntecipacao?.dias30 || 10; break;
+        case 'dias40': taxaPercent = clienteTaxaInfo.taxasAntecipacao?.dias40 || 8; break;
+        case 'dias50': taxaPercent = clienteTaxaInfo.taxasAntecipacao?.dias50 || 6; break;
+        case 'dias60': taxaPercent = clienteTaxaInfo.taxasAntecipacao?.dias60 || 0; break;
+        default: taxaPercent = 0;
+      }
     }
     
     doc.setTextColor(200, 0, 0);
-    doc.text(`(-) Taxa de Operação (${taxaPercent.toFixed(2)}%):`, 25, finalY);
-    doc.text(`R$ ${taxaOperacao.toFixed(2)}`, 185, finalY, { align: 'right' });
+    doc.text(`(-) Taxa de Operação (${taxaPercent.toFixed(2).replace('.', ',')}%):`, 25, finalY);
+    doc.text(formatCurrency(taxaOperacao), 185, finalY, { align: 'right' });
     doc.setDrawColor(0, 91, 237);
     doc.setLineWidth(1);
     doc.line(20, finalY + 2, 190, finalY + 2);
@@ -713,7 +721,7 @@ function FaturasFornecedores() {
     doc.setTextColor(255, 255, 255);
     doc.setFont(undefined, 'bold');
     doc.text('VALOR DEVIDO:', 25, finalY);
-    doc.text(`R$ ${valorDevido.toFixed(2)}`, 185, finalY, { align: 'right' });
+    doc.text(formatCurrency(valorDevido), 185, finalY, { align: 'right' });
 
     doc.save(`fatura_${numeroFatura}.pdf`);
     toast.success('PDF gerado com sucesso!');
@@ -1199,8 +1207,9 @@ function FaturasFornecedores() {
                     });
                   }
                   
-                  const taxaOperacao = calcularTaxaOperacao(valorTotalAposDesconto);
+                  // CORREÇÃO: Taxa calculada sobre o valor APÓS impostos
                   const valorAposImpostos = valorTotalAposDesconto - totalImpostos;
+                  const taxaOperacao = calcularTaxaOperacao(valorAposImpostos);
                   const valorDevido = valorAposImpostos - taxaOperacao;
                   
                   // Calcular porcentagem da taxa de operação para exibição
@@ -1259,7 +1268,7 @@ function FaturasFornecedores() {
                         </>
                       )}
                       <div className="resumo-linha destaque-negativo">
-                        <span>(-) Taxa de Operação ({taxaPercentual.toFixed(2)}%):</span>
+                        <span>(-) Taxa de Operação ({taxaPercentual.toFixed(2).replace('.', ',')}%):</span>
                         <span>{formatCurrency(taxaOperacao)}</span>
                       </div>
                       <div className="resumo-linha destaque">

@@ -33,14 +33,7 @@ function FaturadoDetalhes() {
     const valorTaxas = fatura.valorTaxasOperacao || 0;
     if (valorTaxas <= 0) return null;
 
-    const base = fatura.valorComDesconto || 0;
-    if (base > 0) {
-      const perc = (valorTaxas / base) * 100;
-      if (Number.isFinite(perc)) {
-        return perc;
-      }
-    }
-
+    // Primeiro: tentar usar a taxa salva na OS
     const osComTaxa = ordensServico.find(item => {
       const taxa = item?.ordemServico?.taxaAplicada;
       return typeof taxa === 'number' && taxa > 0;
@@ -49,6 +42,7 @@ function FaturadoDetalhes() {
       return osComTaxa.ordemServico.taxaAplicada;
     }
 
+    // Segundo: tentar usar a taxa do cliente
     const taxaCliente = fatura.cliente?.taxaOperacao;
     if (typeof taxaCliente === 'number' && taxaCliente > 0) {
       return taxaCliente;
@@ -60,6 +54,15 @@ function FaturadoDetalhes() {
       const candidatos = [aVista, aposFechamento, aprazado].filter(valor => typeof valor === 'number' && valor > 0);
       if (candidatos.length > 0) {
         return candidatos[0];
+      }
+    }
+
+    // Fallback: calcular a partir dos valores (base = valor após impostos)
+    const base = (fatura.valorComDesconto || 0) - (fatura.valorImpostos || 0);
+    if (base > 0) {
+      const perc = (valorTaxas / base) * 100;
+      if (Number.isFinite(perc)) {
+        return perc;
       }
     }
 
@@ -1104,14 +1107,19 @@ function FaturadoDetalhes() {
       doc.setFont(undefined, 'normal');
     }
     
-    // Taxa de Operação
+    // Taxa de Operação - Recalcular sobre a base correta (valor após impostos)
+    let valorTaxaOperacaoCorreto = fatura.valorTaxasOperacao || 0;
+    if (percentualTaxaOperacao !== null && valorAposImpostos > 0) {
+      valorTaxaOperacaoCorreto = Math.round(valorAposImpostos * percentualTaxaOperacao / 100 * 100) / 100;
+    }
+    
     doc.text(`${getTextoTaxaOperacao()}:`, 25, finalY);
-    doc.text(formatarValor(fatura.valorTaxasOperacao || 0), 185, finalY, { align: 'right' });
+    doc.text(formatarValor(valorTaxaOperacaoCorreto), 185, finalY, { align: 'right' });
     doc.line(20, finalY + 2, 190, finalY + 2);
     finalY += 10;
     
     // Valor Devido - Final destacado (fórmula: Valor após Impostos - Taxa Operação)
-    const valorDevidoCorreto = valorAposImpostos - (fatura.valorTaxasOperacao || 0);
+    const valorDevidoCorreto = valorAposImpostos - valorTaxaOperacaoCorreto;
     doc.setFillColor(0, 91, 237);
     doc.rect(20, finalY, 170, 10, 'F');
     doc.setDrawColor(0, 91, 237);
@@ -1292,14 +1300,21 @@ function FaturadoDetalhes() {
     
     // Calcular proporção de peças em relação ao total
     const valorTotalFatura = fatura.valorComDesconto || 1;
-    const proporcaoPecas = valorPecasDesconto / valorTotalFatura;
     
     // Calcular impostos detalhados apenas para peças
     const detalhamentoImpostosPecas = calcularDetalhamentoImpostosPecas();
     const impostosPecas = detalhamentoImpostosPecas.total;
     
     const valorAposImpostos = valorPecasDesconto - impostosPecas;
-    const taxaOperacaoPecas = (fatura.valorTaxasOperacao || 0) * proporcaoPecas;
+    
+    // CORREÇÃO: Taxa proporcional calculada sobre valor após impostos
+    const proporcaoPecas = valorPecasDesconto / valorTotalFatura;
+    let taxaOperacaoPecas;
+    if (percentualTaxaOperacao !== null && valorAposImpostos > 0) {
+      taxaOperacaoPecas = Math.round(valorAposImpostos * (percentualTaxaOperacao / 100) * 100) / 100;
+    } else {
+      taxaOperacaoPecas = (fatura.valorTaxasOperacao || 0) * proporcaoPecas;
+    }
     const valorDevidoPecas = valorAposImpostos - taxaOperacaoPecas;
     
     // Calcular altura do box dinamicamente
@@ -1556,14 +1571,21 @@ function FaturadoDetalhes() {
     
     // Calcular proporção de serviços em relação ao total
     const valorTotalFatura = fatura.valorComDesconto || 1;
-    const proporcaoServicos = valorServicosDesconto / valorTotalFatura;
     
     // Calcular impostos detalhados apenas para serviços
     const detalhamentoImpostosServicos = calcularDetalhamentoImpostosServicos();
     const impostosServicos = detalhamentoImpostosServicos.total;
     
     const valorAposImpostos = valorServicosDesconto - impostosServicos;
-    const taxaOperacaoServicos = (fatura.valorTaxasOperacao || 0) * proporcaoServicos;
+    
+    // CORREÇÃO: Taxa proporcional calculada sobre valor após impostos
+    const proporcaoServicos = valorServicosDesconto / valorTotalFatura;
+    let taxaOperacaoServicos;
+    if (percentualTaxaOperacao !== null && valorAposImpostos > 0) {
+      taxaOperacaoServicos = Math.round(valorAposImpostos * (percentualTaxaOperacao / 100) * 100) / 100;
+    } else {
+      taxaOperacaoServicos = (fatura.valorTaxasOperacao || 0) * proporcaoServicos;
+    }
     const valorDevidoServicos = valorAposImpostos - taxaOperacaoServicos;
     
     // Calcular altura do box dinamicamente
@@ -2012,24 +2034,39 @@ function FaturadoDetalhes() {
                           </div>
                         </>
                       )}
-                      {(fatura.valorTaxasOperacao || 0) > 0 && (
-                        <div className="resumo-linha">
-                          <span>{getTextoTaxaOperacao()}:</span>
-                          <span className="valor-negativo">{formatarValor(fatura.valorTaxasOperacao || 0)}</span>
-                        </div>
-                      )}
-                      <div className="resumo-linha destaque-total">
-                        <span>VALOR DEVIDO:</span>
-                        <strong>{formatarValor(fatura.valorDevido || 0)}</strong>
-                      </div>
-                      <div className="resumo-linha pago">
-                        <span>Valor Pago:</span>
-                        <strong>{formatarValor(fatura.valorPago || 0)}</strong>
-                      </div>
-                      <div className="resumo-linha restante">
-                        <span>Valor Restante:</span>
-                        <strong>{formatarValor(fatura.valorRestante || 0)}</strong>
-                      </div>
+                      {(() => {
+                        // CORREÇÃO: Recalcular taxa sobre valor após impostos
+                        let valorTaxaExibir = fatura.valorTaxasOperacao || 0;
+                        if (percentualTaxaOperacao !== null && valorAposImpostos > 0) {
+                          valorTaxaExibir = Math.round(valorAposImpostos * percentualTaxaOperacao / 100 * 100) / 100;
+                        }
+                        const valorDevidoCorreto = valorAposImpostos - valorTaxaExibir;
+                        const valorPagoExibir = fatura.valorPago || 0;
+                        const valorRestanteExibir = Math.round((valorDevidoCorreto - valorPagoExibir) * 100) / 100;
+                        
+                        return (
+                          <>
+                            {valorTaxaExibir > 0 && (
+                              <div className="resumo-linha">
+                                <span>{getTextoTaxaOperacao()}:</span>
+                                <span className="valor-negativo">{formatarValor(valorTaxaExibir)}</span>
+                              </div>
+                            )}
+                            <div className="resumo-linha destaque-total">
+                              <span>VALOR DEVIDO:</span>
+                              <strong>{formatarValor(valorDevidoCorreto)}</strong>
+                            </div>
+                            <div className="resumo-linha pago">
+                              <span>Valor Pago:</span>
+                              <strong>{formatarValor(valorPagoExibir)}</strong>
+                            </div>
+                            <div className="resumo-linha restante">
+                              <span>Valor Restante:</span>
+                              <strong>{formatarValor(valorRestanteExibir)}</strong>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </>
                   );
                 })()}

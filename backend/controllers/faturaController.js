@@ -222,20 +222,27 @@ exports.criar = async (req, res) => {
     });
     
     // Calcular taxas para Fatura Fornecedor
+    // IMPORTANTE: A taxa é calculada sobre o valor APÓS impostos
     if (tipo === 'Fornecedor' && ordensServico.length > 0) {
       // Pega o cliente da primeira ordem (todas devem ser do mesmo cliente)
       const clienteOS = ordensServico[0].cliente;
+      
+      // Base de cálculo da taxa = valor com desconto MENOS impostos
+      const baseCalculoTaxa = valorComDesconto - valorImpostos;
       
       console.log('🔍 DEBUG TAXA - Cliente:', clienteOS?.nomeFantasia);
       console.log('🔍 DEBUG TAXA - tipoTaxa:', clienteOS?.tipoTaxa);
       console.log('🔍 DEBUG TAXA - tipoPagamento:', tipoPagamento);
       console.log('🔍 DEBUG TAXA - taxasAntecipacao:', JSON.stringify(clienteOS?.taxasAntecipacao));
+      console.log('🔍 DEBUG TAXA - valorComDesconto:', valorComDesconto);
+      console.log('🔍 DEBUG TAXA - valorImpostos:', valorImpostos);
+      console.log('🔍 DEBUG TAXA - baseCalculoTaxa (após impostos):', baseCalculoTaxa);
       
       if (clienteOS?.tipoTaxa === 'operacao') {
         // Taxa de Operação fixa
         const taxaPerc = clienteOS.taxaOperacao || 15;
-        valorTaxasOperacao = Math.round((valorComDesconto * taxaPerc) / 100 * 100) / 100;
-        console.log('💰 Taxa Operação:', taxaPerc + '%', '=', valorTaxasOperacao);
+        valorTaxasOperacao = Math.round((baseCalculoTaxa * taxaPerc) / 100 * 100) / 100;
+        console.log('💰 Taxa Operação:', taxaPerc + '%', 'sobre', baseCalculoTaxa, '=', valorTaxasOperacao);
       } else if (clienteOS?.tipoTaxa === 'antecipacao_variavel' && tipoPagamento) {
         // Taxa Antecipação Variável - requer tipoPagamento
         let taxaPerc = 0;
@@ -259,8 +266,8 @@ exports.criar = async (req, res) => {
             taxaPerc = clienteOS.taxasAntecipacao?.dias60 || 0;
             break;
         }
-        valorTaxasOperacao = Math.round((valorComDesconto * taxaPerc) / 100 * 100) / 100;
-        console.log('💰 Taxa Antecipação Variável:', tipoPagamento, '=', taxaPerc + '%', '=', valorTaxasOperacao);
+        valorTaxasOperacao = Math.round((baseCalculoTaxa * taxaPerc) / 100 * 100) / 100;
+        console.log('💰 Taxa Antecipação Variável:', tipoPagamento, '=', taxaPerc + '%', 'sobre', baseCalculoTaxa, '=', valorTaxasOperacao);
       }
     }
     

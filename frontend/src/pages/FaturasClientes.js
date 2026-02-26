@@ -500,7 +500,9 @@ function FaturasClientes() {
       return;
     }
     
-    const numeroFatura = `FAT-CLI-${Date.now().toString().slice(-8)}`;
+    // Gerar número de prévia no mesmo formato do backend (C + 4 dígitos)
+    const numeroAleatorio = Math.floor(1000 + Math.random() * 9000);
+    const numeroFatura = `C${numeroAleatorio}`;
 
     const doc = new jsPDF('p', 'mm', 'a4');
 
@@ -830,7 +832,7 @@ function FaturasClientes() {
     doc.text('VALOR DEVIDO:', 25, finalY);
     doc.text(`R$ ${formatarValorBRL(valorDevido)}`, 185, finalY, { align: 'right' });
 
-    doc.save(`fatura_cliente_${numeroFatura}.pdf`);
+    doc.save(`fatura_cliente_previa_${numeroFatura}.pdf`);
     toast.success('PDF gerado com sucesso!');
   };
 

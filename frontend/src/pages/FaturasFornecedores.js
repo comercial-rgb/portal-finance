@@ -474,7 +474,9 @@ function FaturasFornecedores() {
     console.log('Fornecedor final selecionado:', fornecedor);
     console.log('Tem naoOptanteSimples?', fornecedor?.naoOptanteSimples);
     
-    const numeroFatura = `FAT-${Date.now().toString().slice(-8)}`;
+    // Gerar número de prévia no mesmo formato do backend (F + 4 dígitos)
+    const numeroAleatorio = Math.floor(1000 + Math.random() * 9000);
+    const numeroFatura = `F${numeroAleatorio}`;
 
     const doc = new jsPDF('p', 'mm', 'a4');
     
@@ -723,7 +725,7 @@ function FaturasFornecedores() {
     doc.text('VALOR DEVIDO:', 25, finalY);
     doc.text(formatCurrency(valorDevido), 185, finalY, { align: 'right' });
 
-    doc.save(`fatura_${numeroFatura}.pdf`);
+    doc.save(`fatura_previa_${numeroFatura}.pdf`);
     toast.success('PDF gerado com sucesso!');
   };
 
@@ -756,7 +758,8 @@ function FaturasFornecedores() {
     console.log('naoOptanteSimples:', fornecedorFatura?.naoOptanteSimples);
   }
   
-  const numeroFatura = `FAT-${Date.now().toString().slice(-8)}`;
+  // Gerar número de prévia no mesmo formato do backend (F + 4 dígitos)
+  const numeroPrevia = `F${Math.floor(1000 + Math.random() * 9000)}`;
 
   return (
     <div className="page-container">
@@ -937,7 +940,7 @@ function FaturasFornecedores() {
               <div className="fatura-titulo">
                 <h3>FATURA DE SERVIÇOS - FORNECEDOR</h3>
                 <div className="fatura-numero-data">
-                  <p><strong>Fatura Nº:</strong> {numeroFatura}</p>
+                  <p><strong>Fatura Nº:</strong> {numeroPrevia} <span style={{ fontSize: '0.75rem', color: '#999', fontStyle: 'italic' }}>(prévia - número definitivo ao gerar)</span></p>
                   <p><strong>Data:</strong> {new Date().toLocaleDateString('pt-BR')}</p>
                 </div>
               </div>

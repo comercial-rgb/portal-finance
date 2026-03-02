@@ -9,15 +9,14 @@
   top: 80px;
   box-shadow: var(--shadow-md);
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: 1fr auto;
 }
 
 .sidebar-nav {
-  flex: 1;
-  min-height: 0;
   padding: 24px 16px;
   overflow-y: auto;
+  min-height: 0;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
@@ -122,9 +121,9 @@
 }
 
 .sidebar-footer {
-  padding: 20px;
+  padding: 16px 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  flex-shrink: 0;
+  background: var(--secondary);
 }
 
 .btn-logout {

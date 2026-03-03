@@ -1,7 +1,6 @@
 .faturas-clientes-container {
   padding: 20px;
-  max-width: 100%;
-  width: 100%;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -635,5 +634,134 @@
   .fatura-table th,
   .fatura-table td {
     padding: 6px;
+  }
+}
+
+/* ========== IMPRESSÃO ========== */
+@media print {
+  /* Esconde TUDO da página, exceto o modal da fatura */
+  body * {
+    visibility: hidden;
+  }
+
+  .modal-overlay,
+  .modal-overlay *,
+  .modal-fatura,
+  .modal-fatura * {
+    visibility: visible;
+  }
+
+  .modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: auto;
+    background: none;
+    padding: 0;
+    display: block;
+    z-index: 99999;
+  }
+
+  .modal-fatura {
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none;
+    border-radius: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .modal-header {
+    display: none !important;
+  }
+
+  .modal-body {
+    overflow: visible !important;
+    padding: 10mm 8mm;
+  }
+
+  .modal-footer {
+    display: none !important;
+  }
+
+  .sidebar,
+  .faturas-clientes-container,
+  .filtros-section,
+  .tabela-ordens-section,
+  footer,
+  nav,
+  header {
+    display: none !important;
+  }
+
+  .fatura-empresa-info {
+    background: linear-gradient(135deg, #251c59 0%, #005bed 100%) !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    padding: 15px 12px;
+    margin-bottom: 15px;
+  }
+
+  .fatura-empresa-info h2 {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+
+  .fatura-empresa-info p {
+    font-size: 11px;
+    margin: 4px 0;
+  }
+
+  .fatura-table {
+    font-size: 10px;
+    box-shadow: none;
+    page-break-inside: auto;
+  }
+
+  .fatura-table thead {
+    background: linear-gradient(135deg, #251c59 0%, #005bed 100%) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .fatura-table th {
+    font-size: 10px;
+    padding: 6px 5px;
+    color: white !important;
+  }
+
+  .fatura-table td {
+    padding: 5px 5px;
+    font-size: 10px;
+  }
+
+  .fatura-table tbody tr {
+    page-break-inside: avoid;
+  }
+
+  .resumo-financeiro {
+    page-break-inside: avoid;
+    border: 2px solid #005bed;
+  }
+
+  .resumo-linha {
+    font-size: 12px;
+    padding: 6px 0;
+  }
+
+  .resumo-linha.destaque {
+    font-size: 14px;
+    background: rgba(0, 91, 237, 0.05) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .resumo-linha.destaque-final {
+    background: linear-gradient(135deg, #005bed 0%, #251c59 100%) !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }

@@ -396,10 +396,11 @@
   width: 100%;
   border-collapse: collapse;
   margin: 20px 0;
-  font-size: 13px;
+  font-size: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   overflow: hidden;
+  table-layout: fixed;
 }
 
 .fatura-table thead {
@@ -409,9 +410,51 @@
 
 .fatura-table th,
 .fatura-table td {
-  padding: 12px 10px;
+  padding: 10px 8px;
   text-align: left;
   border-bottom: 1px solid #e0e0e0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Larguras proporcionais das colunas */
+.fatura-table th:nth-child(1),
+.fatura-table td:nth-child(1) {
+  width: 14%; /* N° OS */
+}
+
+.fatura-table th:nth-child(2),
+.fatura-table td:nth-child(2) {
+  width: 22%; /* Cliente */
+}
+
+.fatura-table th:nth-child(3),
+.fatura-table td:nth-child(3) {
+  width: 9%; /* Placa */
+}
+
+.fatura-table th:nth-child(4),
+.fatura-table td:nth-child(4) {
+  width: 22%; /* Centro de Custo */
+}
+
+.fatura-table th:nth-child(5),
+.fatura-table td:nth-child(5) {
+  width: 11%; /* Valor Peças */
+  text-align: right;
+}
+
+.fatura-table th:nth-child(6),
+.fatura-table td:nth-child(6) {
+  width: 11%; /* Valor Serviços */
+  text-align: right;
+}
+
+.fatura-table th:nth-child(7),
+.fatura-table td:nth-child(7) {
+  width: 11%; /* Total */
+  text-align: right;
+  font-weight: 600;
 }
 
 .fatura-table th {
@@ -518,11 +561,163 @@
 }
 
 @media print {
-  .modal-footer {
-    display: none;
+  /* Esconde TUDO da página, exceto o modal da fatura */
+  body * {
+    visibility: hidden;
   }
-  
+
+  /* Torna o modal e seus filhos visíveis */
+  .fatura-modal,
+  .fatura-modal * {
+    visibility: visible;
+  }
+
+  /* Remove posicionamento fixo e restrições de tamanho do modal */
+  .fatura-modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: auto;
+    background: none;
+    padding: 0;
+    display: block;
+    z-index: 99999;
+  }
+
+  .fatura-modal-content {
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none;
+    border-radius: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
   .fatura-document {
-    padding: 1rem;
+    padding: 10mm 8mm;
+    background: white;
+  }
+
+  /* Esconde botões do rodapé na impressão */
+  .modal-footer {
+    display: none !important;
+  }
+
+  /* Esconde sidebar, header, filtros etc */
+  .sidebar,
+  .faturas-fornecedores-container,
+  .filtros-section,
+  .tabela-ordens-section,
+  .readonly-banner,
+  footer,
+  nav,
+  header {
+    display: none !important;
+  }
+
+  /* Cabeçalho da empresa ajustado p/ impressão */
+  .fatura-empresa-info {
+    background: linear-gradient(135deg, #251c59 0%, #005bed 100%) !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    padding: 15px 12px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+  }
+
+  .fatura-empresa-info h2 {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+
+  .fatura-empresa-info p {
+    font-size: 11px;
+    margin: 4px 0;
+  }
+
+  /* Título */
+  .fatura-titulo h3 {
+    font-size: 14px;
+  }
+
+  /* Dados do fornecedor */
+  .fatura-fornecedor-info {
+    padding: 12px;
+    margin-bottom: 12px;
+    border-left: 4px solid #005bed;
+    page-break-inside: avoid;
+  }
+
+  .fatura-fornecedor-info h3,
+  .fatura-fornecedor-info h4 {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .fatura-fornecedor-info div {
+    font-size: 11px;
+    margin-bottom: 3px;
+  }
+
+  /* Tabela ajustada para caber na página */
+  .fatura-table {
+    font-size: 10px;
+    margin: 10px 0;
+    box-shadow: none;
+    page-break-inside: auto;
+  }
+
+  .fatura-table thead {
+    background: linear-gradient(135deg, #251c59 0%, #005bed 100%) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .fatura-table th {
+    font-size: 10px;
+    padding: 6px 5px;
+    color: white !important;
+  }
+
+  .fatura-table td {
+    padding: 5px 5px;
+    font-size: 10px;
+  }
+
+  .fatura-table tbody tr {
+    page-break-inside: avoid;
+  }
+
+  .fatura-table tbody tr:nth-child(even) {
+    background: #f8f9fa !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Resumo financeiro */
+  .resumo-financeiro {
+    padding: 15px;
+    margin-top: 15px;
+    page-break-inside: avoid;
+    border: 2px solid #005bed;
+  }
+
+  .resumo-linha {
+    font-size: 12px;
+    padding: 6px 0;
+  }
+
+  .resumo-linha.destaque {
+    font-size: 14px;
+    background: rgba(0, 91, 237, 0.05) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Garantir que a fatura quebre de página corretamente */
+  .fatura-document {
+    page-break-after: auto;
   }
 }

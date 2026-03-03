@@ -336,6 +336,43 @@ exports.deleteOrdemServico = async (req, res) => {
   }
 };
 
+exports.deleteMultiple = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'IDs não fornecidos' });
+    }
+
+    // Estornar valores dos empenhos antes de deletar
+    for (const id of ids) {
+      const ordemServico = await OrdemServico.findById(id);
+      if (ordemServico) {
+        if (ordemServico.empenhoPecas && ordemServico.valorPecasComDesconto > 0) {
+          await estornarValorEmpenho(
+            ordemServico.cliente,
+            ordemServico.contratoEmpenhoPecas,
+            ordemServico.empenhoPecas,
+            ordemServico.valorPecasComDesconto
+          ).catch(err => console.error('Erro ao estornar peças:', err.message));
+        }
+        if (ordemServico.empenhoServicos && ordemServico.valorServicoComDesconto > 0) {
+          await estornarValorEmpenho(
+            ordemServico.cliente,
+            ordemServico.contratoEmpenhoServicos,
+            ordemServico.empenhoServicos,
+            ordemServico.valorServicoComDesconto
+          ).catch(err => console.error('Erro ao estornar serviços:', err.message));
+        }
+      }
+    }
+
+    const result = await OrdemServico.deleteMany({ _id: { $in: ids } });
+    res.json({ message: `${result.deletedCount} ordens de serviço excluídas com sucesso` });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao excluir ordens de serviço', error: error.message });
+  }
+};
+
 exports.updateStatus = async (req, res) => {
   try {
     const { status } = req.body;

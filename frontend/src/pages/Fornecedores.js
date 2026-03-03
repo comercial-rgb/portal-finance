@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import api from '../services/api';
 import Header from '../components/Header';
@@ -9,7 +8,6 @@ import authService from '../services/authService';
 import './Fornecedores.css';
 
 function Fornecedores() {
-  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [fornecedores, setFornecedores] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +51,7 @@ function Fornecedores() {
     const currentUser = authService.getCurrentUser();
     setUser(currentUser);
     loadFornecedores();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Fechar popup de dados bancários ao clicar fora
@@ -147,6 +146,7 @@ function Fornecedores() {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleRelatorio = () => {
     toast.info('Funcionalidade de relatório em desenvolvimento');
   };

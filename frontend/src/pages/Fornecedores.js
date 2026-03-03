@@ -405,7 +405,7 @@ function Fornecedores() {
                         <span>{fornecedor.cnpjCpf}</span>
                         <button
                           className="btn-bank-info"
-                          title="Dados Bancários"
+                          title="Ver Dados Bancários"
                           onClick={(e) => {
                             e.stopPropagation();
                             setBankInfoId(bankInfoId === fornecedor._id ? null : fornecedor._id);
@@ -417,6 +417,7 @@ function Fornecedores() {
                           </svg>
                         </button>
                         {bankInfoId === fornecedor._id && (
+                          <div className="bank-info-overlay" onClick={() => setBankInfoId(null)}>
                           <div className="bank-info-popup" onClick={(e) => e.stopPropagation()}>
                             <div className="bank-info-header">
                               <strong>Dados Bancários</strong>
@@ -452,6 +453,7 @@ function Fornecedores() {
                                 </div>
                               )}
                             </div>
+                          </div>
                           </div>
                         )}
                       </div>

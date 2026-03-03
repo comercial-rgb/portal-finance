@@ -103,24 +103,9 @@ const ordemServicoSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  // Campos simplificados de valores totais
-  valorTotalSemDesconto: {
-    type: Number,
-    default: 0,
-    min: 0,
-    description: 'Valor total sem desconto (peças + serviços)'
-  },
-  descontoPercentual: {
-    type: Number,
-    default: 0,
-    min: 0,
-    max: 100,
-    description: 'Desconto percentual geral aplicado'
-  },
   valorFinal: {
     type: Number,
-    default: 0,
-    description: 'Valor total com desconto'
+    default: 0
   },
   notaFiscalPeca: {
     type: String,
@@ -153,7 +138,7 @@ const ordemServicoSchema = new mongoose.Schema({
   },
   tipoPagamento: {
     type: String,
-    enum: ['aVista', 'aposFechamento', 'aprazado', 'dias30', 'dias40', 'dias50', 'dias60', null],
+    enum: ['aVista', 'aposFechamento', 'aprazado', null],
     default: null,
     description: 'Tipo de pagamento escolhido pelo fornecedor (para clientes com taxa antecipação variável)'
   },
@@ -176,31 +161,23 @@ const ordemServicoSchema = new mongoose.Schema({
 ordemServicoSchema.pre('validate', async function(next) {
   if (!this.codigo) {
     try {
-      // Se não tem código mas tem numeroOrdemServico, usa o numeroOrdemServico como código
-      if (this.numeroOrdemServico) {
-        this.codigo = this.numeroOrdemServico;
-        console.log(`📝 Usando numeroOrdemServico como código: ${this.codigo}`);
-      } else {
-        // Caso contrário, gera código automático sequencial
-        // Buscar a última OS com código no formato sequencial OS-XXXXXX (6 dígitos)
-        const todasOS = await mongoose.model('OrdemServico')
-          .find({
-            codigo: /^OS-\d{6}$/  // Regex: OS- seguido de exatamente 6 dígitos
-          })
-          .select('codigo')
-          .lean();
-        
-        let proximoNumero = 1;
-        if (todasOS && todasOS.length > 0) {
-          // Extrair números e encontrar o maior
-          const numeros = todasOS.map(os => parseInt(os.codigo.replace('OS-', '')));
-          const maiorNumero = Math.max(...numeros);
-          proximoNumero = maiorNumero + 1;
+      // Buscar apenas OS com código gerado pelo portal (formato OS-XXXX)
+      const ultimaOS = await mongoose.model('OrdemServico')
+        .findOne({ codigo: { $regex: /^OS-\d+$/ } })
+        .sort({ codigo: -1 })
+        .select('codigo')
+        .lean();
+      
+      let proximoNumero = 1;
+      if (ultimaOS && ultimaOS.codigo) {
+        const numeroAtual = parseInt(ultimaOS.codigo.replace('OS-', ''));
+        if (!isNaN(numeroAtual)) {
+          proximoNumero = numeroAtual + 1;
         }
-        
-        this.codigo = `OS-${String(proximoNumero).padStart(6, '0')}`;
-        console.log(`📝 Código gerado automaticamente: ${this.codigo}`);
       }
+      
+      this.codigo = `OS-${String(proximoNumero).padStart(4, '0')}`;
+      console.log(`📝 Código gerado: ${this.codigo}`);
     } catch (error) {
       console.error('❌ Erro ao gerar código:', error);
       return next(error);

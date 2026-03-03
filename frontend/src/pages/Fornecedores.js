@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import api from '../services/api';
 import Header from '../components/Header';
@@ -8,11 +9,13 @@ import authService from '../services/authService';
 import './Fornecedores.css';
 
 function Fornecedores() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [fornecedores, setFornecedores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [bankInfoId, setBankInfoId] = useState(null);
   
   // Paginação
   const [paginaAtual, setPaginaAtual] = useState(1);
@@ -50,8 +53,16 @@ function Fornecedores() {
     const currentUser = authService.getCurrentUser();
     setUser(currentUser);
     loadFornecedores();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Fechar popup de dados bancários ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = () => setBankInfoId(null);
+    if (bankInfoId) {
+      document.addEventListener('click', handleClickOutside);
+    }
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [bankInfoId]);
 
   useEffect(() => {
     loadFornecedores();
@@ -104,16 +115,40 @@ function Fornecedores() {
     loadFornecedores();
   };
 
-  const handleLimpar = () => {
-    setFiltros({
+  const handleLimpar = async () => {
+    const filtrosLimpos = {
       razaoSocial: '',
       nomeFantasia: '',
       cnpjCpf: '',
       cidade: '',
       estado: ''
-    });
+    };
+    setFiltros(filtrosLimpos);
     setPaginaAtual(1);
-    setTimeout(() => loadFornecedores(), 100);
+    try {
+      setLoading(true);
+      const response = await api.get('/fornecedores', {
+        params: { page: 1, limit: itensPorPagina }
+      });
+      const data = response.data;
+      if (Array.isArray(data)) {
+        setFornecedores(data);
+        setTotalPaginas(1);
+        setTotalRegistros(data.length);
+      } else {
+        setFornecedores(data.fornecedores || []);
+        setTotalPaginas(data.totalPages || 1);
+        setTotalRegistros(data.total || (data.fornecedores?.length || 0));
+      }
+    } catch (error) {
+      toast.error('Erro ao carregar fornecedores');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRelatorio = () => {
+    toast.info('Funcionalidade de relatório em desenvolvimento');
   };
 
   const handleInputChange = (e) => {
@@ -365,7 +400,62 @@ function Fornecedores() {
                   <tr key={fornecedor._id}>
                     <td>{fornecedor.razaoSocial}</td>
                     <td>{fornecedor.nomeFantasia}</td>
-                    <td>{fornecedor.cnpjCpf}</td>
+                    <td>
+                      <div className="cnpj-cell">
+                        <span>{fornecedor.cnpjCpf}</span>
+                        <button
+                          className="btn-bank-info"
+                          title="Dados Bancários"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setBankInfoId(bankInfoId === fornecedor._id ? null : fornecedor._id);
+                          }}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                            <line x1="1" y1="10" x2="23" y2="10"></line>
+                          </svg>
+                        </button>
+                        {bankInfoId === fornecedor._id && (
+                          <div className="bank-info-popup" onClick={(e) => e.stopPropagation()}>
+                            <div className="bank-info-header">
+                              <strong>Dados Bancários</strong>
+                              <button className="bank-info-close" onClick={() => setBankInfoId(null)}>×</button>
+                            </div>
+                            <div className="bank-info-body">
+                              <div className="bank-info-row">
+                                <span className="bank-info-label">Banco:</span>
+                                <span className="bank-info-value">{fornecedor.banco || '—'}</span>
+                              </div>
+                              <div className="bank-info-row">
+                                <span className="bank-info-label">Tipo Conta:</span>
+                                <span className="bank-info-value">{fornecedor.tipoConta ? fornecedor.tipoConta.charAt(0).toUpperCase() + fornecedor.tipoConta.slice(1) : '—'}</span>
+                              </div>
+                              <div className="bank-info-row">
+                                <span className="bank-info-label">Agência:</span>
+                                <span className="bank-info-value">{fornecedor.agencia || '—'}</span>
+                              </div>
+                              <div className="bank-info-row">
+                                <span className="bank-info-label">Conta:</span>
+                                <span className="bank-info-value">{fornecedor.conta || '—'}</span>
+                              </div>
+                              {fornecedor.chavePix && (
+                                <div className="bank-info-row bank-info-pix">
+                                  <span className="bank-info-label">Chave PIX:</span>
+                                  <span className="bank-info-value">{fornecedor.chavePix}</span>
+                                </div>
+                              )}
+                              {fornecedor.tipoChavePix && (
+                                <div className="bank-info-row">
+                                  <span className="bank-info-label">Tipo Chave:</span>
+                                  <span className="bank-info-value">{fornecedor.tipoChavePix.toUpperCase()}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </td>
                     <td>{fornecedor.email}</td>
                     <td>{fornecedor.telefone}</td>
                     <td>{fornecedor.cidade}/{fornecedor.estado}</td>

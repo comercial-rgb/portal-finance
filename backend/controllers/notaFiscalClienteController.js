@@ -92,7 +92,11 @@ exports.listarNotasFiscais = async (req, res) => {
     if (dataInicio || dataFim) {
       filtros.dataEmissao = {};
       if (dataInicio) filtros.dataEmissao.$gte = new Date(dataInicio);
-      if (dataFim) filtros.dataEmissao.$lte = new Date(dataFim);
+      if (dataFim) {
+        const dataFimCompleta = new Date(dataFim);
+        dataFimCompleta.setHours(23, 59, 59, 999);
+        filtros.dataEmissao.$lte = dataFimCompleta;
+      }
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);

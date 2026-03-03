@@ -128,25 +128,13 @@ exports.updateCliente = async (req, res) => {
     
     // Verificar se o CNPJ já existe em outro cliente
     if (cnpj) {
-      const cnpjLimpo = cnpj.replace(/\D/g, '');
-      console.log('🔍 Verificando CNPJ:', {
-        recebido: cnpj,
-        limpo: cnpjLimpo,
-        clienteAtual: req.params.id,
-        cnpjAtualNoBanco: cliente.cnpj
-      });
-      
       const clienteExiste = await Cliente.findOne({ 
-        cnpj: cnpjLimpo,
+        cnpj: cnpj.replace(/\D/g, ''),
         _id: { $ne: req.params.id }
       });
-      
       if (clienteExiste) {
-        console.log('⚠️ CNPJ já cadastrado em outro cliente:', clienteExiste._id);
         return res.status(400).json({ message: 'CNPJ já cadastrado' });
       }
-      
-      console.log('✅ CNPJ disponível para uso');
     }
 
     const sanitizeNumber = (value, fallback) => {
@@ -204,11 +192,7 @@ exports.updateCliente = async (req, res) => {
       updatePayload.taxasAntecipacao = {
         aVista: sanitizeNumber(req.body.taxasAntecipacao.aVista, cliente.taxasAntecipacao?.aVista ?? 15),
         aposFechamento: sanitizeNumber(req.body.taxasAntecipacao.aposFechamento, cliente.taxasAntecipacao?.aposFechamento ?? 13),
-        aprazado: sanitizeNumber(req.body.taxasAntecipacao.aprazado, cliente.taxasAntecipacao?.aprazado ?? 0),
-        dias30: sanitizeNumber(req.body.taxasAntecipacao.dias30, cliente.taxasAntecipacao?.dias30 ?? 0),
-        dias40: sanitizeNumber(req.body.taxasAntecipacao.dias40, cliente.taxasAntecipacao?.dias40 ?? 0),
-        dias50: sanitizeNumber(req.body.taxasAntecipacao.dias50, cliente.taxasAntecipacao?.dias50 ?? 0),
-        dias60: sanitizeNumber(req.body.taxasAntecipacao.dias60, cliente.taxasAntecipacao?.dias60 ?? 0)
+        aprazado: sanitizeNumber(req.body.taxasAntecipacao.aprazado, cliente.taxasAntecipacao?.aprazado ?? 0)
       };
     }
 

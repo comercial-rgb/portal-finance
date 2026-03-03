@@ -3,7 +3,6 @@ const Fornecedor = require('../models/Fornecedor');
 const Configuracoes = require('../models/Configuracoes');
 const Notificacao = require('../models/Notificacao');
 const User = require('../models/User');
-const { sendEmail } = require('../utils/email');
 
 // Helper para comparar e rastrear alterações
 const compararAlteracoes = (dadosAntigos, dadosNovos, camposMonitorar) => {
@@ -31,7 +30,7 @@ const compararAlteracoes = (dadosAntigos, dadosNovos, camposMonitorar) => {
 // Listar fornecedores com paginação e filtros
 exports.listarFornecedores = async (req, res) => {
   try {
-    const { page = 1, limit = 50, razaoSocial, nomeFantasia, cnpjCpf, cidade, naoOptanteSimples } = req.query;
+    const { page = 1, limit = 50, razaoSocial, nomeFantasia, cnpjCpf, cidade, estado, naoOptanteSimples } = req.query;
     
     const query = {};
     
@@ -52,6 +51,9 @@ exports.listarFornecedores = async (req, res) => {
     }
     if (cidade) {
       query.cidade = { $regex: cidade, $options: 'i' };
+    }
+    if (estado) {
+      query.estado = { $regex: estado, $options: 'i' };
     }
     if (naoOptanteSimples !== undefined) {
       query.naoOptanteSimples = naoOptanteSimples === 'true';
@@ -104,115 +106,6 @@ exports.criarFornecedor = async (req, res) => {
     });
     
     await fornecedor.save();
-    
-    // Criar automaticamente um usuário para o fornecedor
-    let usuarioCriado = false;
-    let senhaOriginal = senha;
-    try {
-      // Verificar se já existe um usuário com este email
-      const usuarioExistente = await User.findOne({ email: fornecedor.email });
-      
-      if (!usuarioExistente) {
-        // Criar usuário automaticamente
-        await User.create({
-          nome: fornecedor.nomeFantasia || fornecedor.razaoSocial,
-          email: fornecedor.email,
-          senha: senhaHash, // Usar a mesma senha do fornecedor
-          senhaTemporaria: senhaOriginal, // Salvar senha original para envio por email
-          telefone: fornecedor.telefone,
-          role: 'fornecedor',
-          fornecedorId: fornecedor._id,
-          ativo: true,
-          mustChangePassword: true // Forçar alteração de senha no primeiro acesso
-        });
-        
-        console.log(`✅ Usuário criado automaticamente para fornecedor: ${fornecedor.email}`);
-        usuarioCriado = true;
-        
-        // Enviar email com dados de acesso
-        try {
-          const loginUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-          
-          await sendEmail({
-            to: fornecedor.email,
-            subject: 'Bem-vindo ao Sistema Financeiro InstaSolutions',
-            html: `
-              <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; padding: 20px;">
-                <div style="background: linear-gradient(135deg, #251C59 0%, #005BED 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-                  <h1 style="color: white; margin: 0; font-size: 24px;">Bem-vindo!</h1>
-                  <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Sistema Financeiro InstaSolutions</p>
-                </div>
-                
-                <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                  <h2 style="color: #251C59; margin-top: 0;">Olá, ${fornecedor.nomeFantasia || fornecedor.razaoSocial}!</h2>
-                  
-                  <p style="color: #64748b; line-height: 1.6;">
-                    Seu cadastro foi realizado com sucesso! Seus dados de acesso ao portal estão prontos.
-                  </p>
-                  
-                  <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                    <p style="margin: 0 0 10px 0; color: #475569;"><strong>Email:</strong> ${fornecedor.email}</p>
-                    <p style="margin: 0; color: #475569;"><strong>Senha:</strong> 
-                      <span style="background: #251C59; color: white; padding: 4px 12px; border-radius: 4px; font-family: monospace; font-size: 16px;">
-                        ${senhaOriginal}
-                      </span>
-                    </p>
-                  </div>
-                  
-                  <div style="text-align: center; margin: 30px 0;">
-                    <a href="${loginUrl}/login" 
-                       style="display: inline-block; background: linear-gradient(135deg, #251C59 0%, #005BED 100%); color: white; 
-                              text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                      Acessar Sistema
-                    </a>
-                  </div>
-                  
-                  <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 16px; margin: 20px 0; border-radius: 4px;">
-                    <p style="margin: 0 0 8px 0; color: #856404; font-weight: 600;">
-                      ⚠️ Alteração de Senha Obrigatória
-                    </p>
-                    <p style="margin: 0; color: #856404; font-size: 14px; line-height: 1.5;">
-                      No primeiro acesso, você será solicitado a <strong>criar uma nova senha</strong> para sua segurança.
-                    </p>
-                  </div>
-                  
-                  <div style="border-top: 1px solid #e2e8f0; margin-top: 30px; padding-top: 20px;">
-                    <p style="color: #64748b; font-size: 14px; margin: 0;">
-                      <strong>Link de Acesso:</strong><br>
-                      <a href="${loginUrl}/login" style="color: #005BED; text-decoration: none;">${loginUrl}/login</a>
-                    </p>
-                  </div>
-                  
-                  <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-                  
-                  <p style="color: #94a3b8; font-size: 12px; text-align: center; margin: 0;">
-                    Este é um email automático. Em caso de dúvidas, entre em contato com o administrador.
-                  </p>
-                </div>
-              </div>
-            `
-          });
-          
-          console.log(`📧 Email de boas-vindas enviado para: ${fornecedor.email}`);
-        } catch (emailError) {
-          console.error('⚠️ Erro ao enviar email de boas-vindas:', emailError.message);
-          // Não falhar o cadastro se o email não enviar
-        }
-        
-      } else {
-        // Se o usuário já existe, verificar se precisa vincular ao fornecedor
-        if (!usuarioExistente.fornecedorId) {
-          usuarioExistente.fornecedorId = fornecedor._id;
-          usuarioExistente.role = 'fornecedor';
-          await usuarioExistente.save();
-          console.log(`✅ Usuário existente vinculado ao fornecedor: ${fornecedor.email}`);
-        }
-      }
-    } catch (userError) {
-      console.error('⚠️ Erro ao criar usuário para fornecedor:', userError.message);
-      // Não falhar a criação do fornecedor se houver erro ao criar o usuário
-      // O usuário pode ser criado manualmente depois
-    }
     
     const fornecedorSemSenha = fornecedor.toObject();
     delete fornecedorSemSenha.senha;

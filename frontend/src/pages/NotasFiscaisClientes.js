@@ -160,15 +160,27 @@ function NotasFiscaisClientes() {
     loadNotasFiscais();
   };
 
-  const handleLimparFiltros = () => {
-    setFiltros({
+  const handleLimparFiltros = async () => {
+    const filtrosLimpos = {
       clienteId: '',
       status: '',
       dataInicio: '',
       dataFim: ''
-    });
+    };
+    setFiltros(filtrosLimpos);
     setCurrentPage(1);
-    setTimeout(() => loadNotasFiscais(), 100);
+    try {
+      setLoading(true);
+      const response = await api.get('/notas-fiscais-clientes', {
+        params: { page: 1, limit: 50 }
+      });
+      setNotasFiscais(response.data.notasFiscais || []);
+      setTotalPages(response.data.totalPages || 1);
+    } catch (error) {
+      toast.error('Erro ao carregar notas fiscais');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleOpenModal = (notaFiscal = null) => {

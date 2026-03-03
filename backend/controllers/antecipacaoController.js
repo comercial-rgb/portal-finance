@@ -115,8 +115,8 @@ exports.calcularAntecipacao = async (req, res) => {
     
     // Calcular taxa
     const taxaAplicada = calcularTaxa(diasAntecipados, taxas);
-    const valorDesconto = Math.round((valorSolicitado * taxaAplicada) / 100 * 100) / 100;
-    const valorAReceber = Math.round((valorSolicitado - valorDesconto) * 100) / 100;
+    const valorDesconto = (valorSolicitado * taxaAplicada) / 100;
+    const valorAReceber = valorSolicitado - valorDesconto;
     
     res.json({
       valorSolicitado,
@@ -221,8 +221,8 @@ exports.criarAntecipacao = async (req, res) => {
     
     // Calcular taxa e valores
     const taxaAplicada = calcularTaxa(diasAntecipados, taxas);
-    const valorDesconto = Math.round((valorSolicitado * taxaAplicada) / 100 * 100) / 100;
-    const valorAReceber = Math.round((valorSolicitado - valorDesconto) * 100) / 100;
+    const valorDesconto = (valorSolicitado * taxaAplicada) / 100;
+    const valorAReceber = valorSolicitado - valorDesconto;
     
     // Criar registro das faturas com valores distribuídos
     const faturasRegistro = [];

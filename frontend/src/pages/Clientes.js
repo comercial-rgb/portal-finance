@@ -21,7 +21,7 @@ function Clientes() {
     cnpj: '',
     cidade: '',
     estado: '',
-    status: ''
+    ativo: ''
   });
 
   const clientesPorPagina = 15;
@@ -66,17 +66,29 @@ function Clientes() {
     loadClientes();
   };
 
-  const handleLimpar = () => {
-    setFiltros({
+  const handleLimpar = async () => {
+    const filtrosLimpos = {
       razaoSocial: '',
       nomeFantasia: '',
       cnpj: '',
       cidade: '',
       estado: '',
-      status: ''
-    });
+      ativo: ''
+    };
+    setFiltros(filtrosLimpos);
     setCurrentPage(1);
-    setTimeout(() => loadClientes(), 100);
+    try {
+      setLoading(true);
+      const response = await api.get('/clientes', {
+        params: { page: 1, limit: clientesPorPagina }
+      });
+      setClientes(response.data.clientes || response.data);
+      setTotalPages(response.data.totalPages || 1);
+    } catch (error) {
+      toast.error('Erro ao carregar clientes');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRelatorio = () => {
@@ -176,13 +188,13 @@ function Clientes() {
                   ))}
                 </select>
                 <select
-                  name="status"
-                  value={filtros.status}
+                  name="ativo"
+                  value={filtros.ativo}
                   onChange={handleFiltroChange}
                 >
                   <option value="">Todos os Status</option>
-                  <option value="ativo">Ativo</option>
-                  <option value="inativo">Inativo</option>
+                  <option value="true">Ativo</option>
+                  <option value="false">Inativo</option>
                 </select>
               </div>
               <div className="filtros-actions">

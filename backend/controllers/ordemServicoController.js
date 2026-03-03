@@ -58,7 +58,7 @@ const estornarValorEmpenho = async (clienteId, contratoId, empenhoId, valorEstor
 exports.getOrdensServico = async (req, res) => {
   try {
     console.log('📋 GET /api/ordens-servico - Query params:', req.query);
-    const { page = 1, limit = 15, cliente, fornecedor, status, codigo } = req.query;
+    const { page = 1, limit = 15, cliente, fornecedor, status, codigo, dataInicio, dataFim } = req.query;
     
     const query = {};
     
@@ -85,6 +85,17 @@ exports.getOrdensServico = async (req, res) => {
         { numeroOrdemServico: new RegExp(codigo, 'i') }
       ];
     }
+    
+    // Filtro por período de data
+    if (dataInicio || dataFim) {
+      query.dataReferencia = {};
+      if (dataInicio) query.dataReferencia.$gte = new Date(dataInicio);
+      if (dataFim) {
+        const dataFimCompleta = new Date(dataFim);
+        dataFimCompleta.setHours(23, 59, 59, 999);
+        query.dataReferencia.$lte = dataFimCompleta;
+      }
+    }
 
     console.log('Query MongoDB:', JSON.stringify(query));
 
@@ -97,19 +108,12 @@ exports.getOrdensServico = async (req, res) => {
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
-    // Recalcula valorFinal dinamicamente baseado nos valores com desconto
-    const ordensComValorRecalculado = ordensServico.map(os => {
-      const osObj = os.toObject();
-      osObj.valorFinal = (osObj.valorPecasComDesconto || 0) + (osObj.valorServicoComDesconto || 0);
-      return osObj;
-    });
-
     console.log(`✅ Encontradas ${ordensServico.length} ordens de serviço`);
 
     const count = await OrdemServico.countDocuments(query);
 
     res.json({
-      ordensServico: ordensComValorRecalculado,
+      ordensServico,
       totalPages: Math.ceil(count / limit),
       currentPage: page,
       total: count
@@ -348,82 +352,5 @@ exports.updateStatus = async (req, res) => {
     res.json(ordemServico);
   } catch (error) {
     res.status(400).json({ message: 'Erro ao atualizar status', error: error.message });
-  }
-};
-
-exports.deleteMultiple = async (req, res) => {
-  try {
-    const { ids } = req.body;
-    
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return res.status(400).json({ message: 'Nenhum ID fornecido para exclusão' });
-    }
-
-    console.log(`🗑️ Excluindo ${ids.length} ordem(ns) de serviço...`);
-
-    const results = {
-      success: [],
-      errors: []
-    };
-
-    // Processar cada ordem de serviço
-    for (const id of ids) {
-      try {
-        const ordemServico = await OrdemServico.findById(id);
-        
-        if (!ordemServico) {
-          results.errors.push({
-            id,
-            message: 'Ordem de serviço não encontrada'
-          });
-          continue;
-        }
-
-        // Estornar valores dos empenhos antes de deletar
-        if (ordemServico.empenhoPecas && ordemServico.valorPecasComDesconto > 0) {
-          await estornarValorEmpenho(
-            ordemServico.cliente,
-            ordemServico.contratoEmpenhoPecas,
-            ordemServico.empenhoPecas,
-            ordemServico.valorPecasComDesconto
-          );
-        }
-
-        if (ordemServico.empenhoServicos && ordemServico.valorServicoComDesconto > 0) {
-          await estornarValorEmpenho(
-            ordemServico.cliente,
-            ordemServico.contratoEmpenhoServicos,
-            ordemServico.empenhoServicos,
-            ordemServico.valorServicoComDesconto
-          );
-        }
-
-        await OrdemServico.findByIdAndDelete(id);
-        results.success.push({
-          id,
-          codigo: ordemServico.numeroOrdemServico || ordemServico.codigo
-        });
-      } catch (error) {
-        console.error(`Erro ao excluir OS ${id}:`, error);
-        results.errors.push({
-          id,
-          message: error.message
-        });
-      }
-    }
-
-    const message = `${results.success.length} ordem(ns) excluída(s) com sucesso` +
-      (results.errors.length > 0 ? `, ${results.errors.length} erro(s)` : '');
-
-    res.json({
-      message,
-      results
-    });
-  } catch (error) {
-    console.error('Erro ao excluir ordens de serviço em massa:', error);
-    res.status(500).json({ 
-      message: 'Erro ao excluir ordens de serviço', 
-      error: error.message 
-    });
   }
 };

@@ -65,9 +65,15 @@ const AlterarSenhaObrigatoria = () => {
 
       toast.success('Senha alterada com sucesso!');
       
+      // Atualizar localStorage removendo flag de troca obrigatória
+      const user = authService.getCurrentUser();
+      if (user) {
+        user.mustChangePassword = false;
+        localStorage.setItem('user', JSON.stringify(user));
+      }
+      
       // Aguardar um pouco e redirecionar
       setTimeout(() => {
-        const user = authService.getCurrentUser();
         if (user?.role === 'fornecedor') {
           navigate('/dashboard-fornecedor');
         } else if (user?.role === 'cliente') {

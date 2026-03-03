@@ -357,9 +357,7 @@ function ClienteForm() {
       }
     } catch (error) {
       console.error('❌ Erro ao salvar cliente:', error);
-      console.error('❌ Resposta completa do erro:', error.response?.data);
-      const mensagemErro = error.response?.data?.message || error.response?.data?.mensagem || 'Erro ao salvar cliente';
-      toast.error(mensagemErro);
+      toast.error(error.response?.data?.mensagem || 'Erro ao salvar cliente');
     } finally {
       setLoading(false);
     }
@@ -1257,13 +1255,13 @@ function ClienteForm() {
                         <label>30 Dias Após Fatura (%)</label>
                         <input
                           type="number"
-                          name="taxasAntecipacao.dias30"
-                          value={formData.taxasAntecipacao.dias30}
+                          name="taxasAntecipacao.aprazado"
+                          value={formData.taxasAntecipacao.aprazado}
                           onChange={handleTaxaChange}
                           min="0"
                           max="100"
                           step="0.01"
-                          placeholder="10"
+                          placeholder="0"
                         />
                       </div>
                       <div className="form-group">

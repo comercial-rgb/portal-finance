@@ -52,7 +52,7 @@ exports.getClientes = async (req, res) => {
     if (estado) {
       query['endereco.estado'] = { $regex: estado, $options: 'i' };
     }
-    if (ativo !== undefined) {
+    if (ativo !== undefined && ativo !== '') {
       query.ativo = ativo === 'true';
     }
 

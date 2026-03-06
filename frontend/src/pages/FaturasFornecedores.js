@@ -627,19 +627,30 @@ function FaturasFornecedores() {
     const valorDevido = valorAposImpostos - taxaOperacao;
 
     // Resumo Financeiro em formato de tabela
+    let finalY = afterTableY + 10;
+    
+    // Calcular altura do box dinamicamente
+    let boxHeight = 20; // base: valor + taxa + espaçamento
+    if (fornecedor?.naoOptanteSimples && totalImpostos > 0) {
+      boxHeight += 14 + (detalhesImpostos.length * 4) + 9; // impostos + detalhe + valor após impostos
+    }
+    
+    // Verificar se cabe na página (título + box + valor devido)
+    const alturaTotal = 5 + boxHeight + 20;
+    if (finalY + alturaTotal > 275) {
+      doc.addPage();
+      finalY = 20;
+    }
+    
     doc.setFontSize(11);
     doc.setTextColor(37, 28, 89);
     doc.setFont(undefined, 'bold');
-    let finalY = afterTableY + 10;
     doc.text('RESUMO FINANCEIRO', 20, finalY);
     finalY += 5;
     
-    // Background cinza claro
-    const boxHeight = fornecedor?.naoOptanteSimples && totalImpostos > 0 ? 60 : 30;
+    // Background cinza claro com altura calculada
     doc.setFillColor(248, 249, 250);
     doc.rect(20, finalY, 170, boxHeight, 'F');
-    
-    // Borda da caixa
     doc.setDrawColor(224, 224, 224);
     doc.setLineWidth(0.5);
     doc.rect(20, finalY, 170, boxHeight);
@@ -712,6 +723,10 @@ function FaturasFornecedores() {
     finalY += 10;
     
     // Valor Devido - Final destacado
+    if (finalY + 10 > 280) {
+      doc.addPage();
+      finalY = 20;
+    }
     doc.setFillColor(0, 91, 237);
     doc.rect(20, finalY - 4, 170, 10, 'F');
     doc.setDrawColor(0, 91, 237);

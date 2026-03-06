@@ -1017,10 +1017,17 @@ function FaturadoDetalhes() {
     // Altura do box: dinâmica baseada no detalhamento
     let alturaBox = 65; // Base
     if (detalhamentoPreCalculo.total > 0) {
-      alturaBox = 85 + (totalLinhasDetalhamento * 3.5); // Adiciona espaço para cada linha
+      alturaBox = 85 + (totalLinhasDetalhamento * 3.5);
     }
     
     let finalY = afterTableY + 5;
+    
+    // Verificar se o resumo cabe na página atual
+    if (finalY + alturaBox + 20 > 275) {
+      doc.addPage();
+      finalY = 20;
+    }
+    
     doc.setFillColor(248, 249, 250);
     doc.rect(20, finalY, 170, alturaBox, 'F');
     doc.setDrawColor(224, 224, 224);
@@ -1120,6 +1127,10 @@ function FaturadoDetalhes() {
     
     // Valor Devido - Final destacado (fórmula: Valor após Impostos - Taxa Operação)
     const valorDevidoCorreto = valorAposImpostos - valorTaxaOperacaoCorreto;
+    if (finalY + 15 > 280) {
+      doc.addPage();
+      finalY = 20;
+    }
     doc.setFillColor(0, 91, 237);
     doc.rect(20, finalY, 170, 10, 'F');
     doc.setDrawColor(0, 91, 237);
@@ -1322,6 +1333,14 @@ function FaturadoDetalhes() {
       return acc + 1 + item.subitens.length;
     }, 0);
     const alturaBox = impostosPecas > 0 ? (65 + (totalLinhasDetalhamento * 3.5)) : 45;
+    
+    // Verificar se cabe na página atual
+    if (finalY + alturaBox + 20 > 275) {
+      doc.addPage();
+      finalY = afterTableY > 275 ? 25 : 25;
+      finalY = 25;
+    }
+    
     doc.setFillColor(248, 249, 250);
     doc.rect(20, finalY, 170, alturaBox, 'F');
     doc.setDrawColor(224, 224, 224);
@@ -1395,6 +1414,10 @@ function FaturadoDetalhes() {
     doc.line(20, finalY + 2, 190, finalY + 2);
     finalY += 10;
     
+    if (finalY + 15 > 280) {
+      doc.addPage();
+      finalY = 20;
+    }
     doc.setFillColor(0, 91, 237);
     doc.rect(20, finalY, 170, 10, 'F');
     finalY += 7;
@@ -1593,6 +1616,13 @@ function FaturadoDetalhes() {
       return acc + 1 + item.subitens.length;
     }, 0);
     const alturaBox = impostosServicos > 0 ? (65 + (totalLinhasDetalhamento * 3.5)) : 45;
+    
+    // Verificar se cabe na página atual
+    if (finalY + alturaBox + 20 > 275) {
+      doc.addPage();
+      finalY = 25;
+    }
+    
     doc.setFillColor(248, 249, 250);
     doc.rect(20, finalY, 170, alturaBox, 'F');
     doc.setDrawColor(224, 224, 224);
@@ -1666,6 +1696,10 @@ function FaturadoDetalhes() {
     doc.line(20, finalY + 2, 190, finalY + 2);
     finalY += 10;
     
+    if (finalY + 15 > 280) {
+      doc.addPage();
+      finalY = 20;
+    }
     doc.setFillColor(0, 91, 237);
     doc.rect(20, finalY, 170, 10, 'F');
     finalY += 7;

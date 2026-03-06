@@ -723,21 +723,39 @@ function FaturasClientes() {
     const descontoTotal = (valorTotalPecas + valorTotalServicos) - valorComDesconto;
 
     // Resumo Financeiro em formato de tabela
+    let finalY = afterTableY;
+    
+    // Calcular altura necessária
+    let boxHeight = 6; // padding top
+    const linhasPrincipais = (tipoFatura === 'completa' ? 2 : 1); // peças e/ou serviços
+    boxHeight += linhasPrincipais * 7; // linhas de valores
+    boxHeight += 7; // desconto
+    boxHeight += 14; // valor com desconto (destaque)
+    
+    let impostoBoxHeight = 0;
+    if (totalImpostos > 0) {
+      impostoBoxHeight = 11 + (detalhamento.length * 4) + 14; // título + linhas + total
+    }
+    
+    // Verificar se cabe na página (box + impostos + valor devido)
+    const alturaTotal = 10 + boxHeight + impostoBoxHeight + 20;
+    if (finalY + alturaTotal > 275) {
+      doc.addPage();
+      finalY = 20;
+    }
+    
     doc.setFontSize(11);
     doc.setTextColor(37, 28, 89);
     doc.setFont(undefined, 'bold');
-    let finalY = afterTableY;
     doc.text('RESUMO FINANCEIRO', 20, finalY);
     finalY += 5;
     
-    // Background cinza claro
+    // Background cinza claro com altura calculada
     doc.setFillColor(248, 249, 250);
-    doc.rect(20, finalY, 170, 45, 'F');
-    
-    // Borda da caixa
+    doc.rect(20, finalY, 170, boxHeight, 'F');
     doc.setDrawColor(224, 224, 224);
     doc.setLineWidth(0.5);
-    doc.rect(20, finalY, 170, 45);
+    doc.rect(20, finalY, 170, boxHeight);
     
     finalY += 6;
     doc.setFont(undefined, 'normal');
@@ -779,12 +797,18 @@ function FaturasClientes() {
     finalY += 10;
     
     if (totalImpostos > 0) {
-      // Seção de Impostos
+      // Verificar se seção de impostos cabe na página
+      if (finalY + impostoBoxHeight + 20 > 280) {
+        doc.addPage();
+        finalY = 20;
+      }
+      
+      // Seção de Impostos - altura dinâmica
       doc.setFillColor(255, 255, 255);
-      doc.rect(20, finalY, 170, 35, 'F');
+      doc.rect(20, finalY, 170, impostoBoxHeight, 'F');
       doc.setDrawColor(224, 224, 224);
       doc.setLineWidth(0.5);
-      doc.rect(20, finalY, 170, 35);
+      doc.rect(20, finalY, 170, impostoBoxHeight);
       
       finalY += 6;
       doc.setFont(undefined, 'bold');
@@ -819,6 +843,10 @@ function FaturasClientes() {
     }
     
     // Valor Devido - Final destacado
+    if (finalY + 15 > 280) {
+      doc.addPage();
+      finalY = 20;
+    }
     doc.setFillColor(0, 91, 237);
     doc.rect(20, finalY, 170, 10, 'F');
     doc.setDrawColor(0, 91, 237);

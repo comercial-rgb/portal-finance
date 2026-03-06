@@ -629,10 +629,12 @@ function FaturasFornecedores() {
     // Resumo Financeiro em formato de tabela
     let finalY = afterTableY + 10;
     
-    // Calcular altura do box dinamicamente
-    let boxHeight = 20; // base: valor + taxa + espaçamento
+    // Calcular altura do box baseada no conteúdo real
+    // Base: padding(6) + valorTotal(7) + taxa(10) + margem(2) = 25
+    let boxHeight = 25;
     if (fornecedor?.naoOptanteSimples && totalImpostos > 0) {
-      boxHeight += 14 + (detalhesImpostos.length * 4) + 9; // impostos + detalhe + valor após impostos
+      // Adiciona: impostos(7) + detalhe(L*4) + gap(2) + valorAposImpostos(7) = 16 + L*4
+      boxHeight += 16 + (detalhesImpostos.length * 4);
     }
     
     // Verificar se cabe na página (título + box + valor devido)

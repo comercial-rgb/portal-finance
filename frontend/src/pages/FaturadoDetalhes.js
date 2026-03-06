@@ -1014,10 +1014,14 @@ function FaturadoDetalhes() {
       return acc + 1 + item.subitens.length; // título + subitens
     }, 0);
     
-    // Altura do box: dinâmica baseada no detalhamento
-    let alturaBox = 65; // Base
+    // Altura do box: calculada com base no conteúdo real
+    const numImpostoItems = detalhamentoPreCalculo.detalhamento.length;
+    // Base sem impostos: padding(6) + peças(7) + serviços(7) + desconto(7) + destaque(10) + taxa(10) + margem(2) = 49
+    let alturaBox = 49;
     if (detalhamentoPreCalculo.total > 0) {
-      alturaBox = 85 + (totalLinhasDetalhamento * 3.5);
+      // Com impostos: base(63) + títulos(numItems*5) + subitens((totalLinhas-numItems)*3.5) + margem(2)
+      const detalheAltura = numImpostoItems * 5 + (totalLinhasDetalhamento - numImpostoItems) * 3.5;
+      alturaBox = 65 + detalheAltura;
     }
     
     let finalY = afterTableY + 5;
@@ -1298,12 +1302,8 @@ function FaturadoDetalhes() {
 
     // Resumo Financeiro com cálculos proporcionais para PEÇAS
     const afterTableY = doc.lastAutoTable.finalY + 10;
-    doc.setFontSize(11);
-    doc.setTextColor(37, 28, 89);
-    doc.setFont(undefined, 'bold');
-    doc.text('RESUMO FINANCEIRO', 20, afterTableY);
     
-    let finalY = afterTableY + 5;
+    let finalY = afterTableY;
     
     const valorPecasTotal = ordensServico.reduce((sum, item) => sum + (item.ordemServico.valorPecas || 0), 0);
     const valorPecasDesconto = ordensServico.reduce((sum, item) => sum + (item.ordemServico.valorPecasComDesconto || 0), 0);
@@ -1332,14 +1332,24 @@ function FaturadoDetalhes() {
     const totalLinhasDetalhamento = detalhamentoImpostosPecas.detalhamento.reduce((acc, item) => {
       return acc + 1 + item.subitens.length;
     }, 0);
-    const alturaBox = impostosPecas > 0 ? (65 + (totalLinhasDetalhamento * 3.5)) : 45;
+    const numImpostoItems = detalhamentoImpostosPecas.detalhamento.length;
+    // Base sem impostos: padding(6) + peças(7) + desconto(7) + destaque(10) + taxa(10) + margem(2) = 42
+    const alturaBox = impostosPecas > 0 
+      ? (58 + numImpostoItems * 5 + (totalLinhasDetalhamento - numImpostoItems) * 3.5) 
+      : 42;
     
-    // Verificar se cabe na página atual
-    if (finalY + alturaBox + 20 > 275) {
+    // Verificar se cabe na página (título + box + valor devido)
+    if (finalY + alturaBox + 25 > 275) {
       doc.addPage();
-      finalY = afterTableY > 275 ? 25 : 25;
-      finalY = 25;
+      finalY = 20;
     }
+    
+    // Título RESUMO FINANCEIRO (após verificação de página para não ficar órfão)
+    doc.setFontSize(11);
+    doc.setTextColor(37, 28, 89);
+    doc.setFont(undefined, 'bold');
+    doc.text('RESUMO FINANCEIRO', 20, finalY);
+    finalY += 5;
     
     doc.setFillColor(248, 249, 250);
     doc.rect(20, finalY, 170, alturaBox, 'F');
@@ -1581,12 +1591,8 @@ function FaturadoDetalhes() {
 
     // Resumo Financeiro com cálculos proporcionais para SERVIÇOS
     const afterTableY = doc.lastAutoTable.finalY + 10;
-    doc.setFontSize(11);
-    doc.setTextColor(37, 28, 89);
-    doc.setFont(undefined, 'bold');
-    doc.text('RESUMO FINANCEIRO', 20, afterTableY);
     
-    let finalY = afterTableY + 5;
+    let finalY = afterTableY;
     
     const valorServicosTotal = ordensServico.reduce((sum, item) => sum + (item.ordemServico.valorServico || 0), 0);
     const valorServicosDesconto = ordensServico.reduce((sum, item) => sum + (item.ordemServico.valorServicoComDesconto || 0), 0);
@@ -1615,13 +1621,24 @@ function FaturadoDetalhes() {
     const totalLinhasDetalhamento = detalhamentoImpostosServicos.detalhamento.reduce((acc, item) => {
       return acc + 1 + item.subitens.length;
     }, 0);
-    const alturaBox = impostosServicos > 0 ? (65 + (totalLinhasDetalhamento * 3.5)) : 45;
+    const numImpostoItems = detalhamentoImpostosServicos.detalhamento.length;
+    // Base sem impostos: padding(6) + serviços(7) + desconto(7) + destaque(10) + taxa(10) + margem(2) = 42
+    const alturaBox = impostosServicos > 0 
+      ? (58 + numImpostoItems * 5 + (totalLinhasDetalhamento - numImpostoItems) * 3.5) 
+      : 42;
     
-    // Verificar se cabe na página atual
-    if (finalY + alturaBox + 20 > 275) {
+    // Verificar se cabe na página (título + box + valor devido)
+    if (finalY + alturaBox + 25 > 275) {
       doc.addPage();
-      finalY = 25;
+      finalY = 20;
     }
+    
+    // Título RESUMO FINANCEIRO (após verificação de página para não ficar órfão)
+    doc.setFontSize(11);
+    doc.setTextColor(37, 28, 89);
+    doc.setFont(undefined, 'bold');
+    doc.text('RESUMO FINANCEIRO', 20, finalY);
+    finalY += 5;
     
     doc.setFillColor(248, 249, 250);
     doc.rect(20, finalY, 170, alturaBox, 'F');

@@ -30,6 +30,7 @@ import ImpostosRetencoes from './pages/ImpostosRetencoes';
 import Relatorios from './pages/Relatorios';
 import ValoresPendentes from './pages/ValoresPendentes';
 import Pagamentos from './pages/Pagamentos';
+import OrdensPagamento from './pages/OrdensPagamento';
 import NotasFiscaisClientes from './pages/NotasFiscaisClientes';
 import PrivateRoute from './components/PrivateRoute';
 
@@ -278,6 +279,14 @@ function App() {
           element={
             <PrivateRoute allowedRoles={['super_admin', 'admin', 'gerente', 'fornecedor', 'cliente']}>
               <Pagamentos />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/ordens-pagamento"
+          element={
+            <PrivateRoute allowedRoles={['super_admin', 'admin', 'gerente', 'fornecedor']}>
+              <OrdensPagamento />
             </PrivateRoute>
           }
         />

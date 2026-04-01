@@ -30,6 +30,7 @@ const faturaRoutes = require('./routes/faturaRoutes');
 const notificacaoRoutes = require('./routes/notificacaoRoutes');
 const antecipacaoRoutes = require('./routes/antecipacaoRoutes');
 const pagamentoRoutes = require('./routes/pagamentoRoutes');
+const ordemPagamentoRoutes = require('./routes/ordemPagamentoRoutes');
 const notaFiscalClienteRoutes = require('./routes/notaFiscalClienteRoutes');
 const webhookFrotaRoutes = require('./routes/webhookFrotaRoutes');
 const importacaoRoutes = require('./routes/importacaoRoutes');
@@ -106,6 +107,8 @@ app.use('/api/notificacoes', notificacaoRoutes);
 // Antecipações e Pagamentos SEM cache
 app.use('/api/antecipacoes', antecipacaoRoutes);
 app.use('/api/pagamentos', pagamentoRoutes);
+// Ordens de Pagamento SEM cache
+app.use('/api/ordens-pagamento', ordemPagamentoRoutes);
 // Notas Fiscais de Clientes SEM cache
 app.use('/api/notas-fiscais-clientes', notaFiscalClienteRoutes);
 // Webhook de integração com sistema de frotas (protegido por token)

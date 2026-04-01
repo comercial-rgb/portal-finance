@@ -458,3 +458,160 @@ exports.alterarSenha = async (req, res) => {
   }
 };
 
+// @desc    SSO Login via Sistema de Frotas
+// @route   POST /api/auth/sso
+// @access  Public (protegido por token HMAC)
+exports.ssoLogin = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token SSO não fornecido'
+      });
+    }
+
+    // Decodificar token: base64url(payload).base64url(signature)
+    const parts = token.split('.');
+    if (parts.length !== 2) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token SSO inválido'
+      });
+    }
+
+    const [payloadB64, signatureB64] = parts;
+    const ssoSecret = process.env.SSO_FROTA_SECRET || process.env.WEBHOOK_FROTA_TOKEN;
+
+    if (!ssoSecret) {
+      console.error('SSO_FROTA_SECRET ou WEBHOOK_FROTA_TOKEN não configurado');
+      return res.status(500).json({
+        success: false,
+        message: 'SSO não configurado no servidor'
+      });
+    }
+
+    // Verificar assinatura HMAC-SHA256
+    const expectedSignature = crypto
+      .createHmac('sha256', ssoSecret)
+      .update(payloadB64)
+      .digest('base64url');
+
+    if (signatureB64 !== expectedSignature) {
+      return res.status(401).json({
+        success: false,
+        message: 'Assinatura SSO inválida'
+      });
+    }
+
+    // Decodificar payload
+    let payload;
+    try {
+      payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8'));
+    } catch (e) {
+      return res.status(401).json({
+        success: false,
+        message: 'Payload SSO malformado'
+      });
+    }
+
+    // Verificar expiração (token válido por 120 segundos)
+    const now = Math.floor(Date.now() / 1000);
+    if (!payload.exp || now > payload.exp) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token SSO expirado'
+      });
+    }
+
+    // Verificar campos obrigatórios
+    if (!payload.email || !payload.nome) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token SSO incompleto'
+      });
+    }
+
+    // Buscar ou criar usuário pelo email
+    let user = await User.findOne({ email: payload.email.toLowerCase() });
+
+    if (!user) {
+      // Criar usuário automaticamente
+      const role = payload.role || 'fornecedor';
+      const senhaTemp = crypto.randomBytes(16).toString('hex');
+
+      const userData = {
+        nome: payload.nome,
+        email: payload.email.toLowerCase(),
+        senha: senhaTemp,
+        role: role,
+        ativo: true,
+        mustChangePassword: false,
+        senhaTemporaria: senhaTemp
+      };
+
+      // Se for fornecedor, tentar vincular ao Fornecedor existente
+      if (role === 'fornecedor' && payload.nome) {
+        const fornecedor = await Fornecedor.findOne({
+          $or: [
+            { nomeFantasia: { $regex: new RegExp('^' + payload.nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') } },
+            { razaoSocial: { $regex: new RegExp('^' + payload.nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') } },
+            { email: payload.email.toLowerCase() }
+          ]
+        });
+        if (fornecedor) {
+          userData.fornecedorId = fornecedor._id;
+        }
+      }
+
+      // Se for cliente, tentar vincular ao Cliente existente
+      if (role === 'cliente' && payload.nome) {
+        const cliente = await Cliente.findOne({
+          $or: [
+            { nomeFantasia: { $regex: new RegExp('^' + payload.nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') } },
+            { email: payload.email.toLowerCase() }
+          ]
+        });
+        if (cliente) {
+          userData.clienteId = cliente._id;
+        }
+      }
+
+      user = await User.create(userData);
+      console.log(`✅ SSO: Usuário criado automaticamente para ${payload.email} (role: ${role})`);
+    }
+
+    // Verificar se está ativo
+    if (!user.ativo) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuário inativo no Portal Financeiro'
+      });
+    }
+
+    // Gerar JWT do portal
+    const jwtToken = gerarToken(user._id);
+
+    res.status(200).json({
+      success: true,
+      token: jwtToken,
+      user: {
+        id: user._id,
+        nome: user.nome,
+        email: user.email,
+        role: user.role,
+        fornecedorId: user.fornecedorId,
+        clienteId: user.clienteId,
+        mustChangePassword: false
+      }
+    });
+  } catch (error) {
+    console.error('Erro no SSO login:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao processar login SSO'
+    });
+  }
+};
+

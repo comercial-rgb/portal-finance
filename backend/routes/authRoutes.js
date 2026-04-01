@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   register,
   login,
+  ssoLogin,
   esqueciSenha,
   redefinirSenha,
   getMe,
@@ -14,6 +15,7 @@ const { rateLimitPresets } = require('../middleware/rateLimit');
 
 router.post('/register', protect, authorize('admin', 'super_admin'), register);
 router.post('/login', rateLimitPresets.auth, login);
+router.post('/sso', rateLimitPresets.auth, ssoLogin);
 router.post('/esqueci-senha', rateLimitPresets.auth, esqueciSenha);
 router.put('/redefinir-senha/:resetToken', rateLimitPresets.auth, redefinirSenha);
 router.get('/me', protect, rateLimitPresets.profile, getMe);

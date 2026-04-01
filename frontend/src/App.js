@@ -30,8 +30,8 @@ import ImpostosRetencoes from './pages/ImpostosRetencoes';
 import Relatorios from './pages/Relatorios';
 import ValoresPendentes from './pages/ValoresPendentes';
 import Pagamentos from './pages/Pagamentos';
-import OrdensPagamento from './pages/OrdensPagamento';
 import NotasFiscaisClientes from './pages/NotasFiscaisClientes';
+import SsoCallback from './pages/SsoCallback';
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {
@@ -51,6 +51,7 @@ function App() {
       />
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/sso-callback" element={<SsoCallback />} />
         <Route path="/esqueci-senha" element={<EsqueciSenha />} />
         <Route path="/redefinir-senha/:token" element={<RedefinirSenha />} />
         <Route path="/alterar-senha-obrigatoria" element={
@@ -279,14 +280,6 @@ function App() {
           element={
             <PrivateRoute allowedRoles={['super_admin', 'admin', 'gerente', 'fornecedor', 'cliente']}>
               <Pagamentos />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/ordens-pagamento"
-          element={
-            <PrivateRoute allowedRoles={['super_admin', 'admin', 'gerente', 'fornecedor']}>
-              <OrdensPagamento />
             </PrivateRoute>
           }
         />

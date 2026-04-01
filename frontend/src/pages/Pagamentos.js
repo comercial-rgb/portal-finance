@@ -40,6 +40,46 @@ function Pagamentos() {
     cliente: '', fornecedor: '', fatura: '', faturaNumeroManual: '',
     valor: '', dataGeracao: new Date().toISOString().split('T')[0], observacoes: ''
   });
+  // Busca nos selects de Cliente e Fornecedor
+  const [buscaCliente, setBuscaCliente] = useState('');
+  const [buscaFornecedor, setBuscaFornecedor] = useState('');
+  const [showDropdownCliente, setShowDropdownCliente] = useState(false);
+  const [showDropdownFornecedor, setShowDropdownFornecedor] = useState(false);
+
+  // Formatação brasileira de valor (R$ 1.234,56)
+  const [valorFormatado, setValorFormatado] = useState('');
+
+  const formatarValorInput = (valor) => {
+    if (!valor) return '';
+    const num = parseFloat(valor);
+    if (isNaN(num)) return '';
+    return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const handleValorChange = (e) => {
+    let raw = e.target.value;
+    // Remove tudo que não é dígito ou vírgula
+    raw = raw.replace(/[^0-9,]/g, '');
+    setValorFormatado(raw);
+    // Converte para número (troca vírgula por ponto)
+    const numerico = parseFloat(raw.replace(/\./g, '').replace(',', '.'));
+    setFormData(prev => ({ ...prev, valor: isNaN(numerico) ? '' : numerico }));
+  };
+
+  const handleValorFocus = () => {
+    // Ao focar, mostra o valor sem formatação de milhar para facilitar edição
+    if (formData.valor) {
+      setValorFormatado(formData.valor.toString().replace('.', ','));
+    }
+  };
+
+  const handleValorBlur = () => {
+    // Ao sair do campo, formata bonito
+    if (formData.valor) {
+      setValorFormatado(formatarValorInput(formData.valor));
+    }
+  };
+
   const [usarFaturaManual, setUsarFaturaManual] = useState(false);
 
   // Modal pagar ordem
@@ -263,6 +303,9 @@ function Pagamentos() {
       });
       toast.success('Ordem de pagamento criada com sucesso!');
       setFormData({ cliente: '', fornecedor: '', fatura: '', faturaNumeroManual: '', valor: '', dataGeracao: new Date().toISOString().split('T')[0], observacoes: '' });
+      setValorFormatado('');
+      setBuscaCliente('');
+      setBuscaFornecedor('');
       setUsarFaturaManual(false);
       setFaturasAbertasFornecedor([]);
       setShowForm(false);
@@ -498,28 +541,97 @@ function Pagamentos() {
                         <form onSubmit={handleCriarOrdem} className="form-grid">
                           <div className="form-group">
                             <label htmlFor="cliente">Cliente *</label>
-                            <select id="cliente" name="cliente" value={formData.cliente} onChange={handleFormChange} required className="form-input">
-                              <option value="">Selecione o cliente...</option>
-                              {clientes.map(c => (
-                                <option key={c._id} value={c._id}>{c.razaoSocial} {c.cnpj ? `(${c.cnpj})` : ''}</option>
-                              ))}
-                            </select>
+                            <div className="searchable-select">
+                              <input
+                                type="text"
+                                className="form-input"
+                                placeholder="Buscar cliente por nome ou CNPJ..."
+                                value={formData.cliente ? (clientes.find(c => c._id === formData.cliente)?.razaoSocial || buscaCliente) : buscaCliente}
+                                onChange={(e) => {
+                                  setBuscaCliente(e.target.value);
+                                  setShowDropdownCliente(true);
+                                  if (formData.cliente) setFormData(prev => ({ ...prev, cliente: '' }));
+                                }}
+                                onFocus={() => setShowDropdownCliente(true)}
+                                onBlur={() => setTimeout(() => setShowDropdownCliente(false), 200)}
+                              />
+                              {formData.cliente && (
+                                <button type="button" className="clear-select" onClick={() => { setFormData(prev => ({ ...prev, cliente: '' })); setBuscaCliente(''); }}>✕</button>
+                              )}
+                              {showDropdownCliente && (
+                                <ul className="select-dropdown">
+                                  {clientes
+                                    .filter(c => {
+                                      const termo = buscaCliente.toLowerCase();
+                                      return !termo || c.razaoSocial?.toLowerCase().includes(termo) || c.cnpj?.includes(termo);
+                                    })
+                                    .map(c => (
+                                      <li key={c._id} onMouseDown={() => {
+                                        setFormData(prev => ({ ...prev, cliente: c._id }));
+                                        setBuscaCliente('');
+                                        setShowDropdownCliente(false);
+                                      }}>
+                                        {c.razaoSocial} {c.cnpj ? <span className="select-hint">({c.cnpj})</span> : ''}
+                                      </li>
+                                    ))}
+                                  {clientes.filter(c => { const t = buscaCliente.toLowerCase(); return !t || c.razaoSocial?.toLowerCase().includes(t) || c.cnpj?.includes(t); }).length === 0 && (
+                                    <li className="select-empty">Nenhum cliente encontrado</li>
+                                  )}
+                                </ul>
+                              )}
+                            </div>
+                            <input type="hidden" name="cliente" value={formData.cliente} required />
                           </div>
                           <div className="form-group">
                             <label htmlFor="fornecedor">Fornecedor *</label>
-                            <select id="fornecedor" name="fornecedor" value={formData.fornecedor} onChange={handleFormChange} required className="form-input">
-                              <option value="">Selecione o fornecedor...</option>
-                              {fornecedoresLista.map(f => (
-                                <option key={f._id} value={f._id}>{f.razaoSocial} ({f.cnpjCpf})</option>
-                              ))}
-                            </select>
+                            <div className="searchable-select">
+                              <input
+                                type="text"
+                                className="form-input"
+                                placeholder="Buscar fornecedor por nome ou CNPJ..."
+                                value={formData.fornecedor ? (fornecedoresLista.find(f => f._id === formData.fornecedor)?.razaoSocial || buscaFornecedor) : buscaFornecedor}
+                                onChange={(e) => {
+                                  setBuscaFornecedor(e.target.value);
+                                  setShowDropdownFornecedor(true);
+                                  if (formData.fornecedor) setFormData(prev => ({ ...prev, fornecedor: '', fatura: '' }));
+                                }}
+                                onFocus={() => setShowDropdownFornecedor(true)}
+                                onBlur={() => setTimeout(() => setShowDropdownFornecedor(false), 200)}
+                              />
+                              {formData.fornecedor && (
+                                <button type="button" className="clear-select" onClick={() => { setFormData(prev => ({ ...prev, fornecedor: '', fatura: '' })); setBuscaFornecedor(''); setFaturasAbertasFornecedor([]); }}>✕</button>
+                              )}
+                              {showDropdownFornecedor && (
+                                <ul className="select-dropdown">
+                                  {fornecedoresLista
+                                    .filter(f => {
+                                      const termo = buscaFornecedor.toLowerCase();
+                                      return !termo || f.razaoSocial?.toLowerCase().includes(termo) || f.cnpjCpf?.includes(termo);
+                                    })
+                                    .map(f => (
+                                      <li key={f._id} onMouseDown={() => {
+                                        setFormData(prev => ({ ...prev, fornecedor: f._id, fatura: '' }));
+                                        setBuscaFornecedor('');
+                                        setShowDropdownFornecedor(false);
+                                        carregarFaturasFornecedor(f._id);
+                                      }}>
+                                        {f.razaoSocial} <span className="select-hint">({f.cnpjCpf})</span>
+                                      </li>
+                                    ))}
+                                  {fornecedoresLista.filter(f => { const t = buscaFornecedor.toLowerCase(); return !t || f.razaoSocial?.toLowerCase().includes(t) || f.cnpjCpf?.includes(t); }).length === 0 && (
+                                    <li className="select-empty">Nenhum fornecedor encontrado</li>
+                                  )}
+                                </ul>
+                              )}
+                            </div>
+                            <input type="hidden" name="fornecedor" value={formData.fornecedor} required />
                           </div>
                           <div className="form-group">
-                            <label>Fatura</label>
-                            <div className="fatura-toggle">
+                            <div className="fatura-label-row">
+                              <label>Fatura</label>
                               <label className="toggle-label">
                                 <input type="checkbox" checked={usarFaturaManual} onChange={(e) => { setUsarFaturaManual(e.target.checked); setFormData(prev => ({ ...prev, fatura: '', faturaNumeroManual: '' })); }} />
-                                <span>Preencher manualmente</span>
+                                <span>Manual</span>
                               </label>
                             </div>
                             {usarFaturaManual ? (
@@ -537,7 +649,10 @@ function Pagamentos() {
                           </div>
                           <div className="form-group">
                             <label htmlFor="valor">Valor *</label>
-                            <input type="number" id="valor" name="valor" value={formData.valor} onChange={handleFormChange} placeholder="0,00" step="0.01" min="0.01" required className="form-input" />
+                            <div className="valor-input-wrapper">
+                              <span className="valor-prefix">R$</span>
+                              <input type="text" id="valor" name="valor" value={valorFormatado} onChange={handleValorChange} onFocus={handleValorFocus} onBlur={handleValorBlur} placeholder="0,00" required className="form-input valor-input" inputMode="decimal" />
+                            </div>
                           </div>
                           <div className="form-group">
                             <label htmlFor="dataGeracao">Data Gerada *</label>

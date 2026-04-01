@@ -69,20 +69,19 @@ function Pagamentos() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const promises = [
+      const results = await Promise.allSettled([
         api.get('/pagamentos'),
         api.get('/pagamentos/antecipacoes'),
         api.get('/pagamentos/resumo'),
         api.get('/ordens-pagamento'),
         api.get('/ordens-pagamento/resumo')
-      ];
-      const [pagamentosRes, antecipacoesRes, resumoRes, ordensRes, resumoOrdensRes] = await Promise.all(promises);
+      ]);
 
-      setPagamentos(pagamentosRes.data);
-      setAntecipacoes(antecipacoesRes.data);
-      setResumo(resumoRes.data);
-      setOrdens(ordensRes.data.data || []);
-      setResumoOrdens(resumoOrdensRes.data.data || { totalOrdens: 0, pendentes: 0, pagas: 0, valorTotalPendente: 0, valorTotalPago: 0 });
+      if (results[0].status === 'fulfilled') setPagamentos(results[0].value.data || []);
+      if (results[1].status === 'fulfilled') setAntecipacoes(results[1].value.data || []);
+      if (results[2].status === 'fulfilled') setResumo(results[2].value.data);
+      if (results[3].status === 'fulfilled') setOrdens(results[3].value.data?.data || []);
+      if (results[4].status === 'fulfilled') setResumoOrdens(results[4].value.data?.data || { totalOrdens: 0, pendentes: 0, pagas: 0, valorTotalPendente: 0, valorTotalPago: 0 });
     } catch (error) {
       toast.error('Erro ao carregar dados');
       console.error(error);
@@ -97,10 +96,11 @@ function Pagamentos() {
         api.get('/clientes?limit=1000'),
         api.get('/fornecedores?limit=1000')
       ]);
-      setClientes(clientesRes.data.data || clientesRes.data || []);
-      setFornecedoresLista(fornecedoresRes.data.data || fornecedoresRes.data || []);
+      setClientes(clientesRes.data?.clientes || clientesRes.data?.data || []);
+      setFornecedoresLista(fornecedoresRes.data?.fornecedores || fornecedoresRes.data?.data || []);
     } catch (error) {
       console.error('Erro ao carregar clientes/fornecedores:', error);
+      toast.error('Erro ao carregar clientes e fornecedores');
     }
   }, []);
 

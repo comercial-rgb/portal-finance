@@ -92,7 +92,7 @@ ordemPagamentoSchema.pre('validate', async function(next) {
         proximo = parseInt(match[1], 10) + 1;
       }
     }
-    this.numero = `OP-${String(proximo).padStart(6, '0')}`;
+    this.numero = `OP-${String(proximo).padStart(3, '0')}`;
   }
   next();
 });

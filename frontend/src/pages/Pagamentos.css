@@ -820,17 +820,20 @@
   right: 0;
   bottom: 0;
   z-index: 999;
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .bank-info-popup {
-  position: absolute;
-  top: 100%;
-  right: 0;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   background: white;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   border: 1px solid #e2e8f0;
-  min-width: 280px;
+  min-width: 320px;
+  max-width: 400px;
   z-index: 1000;
   animation: fadeIn 0.2s ease;
 }

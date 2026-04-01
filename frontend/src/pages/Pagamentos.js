@@ -820,29 +820,6 @@ function Pagamentos() {
                                           </svg>
                                         </button>
                                       )}
-                                      {bankInfoId === ordem._id && ordem.fornecedor && (
-                                        <>
-                                          <div className="bank-info-overlay" onClick={() => setBankInfoId(null)}></div>
-                                          <div className="bank-info-popup" onClick={(e) => e.stopPropagation()}>
-                                            <div className="bank-info-header">
-                                              <strong>Dados Bancários</strong>
-                                              <button className="bank-info-close" onClick={() => setBankInfoId(null)}>×</button>
-                                            </div>
-                                            <div className="bank-info-body">
-                                              <div className="bank-info-row"><span className="bank-info-label">Banco:</span><span className="bank-info-value">{ordem.fornecedor.banco || '—'}</span></div>
-                                              <div className="bank-info-row"><span className="bank-info-label">Tipo Conta:</span><span className="bank-info-value">{ordem.fornecedor.tipoConta ? ordem.fornecedor.tipoConta.charAt(0).toUpperCase() + ordem.fornecedor.tipoConta.slice(1) : '—'}</span></div>
-                                              <div className="bank-info-row"><span className="bank-info-label">Agência:</span><span className="bank-info-value">{ordem.fornecedor.agencia || '—'}</span></div>
-                                              <div className="bank-info-row"><span className="bank-info-label">Conta:</span><span className="bank-info-value">{ordem.fornecedor.conta || '—'}</span></div>
-                                              {ordem.fornecedor.chavePix && (
-                                                <div className="bank-info-row bank-info-pix"><span className="bank-info-label">Chave PIX:</span><span className="bank-info-value">{ordem.fornecedor.chavePix}</span></div>
-                                              )}
-                                              {ordem.fornecedor.tipoChavePix && (
-                                                <div className="bank-info-row"><span className="bank-info-label">Tipo Chave:</span><span className="bank-info-value">{ordem.fornecedor.tipoChavePix.toUpperCase()}</span></div>
-                                              )}
-                                            </div>
-                                          </div>
-                                        </>
-                                      )}
                                     </div>
                                   </td>
                                   <td>{ordem.fatura?.numeroFatura || ordem.faturaNumeroManual || '-'}</td>
@@ -869,6 +846,37 @@ function Pagamentos() {
                         </div>
                       )}
                     </div>
+
+                    {/* Modal Dados Bancários (fora da tabela) */}
+                    {bankInfoId && (() => {
+                      const ordemBanco = ordensFiltradas.find(o => o._id === bankInfoId);
+                      if (!ordemBanco?.fornecedor) return null;
+                      const f = ordemBanco.fornecedor;
+                      return (
+                        <>
+                          <div className="bank-info-overlay" onClick={() => setBankInfoId(null)}></div>
+                          <div className="bank-info-popup" onClick={(e) => e.stopPropagation()}>
+                            <div className="bank-info-header">
+                              <strong>🏦 Dados Bancários — {f.razaoSocial}</strong>
+                              <button className="bank-info-close" onClick={() => setBankInfoId(null)}>×</button>
+                            </div>
+                            <div className="bank-info-body">
+                              <div className="bank-info-row"><span className="bank-info-label">CNPJ:</span><span className="bank-info-value">{f.cnpjCpf || '—'}</span></div>
+                              <div className="bank-info-row"><span className="bank-info-label">Banco:</span><span className="bank-info-value">{f.banco || '—'}</span></div>
+                              <div className="bank-info-row"><span className="bank-info-label">Tipo Conta:</span><span className="bank-info-value">{f.tipoConta ? f.tipoConta.charAt(0).toUpperCase() + f.tipoConta.slice(1) : '—'}</span></div>
+                              <div className="bank-info-row"><span className="bank-info-label">Agência:</span><span className="bank-info-value">{f.agencia || '—'}</span></div>
+                              <div className="bank-info-row"><span className="bank-info-label">Conta:</span><span className="bank-info-value">{f.conta || '—'}</span></div>
+                              {f.chavePix && (
+                                <div className="bank-info-row bank-info-pix"><span className="bank-info-label">Chave PIX:</span><span className="bank-info-value">{f.chavePix}</span></div>
+                              )}
+                              {f.tipoChavePix && (
+                                <div className="bank-info-row"><span className="bank-info-label">Tipo Chave:</span><span className="bank-info-value">{f.tipoChavePix.toUpperCase()}</span></div>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </>
                 )}
 

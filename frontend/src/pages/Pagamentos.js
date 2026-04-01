@@ -167,6 +167,91 @@ function Pagamentos() {
     return new Date(data).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
   };
 
+  // === RELATÓRIO / EXPORTAÇÃO ===
+  const exportarRelatorio = (formato) => {
+    const dados = ordensFiltradas;
+    if (dados.length === 0) { toast.warn('Nenhuma ordem para exportar'); return; }
+
+    if (formato === 'csv') {
+      const header = ['Nº Ordem', 'Cliente', 'Fornecedor', 'CNPJ', 'Fatura', 'Valor', 'Data Geração', 'Data Pagamento', 'Status', 'Vinculada a'];
+      const rows = dados.map(o => [
+        o.numero,
+        o.cliente?.razaoSocial || '-',
+        o.fornecedor?.razaoSocial || '-',
+        o.fornecedor?.cnpjCpf || '-',
+        o.fatura?.numeroFatura || o.faturaNumeroManual || '-',
+        o.valor?.toFixed(2).replace('.', ','),
+        o.dataGeracao ? new Date(o.dataGeracao).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-',
+        o.dataPagamento ? new Date(o.dataPagamento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-',
+        o.status,
+        o.faturaVinculada?.numeroFatura || '-'
+      ]);
+      const csvContent = [header, ...rows].map(r => r.map(c => `"${c}"`).join(';')).join('\n');
+      const bom = '\uFEFF';
+      const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `relatorio_ordens_pagamento_${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Relatório CSV exportado com ${dados.length} registros`);
+    } else if (formato === 'pdf') {
+      const printWindow = window.open('', '_blank');
+      const totalValor = dados.reduce((s, o) => s + (o.valor || 0), 0);
+      const totalPendente = dados.filter(o => o.status === 'Pendente').reduce((s, o) => s + (o.valor || 0), 0);
+      const totalPago = dados.filter(o => o.status === 'Paga').reduce((s, o) => s + (o.valor || 0), 0);
+      printWindow.document.write(`
+        <html><head><title>Relatório Ordens de Pagamento</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
+          h1 { color: #003366; font-size: 18px; border-bottom: 2px solid #003366; padding-bottom: 8px; }
+          .info { display: flex; gap: 20px; margin: 12px 0 20px; font-size: 12px; }
+          .info-card { background: #f0f4f8; padding: 8px 14px; border-radius: 6px; }
+          .info-card strong { color: #003366; }
+          table { width: 100%; border-collapse: collapse; font-size: 11px; }
+          th { background: #003366; color: white; padding: 8px 6px; text-align: left; }
+          td { padding: 6px; border-bottom: 1px solid #ddd; }
+          tr:nth-child(even) { background: #f9f9f9; }
+          .status-paga { color: #27ae60; font-weight: bold; }
+          .status-pendente { color: #e67e22; font-weight: bold; }
+          .footer { margin-top: 20px; font-size: 10px; color: #888; text-align: center; border-top: 1px solid #ddd; padding-top: 10px; }
+          @media print { body { padding: 0; } }
+        </style></head><body>
+        <h1>📋 Relatório de Ordens de Pagamento</h1>
+        <div class="info">
+          <div class="info-card"><strong>Total:</strong> ${dados.length} ordens</div>
+          <div class="info-card"><strong>Valor Total:</strong> ${formatarValor(totalValor)}</div>
+          <div class="info-card"><strong>Pendente:</strong> ${formatarValor(totalPendente)}</div>
+          <div class="info-card"><strong>Pago:</strong> ${formatarValor(totalPago)}</div>
+          <div class="info-card"><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</div>
+        </div>
+        <table>
+          <thead><tr><th>Nº</th><th>Cliente</th><th>Fornecedor</th><th>CNPJ</th><th>Fatura</th><th>Valor</th><th>Geração</th><th>Pagamento</th><th>Status</th></tr></thead>
+          <tbody>
+          ${dados.map(o => `<tr>
+            <td>${o.numero}</td>
+            <td>${o.cliente?.razaoSocial || '-'}</td>
+            <td>${o.fornecedor?.razaoSocial || '-'}</td>
+            <td>${o.fornecedor?.cnpjCpf || '-'}</td>
+            <td>${o.fatura?.numeroFatura || o.faturaNumeroManual || '-'}</td>
+            <td>${formatarValor(o.valor)}</td>
+            <td>${o.dataGeracao ? new Date(o.dataGeracao).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}</td>
+            <td>${o.dataPagamento ? new Date(o.dataPagamento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}</td>
+            <td class="${o.status === 'Paga' ? 'status-paga' : 'status-pendente'}">${o.status}</td>
+          </tr>`).join('')}
+          </tbody>
+        </table>
+        <div class="footer">Portal Finance — Relatório gerado em ${new Date().toLocaleString('pt-BR')}</div>
+        </body></html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => printWindow.print(), 500);
+      toast.success('Relatório PDF aberto para impressão');
+    }
+  };
+
   // === PAGAMENTOS (aba existente) ===
   const handleFiltroChange = (e) => {
     setFiltros(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -663,12 +748,24 @@ function Pagamentos() {
 
                     {/* Filtros ordens */}
                     <div className="filtros-card">
-                      <input type="text" name="busca" value={filtros.busca} onChange={handleFiltroChange} placeholder="Buscar por nº ordem, fornecedor, CNPJ, cliente, fatura..." className="filtro-input" />
-                      <select value={filtros.statusOrdem} onChange={(e) => setFiltros(prev => ({ ...prev, statusOrdem: e.target.value }))} className="filtro-select">
-                        <option value="">Todos os status</option>
-                        <option value="Pendente">Pendente</option>
-                        <option value="Paga">Paga</option>
-                      </select>
+                      <div className="filtros-row">
+                        <input type="text" name="busca" value={filtros.busca} onChange={handleFiltroChange} placeholder="Buscar por nº ordem, fornecedor, CNPJ, cliente, fatura..." className="filtro-input" />
+                        <select value={filtros.statusOrdem} onChange={(e) => setFiltros(prev => ({ ...prev, statusOrdem: e.target.value }))} className="filtro-select">
+                          <option value="">Todos os status</option>
+                          <option value="Pendente">Pendente</option>
+                          <option value="Paga">Paga</option>
+                        </select>
+                      </div>
+                      <div className="filtros-acoes">
+                        <button className="btn-export btn-csv" onClick={() => exportarRelatorio('csv')} title="Exportar CSV (Excel)">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                          Exportar CSV
+                        </button>
+                        <button className="btn-export btn-pdf" onClick={() => exportarRelatorio('pdf')} title="Gerar Relatório PDF">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 17h2a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2"/><rect x="7" y="13" width="10" height="8" rx="1"/><path d="M7 3h10v4H7z"/></svg>
+                          Relatório PDF
+                        </button>
+                      </div>
                     </div>
 
                     {/* Tabela ordens */}
@@ -706,7 +803,7 @@ function Pagamentos() {
                             <tbody>
                               {ordensFiltradas.map(ordem => (
                                 <tr key={ordem._id}>
-                                  <td><strong>{ordem.numero}</strong></td>
+                                  <td><span className="numero-ordem">{ordem.numero}</span></td>
                                   <td>{ordem.cliente?.razaoSocial || '-'}</td>
                                   <td>
                                     <div className="cnpj-cell">
@@ -724,7 +821,8 @@ function Pagamentos() {
                                         </button>
                                       )}
                                       {bankInfoId === ordem._id && ordem.fornecedor && (
-                                        <div className="bank-info-overlay" onClick={() => setBankInfoId(null)}>
+                                        <>
+                                          <div className="bank-info-overlay" onClick={() => setBankInfoId(null)}></div>
                                           <div className="bank-info-popup" onClick={(e) => e.stopPropagation()}>
                                             <div className="bank-info-header">
                                               <strong>Dados Bancários</strong>
@@ -743,7 +841,7 @@ function Pagamentos() {
                                               )}
                                             </div>
                                           </div>
-                                        </div>
+                                        </>
                                       )}
                                     </div>
                                   </td>

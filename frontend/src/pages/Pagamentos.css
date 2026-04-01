@@ -141,6 +141,61 @@
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   margin-bottom: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.filtros-row {
+  display: flex;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.filtros-acoes {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-export {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-csv {
+  background: #f0fdf4;
+  color: #16a34a;
+  border-color: #bbf7d0;
+}
+
+.btn-csv:hover {
+  background: #16a34a;
+  color: white;
+  border-color: #16a34a;
+}
+
+.btn-pdf {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.btn-pdf:hover {
+  background: #dc2626;
+  color: white;
+  border-color: #dc2626;
 }
 
 .filtro-input {
@@ -215,6 +270,17 @@
 
 .data-table tbody tr:hover {
   background: #f8fafc;
+}
+
+.numero-ordem {
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #f0f4f8;
+  color: var(--azul-corporativo);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  letter-spacing: -0.02em;
 }
 
 .valor-destaque {
@@ -468,12 +534,6 @@
 /* ===== ORDENS DE PAGAMENTO ===== */
 
 /* Filtro Select */
-.filtros-card {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  align-items: center;
-}
 
 .filtro-select {
   padding: 0.75rem 1rem;
@@ -927,6 +987,21 @@
 
   .filtros-card {
     flex-direction: column;
+  }
+
+  .filtros-row {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .filtros-acoes {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .filtros-acoes .btn-export {
+    flex: 1;
+    justify-content: center;
   }
 
   .filtro-select {

@@ -49,36 +49,27 @@ function Pagamentos() {
   // Formatação brasileira de valor (R$ 1.234,56)
   const [valorFormatado, setValorFormatado] = useState('');
 
-  const formatarValorInput = (valor) => {
-    if (!valor) return '';
-    const num = parseFloat(valor);
-    if (isNaN(num)) return '';
-    return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const formatarMoeda = (centavos) => {
+    if (!centavos) return '';
+    const valor = centavos / 100;
+    return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   const handleValorChange = (e) => {
-    let raw = e.target.value;
-    // Remove tudo que não é dígito ou vírgula
-    raw = raw.replace(/[^0-9,]/g, '');
-    setValorFormatado(raw);
-    // Converte para número (troca vírgula por ponto)
-    const numerico = parseFloat(raw.replace(/\./g, '').replace(',', '.'));
-    setFormData(prev => ({ ...prev, valor: isNaN(numerico) ? '' : numerico }));
+    // Extrai apenas dígitos
+    const apenasDigitos = e.target.value.replace(/\D/g, '');
+    if (!apenasDigitos) {
+      setValorFormatado('');
+      setFormData(prev => ({ ...prev, valor: '' }));
+      return;
+    }
+    const centavos = parseInt(apenasDigitos, 10);
+    setValorFormatado(formatarMoeda(centavos));
+    setFormData(prev => ({ ...prev, valor: centavos / 100 }));
   };
 
-  const handleValorFocus = () => {
-    // Ao focar, mostra o valor sem formatação de milhar para facilitar edição
-    if (formData.valor) {
-      setValorFormatado(formData.valor.toString().replace('.', ','));
-    }
-  };
-
-  const handleValorBlur = () => {
-    // Ao sair do campo, formata bonito
-    if (formData.valor) {
-      setValorFormatado(formatarValorInput(formData.valor));
-    }
-  };
+  const handleValorFocus = () => {};
+  const handleValorBlur = () => {};
 
   const [usarFaturaManual, setUsarFaturaManual] = useState(false);
 

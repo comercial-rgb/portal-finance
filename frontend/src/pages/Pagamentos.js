@@ -521,7 +521,7 @@ function Pagamentos() {
       o.faturaNumeroManual?.toLowerCase().includes(filtros.busca.toLowerCase());
     const matchStatus = !filtros.statusOrdem || o.status === filtros.statusOrdem;
     return matchBusca && matchStatus;
-  });
+  }).sort((a, b) => (a.valor || 0) - (b.valor || 0));
 
   return (
     <div className="page-container">

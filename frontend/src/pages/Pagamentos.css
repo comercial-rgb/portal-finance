@@ -465,6 +465,311 @@
   color: var(--cinza-escuro);
 }
 
+/* ===== ORDENS DE PAGAMENTO ===== */
+
+/* Filtro Select */
+.filtros-card {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filtro-select {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--cinza-claro);
+  border-radius: 8px;
+  font-size: 1rem;
+  min-width: 200px;
+  background: white;
+}
+
+.filtro-select:focus {
+  outline: none;
+  border-color: var(--azul-tech);
+}
+
+/* Form Card */
+.form-card {
+  margin-bottom: 1.5rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: var(--azul-corporativo);
+  font-size: 0.875rem;
+}
+
+.form-group-full {
+  grid-column: 1 / -1;
+}
+
+.form-input {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--cinza-claro);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--azul-tech);
+  box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.15);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.fatura-toggle {
+  margin-bottom: 0.35rem;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--cinza-escuro);
+  cursor: pointer;
+}
+
+.toggle-label input[type="checkbox"] {
+  accent-color: var(--azul-tech);
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding-top: 0.5rem;
+}
+
+.btn-primary {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, var(--azul-corporativo) 0%, var(--azul-tech) 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* CNPJ Cell & Bank Info */
+.cnpj-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.fornecedor-nome {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.cnpj-text {
+  color: var(--cinza-medio);
+  font-size: 0.8rem;
+}
+
+.btn-bank-info {
+  background: #e0f2fe;
+  border: 1px solid #bae6fd;
+  color: var(--azul-tech);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-bank-info:hover {
+  background: var(--azul-tech);
+  color: white;
+}
+
+.bank-info-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+}
+
+.bank-info-popup {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  border: 1px solid #e2e8f0;
+  min-width: 280px;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bank-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, var(--azul-corporativo) 0%, var(--azul-tech) 100%);
+  border-radius: 12px 12px 0 0;
+  color: white;
+  font-size: 0.9rem;
+}
+
+.bank-info-close {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bank-info-close:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.bank-info-body {
+  padding: 0.75rem 1rem;
+}
+
+.bank-info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.85rem;
+}
+
+.bank-info-row:last-child {
+  border-bottom: none;
+}
+
+.bank-info-label {
+  color: var(--cinza-medio);
+  font-weight: 500;
+}
+
+.bank-info-value {
+  font-weight: 600;
+  color: var(--azul-corporativo);
+}
+
+.bank-info-pix {
+  background: #f0fdf4;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  margin-top: 0.25rem;
+}
+
+/* Action Buttons */
+.acoes-cell {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.btn-pagar {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+  border: none;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-pagar:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(17, 153, 142, 0.4);
+}
+
+.btn-vincular {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-vincular:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+/* Fatura vinculada badge */
+.fatura-vinculada {
+  background: #e0e7ff;
+  color: #3730a3;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* PDF Preview */
+.pdf-preview {
+  text-align: center;
+  padding: 1rem;
+}
+
+/* Modal footer with multiple buttons */
+.modal-footer {
+  gap: 0.75rem;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .stats-grid {
@@ -478,5 +783,27 @@
   .tab-button {
     width: 100%;
     justify-content: center;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filtros-card {
+    flex-direction: column;
+  }
+
+  .filtro-select {
+    width: 100%;
+  }
+
+  .acoes-cell {
+    flex-direction: column;
+  }
+
+  .bank-info-popup {
+    min-width: 240px;
+    left: auto;
+    right: -10px;
   }
 }

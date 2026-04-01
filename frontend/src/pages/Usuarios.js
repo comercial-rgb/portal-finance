@@ -16,6 +16,11 @@ function Usuarios() {
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [resetingPassword, setResetingPassword] = useState(false);
+  const [busca, setBusca] = useState('');
+  const [filtroRole, setFiltroRole] = useState('');
+  const [filtroStatus, setFiltroStatus] = useState('');
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const itensPorPagina = 10;
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -231,6 +236,29 @@ function Usuarios() {
     return roles[role] || role;
   };
 
+  // Filtro e paginação
+  const usuariosFiltrados = usuarios.filter(u => {
+    const matchBusca = !busca ||
+      u.nome?.toLowerCase().includes(busca.toLowerCase()) ||
+      u.email?.toLowerCase().includes(busca.toLowerCase()) ||
+      getRoleDisplay(u.role)?.toLowerCase().includes(busca.toLowerCase());
+    const matchRole = !filtroRole || u.role === filtroRole;
+    const matchStatus = filtroStatus === '' || (filtroStatus === 'ativo' ? u.ativo : !u.ativo);
+    return matchBusca && matchRole && matchStatus;
+  });
+
+  const totalPaginas = Math.ceil(usuariosFiltrados.length / itensPorPagina);
+  const usuariosPaginados = usuariosFiltrados.slice(
+    (paginaAtual - 1) * itensPorPagina,
+    paginaAtual * itensPorPagina
+  );
+
+  // Reset página ao filtrar
+  const handleBuscaChange = (value) => {
+    setBusca(value);
+    setPaginaAtual(1);
+  };
+
   return (
     <div className="page-container">
       <Header user={user} />
@@ -252,6 +280,32 @@ function Usuarios() {
                 </svg>
                 Novo Usuário
               </button>
+            </div>
+
+            {/* Filtros de busca */}
+            <div className="usuarios-filtros">
+              <input
+                type="text"
+                className="filtro-input"
+                placeholder="Buscar por nome, email ou perfil..."
+                value={busca}
+                onChange={(e) => handleBuscaChange(e.target.value)}
+              />
+              <select className="filtro-select" value={filtroRole} onChange={(e) => { setFiltroRole(e.target.value); setPaginaAtual(1); }}>
+                <option value="">Todos os perfis</option>
+                <option value="super_admin">Super Admin</option>
+                <option value="admin">Administrador</option>
+                <option value="gerente">Gerente</option>
+                <option value="funcionario">Funcionário</option>
+                <option value="fornecedor">Fornecedor</option>
+                <option value="cliente">Cliente</option>
+              </select>
+              <select className="filtro-select" value={filtroStatus} onChange={(e) => { setFiltroStatus(e.target.value); setPaginaAtual(1); }}>
+                <option value="">Todos os status</option>
+                <option value="ativo">Ativo</option>
+                <option value="inativo">Inativo</option>
+              </select>
+              <span className="filtro-count">{usuariosFiltrados.length} usuário{usuariosFiltrados.length !== 1 ? 's' : ''}</span>
             </div>
 
             {loading ? (
@@ -276,8 +330,14 @@ function Usuarios() {
                           Nenhum usuário encontrado
                         </td>
                       </tr>
+                    ) : usuariosPaginados.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>
+                          Nenhum usuário corresponde aos filtros
+                        </td>
+                      </tr>
                     ) : (
-                      usuarios.map((usuario) => (
+                      usuariosPaginados.map((usuario) => (
                         <tr key={usuario._id}>
                           <td><strong>{usuario.nome}</strong></td>
                           <td>{usuario.email}</td>
@@ -328,6 +388,64 @@ function Usuarios() {
                     )}
                   </tbody>
                 </table>
+
+                {/* Paginação */}
+                {totalPaginas > 1 && (
+                  <div className="paginacao">
+                    <button
+                      className="pag-btn"
+                      disabled={paginaAtual === 1}
+                      onClick={() => setPaginaAtual(1)}
+                      title="Primeira"
+                    >
+                      «
+                    </button>
+                    <button
+                      className="pag-btn"
+                      disabled={paginaAtual === 1}
+                      onClick={() => setPaginaAtual(prev => prev - 1)}
+                      title="Anterior"
+                    >
+                      ‹
+                    </button>
+                    {Array.from({ length: totalPaginas }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === totalPaginas || Math.abs(p - paginaAtual) <= 2)
+                      .reduce((acc, p, i, arr) => {
+                        if (i > 0 && p - arr[i - 1] > 1) acc.push('...');
+                        acc.push(p);
+                        return acc;
+                      }, [])
+                      .map((item, i) =>
+                        item === '...' ? (
+                          <span key={`dots-${i}`} className="pag-dots">...</span>
+                        ) : (
+                          <button
+                            key={item}
+                            className={`pag-btn ${paginaAtual === item ? 'pag-ativo' : ''}`}
+                            onClick={() => setPaginaAtual(item)}
+                          >
+                            {item}
+                          </button>
+                        )
+                      )}
+                    <button
+                      className="pag-btn"
+                      disabled={paginaAtual === totalPaginas}
+                      onClick={() => setPaginaAtual(prev => prev + 1)}
+                      title="Próxima"
+                    >
+                      ›
+                    </button>
+                    <button
+                      className="pag-btn"
+                      disabled={paginaAtual === totalPaginas}
+                      onClick={() => setPaginaAtual(totalPaginas)}
+                      title="Última"
+                    >
+                      »
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

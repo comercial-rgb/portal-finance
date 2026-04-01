@@ -4,6 +4,118 @@
   margin: 0 auto;
 }
 
+/* Filtros de busca */
+.usuarios-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  background: white;
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  margin-bottom: 1.5rem;
+}
+
+.usuarios-filtros .filtro-input {
+  flex: 1;
+  min-width: 220px;
+  padding: 0.7rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.usuarios-filtros .filtro-input:focus {
+  outline: none;
+  border-color: var(--azul-tech, #0077cc);
+  box-shadow: 0 0 0 3px rgba(0, 119, 204, 0.1);
+}
+
+.usuarios-filtros .filtro-select {
+  padding: 0.7rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  min-width: 170px;
+  background: white;
+  cursor: pointer;
+}
+
+.usuarios-filtros .filtro-select:focus {
+  outline: none;
+  border-color: var(--azul-tech, #0077cc);
+}
+
+.filtro-count {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 500;
+  white-space: nowrap;
+  padding: 0.5rem 0.75rem;
+  background: #f0f4f8;
+  border-radius: 6px;
+}
+
+/* Paginação */
+.paginacao {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1.25rem 0;
+}
+
+.pag-btn {
+  min-width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: #333;
+  transition: all 0.2s;
+}
+
+.pag-btn:hover:not(:disabled) {
+  background: #f0f4f8;
+  border-color: var(--azul-tech, #0077cc);
+  color: var(--azul-tech, #0077cc);
+}
+
+.pag-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pag-btn.pag-ativo {
+  background: linear-gradient(135deg, var(--azul-corporativo, #003366) 0%, var(--azul-tech, #0077cc) 100%);
+  color: white;
+  border-color: transparent;
+  font-weight: 700;
+}
+
+.pag-dots {
+  color: #999;
+  padding: 0 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .usuarios-filtros {
+    flex-direction: column;
+  }
+  .usuarios-filtros .filtro-input,
+  .usuarios-filtros .filtro-select {
+    width: 100%;
+  }
+}
+
 .role-badge {
   display: inline-block;
   padding: 0.25rem 0.75rem;

@@ -533,13 +533,48 @@ exports.ssoLogin = async (req, res) => {
       });
     }
 
-    // Buscar ou criar usuário pelo email
+    // Buscar usuário: 1) por email, 2) por nome do fornecedor/cliente vinculado
     let user = await User.findOne({ email: payload.email.toLowerCase() });
 
+    // Fallback: buscar pelo nome do fornecedor/cliente (caso emails sejam diferentes entre Frota e Portal)
+    if (!user && payload.nome) {
+      const role = payload.role || 'fornecedor';
+      const escapedName = payload.nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+      if (role === 'fornecedor') {
+        const fornecedor = await Fornecedor.findOne({
+          $or: [
+            { nomeFantasia: { $regex: new RegExp('^' + escapedName + '$', 'i') } },
+            { razaoSocial: { $regex: new RegExp('^' + escapedName + '$', 'i') } }
+          ]
+        });
+        if (fornecedor) {
+          user = await User.findOne({ fornecedorId: fornecedor._id, ativo: true });
+          if (user) {
+            console.log(`🔗 SSO: Usuário encontrado via nome do fornecedor "${payload.nome}" (email portal: ${user.email}, email frota: ${payload.email})`);
+          }
+        }
+      } else if (role === 'cliente') {
+        const cliente = await Cliente.findOne({
+          $or: [
+            { nomeFantasia: { $regex: new RegExp('^' + escapedName + '$', 'i') } },
+            { razaoSocial: { $regex: new RegExp('^' + escapedName + '$', 'i') } }
+          ]
+        });
+        if (cliente) {
+          user = await User.findOne({ clienteId: cliente._id, ativo: true });
+          if (user) {
+            console.log(`🔗 SSO: Usuário encontrado via nome do cliente "${payload.nome}" (email portal: ${user.email}, email frota: ${payload.email})`);
+          }
+        }
+      }
+    }
+
     if (!user) {
-      // Criar usuário automaticamente
+      // Criar usuário automaticamente (nenhum match por email nem por nome)
       const role = payload.role || 'fornecedor';
       const senhaTemp = crypto.randomBytes(16).toString('hex');
+      const escapedName = payload.nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
       const userData = {
         nome: payload.nome,
@@ -555,8 +590,8 @@ exports.ssoLogin = async (req, res) => {
       if (role === 'fornecedor' && payload.nome) {
         const fornecedor = await Fornecedor.findOne({
           $or: [
-            { nomeFantasia: { $regex: new RegExp('^' + payload.nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') } },
-            { razaoSocial: { $regex: new RegExp('^' + payload.nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') } },
+            { nomeFantasia: { $regex: new RegExp('^' + escapedName + '$', 'i') } },
+            { razaoSocial: { $regex: new RegExp('^' + escapedName + '$', 'i') } },
             { email: payload.email.toLowerCase() }
           ]
         });
@@ -569,7 +604,7 @@ exports.ssoLogin = async (req, res) => {
       if (role === 'cliente' && payload.nome) {
         const cliente = await Cliente.findOne({
           $or: [
-            { nomeFantasia: { $regex: new RegExp('^' + payload.nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') } },
+            { nomeFantasia: { $regex: new RegExp('^' + escapedName + '$', 'i') } },
             { email: payload.email.toLowerCase() }
           ]
         });

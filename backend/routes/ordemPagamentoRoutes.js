@@ -4,6 +4,7 @@ const { protect, authorize } = require('../middleware/auth');
 const {
   listarOrdensPagamento,
   criarOrdemPagamento,
+  editarOrdemPagamento,
   pagarOrdemPagamento,
   vincularFatura,
   faturasAbertasFornecedor,
@@ -19,6 +20,7 @@ router.get('/resumo', resumoOrdensPagamento);
 
 // Rotas admin only
 router.post('/', authorize('super_admin', 'admin', 'gerente'), criarOrdemPagamento);
+router.put('/:id', authorize('super_admin', 'admin', 'gerente'), editarOrdemPagamento);
 router.put('/:id/pagar', authorize('super_admin', 'admin', 'gerente'), pagarOrdemPagamento);
 router.put('/:id/vincular-fatura', authorize('super_admin', 'admin', 'gerente'), vincularFatura);
 router.get('/faturas-fornecedor/:fornecedorId', authorize('super_admin', 'admin', 'gerente'), faturasAbertasFornecedor);

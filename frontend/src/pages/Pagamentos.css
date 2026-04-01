@@ -135,7 +135,7 @@
 }
 
 /* Filtros */
-.filtros-card {
+.pag-filtros-card {
   background: var(--branco);
   padding: 1rem;
   border-radius: 8px;
@@ -450,9 +450,49 @@
   padding: 1.5rem;
 }
 
+.modal-editar {
+  max-width: 600px;
+}
+
+.modal-editar .modal-header {
+  padding: 1.25rem 1.5rem;
+}
+
+.modal-editar .modal-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 1.1rem;
+}
+
+.modal-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 1.4rem;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.edit-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
 .modal-footer {
   display: flex;
   justify-content: flex-end;
+  gap: 0.75rem;
   padding: 1.5rem;
   border-top: 1px solid var(--cinza-claro);
 }
@@ -912,6 +952,24 @@
   flex-wrap: wrap;
 }
 
+.btn-editar {
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  color: white;
+  border: none;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-editar:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}
+
 .btn-pagar {
   background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
   color: white;
@@ -988,7 +1046,7 @@
     grid-template-columns: 1fr;
   }
 
-  .filtros-card {
+  .pag-filtros-card {
     flex-direction: column;
   }
 

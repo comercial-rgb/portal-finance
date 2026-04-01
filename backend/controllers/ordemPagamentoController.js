@@ -118,6 +118,64 @@ exports.criarOrdemPagamento = async (req, res) => {
   }
 };
 
+// @desc    Editar ordem de pagamento
+// @route   PUT /api/ordens-pagamento/:id
+exports.editarOrdemPagamento = async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (!['super_admin', 'admin', 'gerente'].includes(user.role)) {
+      return res.status(403).json({ success: false, message: 'Sem permissão para editar ordens de pagamento' });
+    }
+
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: 'ID inválido' });
+    }
+
+    const ordem = await OrdemPagamento.findById(id);
+    if (!ordem) {
+      return res.status(404).json({ success: false, message: 'Ordem de pagamento não encontrada' });
+    }
+
+    const { cliente, fornecedor, fatura, faturaNumeroManual, valor, dataGeracao, observacoes } = req.body;
+
+    if (valor !== undefined) {
+      if (valor <= 0) return res.status(400).json({ success: false, message: 'Valor deve ser maior que zero' });
+      ordem.valor = Math.round(valor * 100) / 100;
+    }
+    if (cliente) {
+      const clienteExists = await Cliente.findById(cliente).lean();
+      if (!clienteExists) return res.status(404).json({ success: false, message: 'Cliente não encontrado' });
+      ordem.cliente = cliente;
+    }
+    if (fornecedor) {
+      const fornecedorExists = await Fornecedor.findById(fornecedor).lean();
+      if (!fornecedorExists) return res.status(404).json({ success: false, message: 'Fornecedor não encontrado' });
+      ordem.fornecedor = fornecedor;
+    }
+    if (fatura !== undefined) ordem.fatura = fatura || null;
+    if (faturaNumeroManual !== undefined) ordem.faturaNumeroManual = faturaNumeroManual || null;
+    if (dataGeracao) ordem.dataGeracao = new Date(dataGeracao);
+    if (observacoes !== undefined) ordem.observacoes = observacoes;
+
+    await ordem.save();
+
+    const ordemPopulada = await OrdemPagamento.findById(ordem._id)
+      .populate('cliente', 'razaoSocial nomeFantasia cnpj')
+      .populate('fornecedor', 'razaoSocial nomeFantasia cnpjCpf banco tipoConta agencia conta chavePix tipoChavePix')
+      .populate('fatura', 'numeroFatura valorDevido statusFatura')
+      .populate('faturaVinculada', 'numeroFatura')
+      .populate('criadoPor', 'nome')
+      .lean();
+
+    res.json({ success: true, data: ordemPopulada, message: 'Ordem atualizada com sucesso' });
+  } catch (error) {
+    console.error('Erro ao editar ordem de pagamento:', error);
+    res.status(500).json({ success: false, message: 'Erro ao editar ordem de pagamento', error: error.message });
+  }
+};
+
 // @desc    Marcar ordem como paga e anexar comprovante
 // @route   PUT /api/ordens-pagamento/:id/pagar
 exports.pagarOrdemPagamento = async (req, res) => {

@@ -89,6 +89,13 @@ function Pagamentos() {
   const [showModalOrdemComprovante, setShowModalOrdemComprovante] = useState(false);
   const [ordemComprovanteView, setOrdemComprovanteView] = useState(null);
 
+  // Modal editar ordem
+  const [showModalEditar, setShowModalEditar] = useState(false);
+  const [ordemEditar, setOrdemEditar] = useState(null);
+  const [editFormData, setEditFormData] = useState({ valor: '', dataGeracao: '', observacoes: '', faturaNumeroManual: '' });
+  const [editValorFormatado, setEditValorFormatado] = useState('');
+  const [editLoading, setEditLoading] = useState(false);
+
   // Bank info popup
   const [bankInfoId, setBankInfoId] = useState(null);
 
@@ -165,6 +172,56 @@ function Pagamentos() {
   const formatarData = (data) => {
     if (!data) return '-';
     return new Date(data).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+  };
+
+  // === EDITAR ORDEM ===
+  const handleAbrirEditar = (ordem) => {
+    setOrdemEditar(ordem);
+    const centavos = Math.round((ordem.valor || 0) * 100);
+    setEditFormData({
+      valor: ordem.valor || '',
+      dataGeracao: ordem.dataGeracao ? new Date(ordem.dataGeracao).toISOString().split('T')[0] : '',
+      observacoes: ordem.observacoes || '',
+      faturaNumeroManual: ordem.faturaNumeroManual || ''
+    });
+    setEditValorFormatado(centavos ? formatarMoeda(centavos) : '');
+    setShowModalEditar(true);
+  };
+
+  const handleEditValorChange = (e) => {
+    const apenasDigitos = e.target.value.replace(/\D/g, '');
+    if (!apenasDigitos) {
+      setEditValorFormatado('');
+      setEditFormData(prev => ({ ...prev, valor: '' }));
+      return;
+    }
+    const centavos = parseInt(apenasDigitos, 10);
+    setEditValorFormatado(formatarMoeda(centavos));
+    setEditFormData(prev => ({ ...prev, valor: centavos / 100 }));
+  };
+
+  const handleSalvarEdicao = async () => {
+    if (!editFormData.valor || editFormData.valor <= 0) {
+      toast.error('Valor deve ser maior que zero');
+      return;
+    }
+    try {
+      setEditLoading(true);
+      await api.put(`/ordens-pagamento/${ordemEditar._id}`, {
+        valor: editFormData.valor,
+        dataGeracao: editFormData.dataGeracao,
+        observacoes: editFormData.observacoes,
+        faturaNumeroManual: editFormData.faturaNumeroManual
+      });
+      toast.success('Ordem atualizada com sucesso!');
+      setShowModalEditar(false);
+      setOrdemEditar(null);
+      loadData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Erro ao atualizar ordem');
+    } finally {
+      setEditLoading(false);
+    }
   };
 
   // === RELATÓRIO / EXPORTAÇÃO ===
@@ -747,7 +804,7 @@ function Pagamentos() {
                     )}
 
                     {/* Filtros ordens */}
-                    <div className="filtros-card">
+                    <div className="pag-filtros-card">
                       <div className="filtros-row">
                         <input type="text" name="busca" value={filtros.busca} onChange={handleFiltroChange} placeholder="Buscar por nº ordem, fornecedor, CNPJ, cliente, fatura..." className="filtro-input" />
                         <select value={filtros.statusOrdem} onChange={(e) => setFiltros(prev => ({ ...prev, statusOrdem: e.target.value }))} className="filtro-select">
@@ -829,6 +886,9 @@ function Pagamentos() {
                                   <td><span className={`status-badge ${ordem.status === 'Paga' ? 'status-paga' : 'status-pendente'}`}>{ordem.status}</span></td>
                                   <td>{ordem.faturaVinculada ? <span className="fatura-vinculada">{ordem.faturaVinculada.numeroFatura}</span> : <span className="text-muted">-</span>}</td>
                                   <td className="acoes-cell">
+                                    {isAdminGerente && (
+                                      <button className="btn-editar" title="Editar Ordem" onClick={() => handleAbrirEditar(ordem)}>✏️ Editar</button>
+                                    )}
                                     {isAdminGerente && ordem.status === 'Pendente' && (
                                       <button className="btn-pagar" title="Registrar Pagamento" onClick={() => handleAbrirPagar(ordem)}>💰 Pagar</button>
                                     )}
@@ -877,13 +937,60 @@ function Pagamentos() {
                         </>
                       );
                     })()}
+
+                    {/* Modal Editar Ordem */}
+                    {showModalEditar && ordemEditar && (
+                      <div className="modal-overlay" onClick={() => setShowModalEditar(false)}>
+                        <div className="modal-content modal-editar" onClick={(e) => e.stopPropagation()}>
+                          <div className="modal-header">
+                            <h3>✏️ Editar Ordem {ordemEditar.numero}</h3>
+                            <button className="modal-close" onClick={() => setShowModalEditar(false)}>×</button>
+                          </div>
+                          <div className="modal-body">
+                            <div className="edit-form-grid">
+                              <div className="form-group">
+                                <label>Cliente</label>
+                                <input type="text" className="form-input" value={ordemEditar.cliente?.razaoSocial || '-'} disabled />
+                              </div>
+                              <div className="form-group">
+                                <label>Fornecedor</label>
+                                <input type="text" className="form-input" value={ordemEditar.fornecedor?.razaoSocial || '-'} disabled />
+                              </div>
+                              <div className="form-group">
+                                <label>Valor *</label>
+                                <div className="valor-input-wrapper">
+                                  <span className="valor-prefix">R$</span>
+                                  <input type="text" value={editValorFormatado} onChange={handleEditValorChange} placeholder="0,00" className="form-input valor-input" inputMode="decimal" />
+                                </div>
+                              </div>
+                              <div className="form-group">
+                                <label>Data Geração</label>
+                                <input type="date" value={editFormData.dataGeracao} onChange={(e) => setEditFormData(prev => ({ ...prev, dataGeracao: e.target.value }))} className="form-input" />
+                              </div>
+                              <div className="form-group">
+                                <label>Nº Fatura Manual</label>
+                                <input type="text" value={editFormData.faturaNumeroManual} onChange={(e) => setEditFormData(prev => ({ ...prev, faturaNumeroManual: e.target.value }))} placeholder="Número da fatura..." className="form-input" />
+                              </div>
+                              <div className="form-group">
+                                <label>Observações</label>
+                                <textarea value={editFormData.observacoes} onChange={(e) => setEditFormData(prev => ({ ...prev, observacoes: e.target.value }))} placeholder="Observações..." className="form-input form-textarea" rows="2" />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="modal-footer">
+                            <button className="btn-secondary" onClick={() => setShowModalEditar(false)}>Cancelar</button>
+                            <button className="btn-primary" onClick={handleSalvarEdicao} disabled={editLoading}>{editLoading ? 'Salvando...' : '✓ Salvar Alterações'}</button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
 
                 {/* ========== ABA: PAGAMENTOS ========== */}
                 {abaAtiva === 'pagamentos' && (
                   <>
-                    <div className="filtros-card">
+                    <div className="pag-filtros-card">
                       <input type="text" name="busca" value={filtros.busca} onChange={handleFiltroChange} placeholder="Buscar por nº fatura ou OS..." className="filtro-input" />
                     </div>
                     <div className="section-card">
@@ -943,7 +1050,7 @@ function Pagamentos() {
                 {/* ========== ABA: ANTECIPAÇÕES ========== */}
                 {abaAtiva === 'antecipacoes' && isFornecedor && (
                   <>
-                    <div className="filtros-card">
+                    <div className="pag-filtros-card">
                       <input type="text" name="busca" value={filtros.busca} onChange={handleFiltroChange} placeholder="Buscar por fornecedor..." className="filtro-input" />
                     </div>
                     <div className="section-card">

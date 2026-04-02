@@ -208,6 +208,17 @@ exports.updateCliente = async (req, res) => {
       };
     }
 
+    if (req.body.impostosSobreValorBruto !== undefined) {
+      updatePayload.impostosSobreValorBruto = req.body.impostosSobreValorBruto;
+    }
+
+    if (req.body.nomesAlternativos !== undefined) {
+      const nomes = Array.isArray(req.body.nomesAlternativos)
+        ? req.body.nomesAlternativos.map(n => String(n).trim()).filter(Boolean)
+        : [];
+      updatePayload.nomesAlternativos = nomes;
+    }
+
     if (req.body.contatos) {
       updatePayload.contatos = {
         telefone: req.body.contatos.telefone ?? cliente.contatos?.telefone ?? '',

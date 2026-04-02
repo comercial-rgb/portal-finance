@@ -22,6 +22,7 @@ function ClienteForm() {
   const [formData, setFormData] = useState({
     razaoSocial: '',
     nomeFantasia: '',
+    nomesAlternativos: [],
     cnpj: '',
     inscricaoMunicipal: '',
     inscricaoEstadual: '',
@@ -155,6 +156,7 @@ function ClienteForm() {
       setFormData({
         ...clienteData,
         cnpj: cnpjFormatado,
+        nomesAlternativos: clienteData.nomesAlternativos || [],
         tipoImposto: clienteData.tipoImposto || [],
         impostosSobreValorBruto: clienteData.impostosSobreValorBruto || false,
         permitirAntecipacaoFornecedor: clienteData.permitirAntecipacaoFornecedor || false,
@@ -988,6 +990,45 @@ function ClienteForm() {
                         required
                         placeholder="Nome fantasia"
                       />
+                    </div>
+
+                    <div className="form-group full-width">
+                      <label>Nomes Alternativos (Frotas)</label>
+                      <small style={{display:'block',marginBottom:'6px',color:'#666'}}>Nomes enviados pelo sistema de Frotas que devem ser mapeados para este cliente</small>
+                      <div style={{display:'flex',flexWrap:'wrap',gap:'6px',marginBottom:'6px'}}>
+                        {(formData.nomesAlternativos || []).map((nome, idx) => (
+                          <span key={idx} style={{background:'#e8f4fd',border:'1px solid #bee3f8',borderRadius:'4px',padding:'2px 8px',display:'inline-flex',alignItems:'center',gap:'4px',fontSize:'13px'}}>
+                            {nome}
+                            <button type="button" onClick={() => setFormData({...formData, nomesAlternativos: formData.nomesAlternativos.filter((_,i) => i !== idx)})} style={{background:'none',border:'none',cursor:'pointer',color:'#666',fontSize:'14px',lineHeight:1,padding:'0 2px'}}>&times;</button>
+                          </span>
+                        ))}
+                      </div>
+                      <div style={{display:'flex',gap:'8px'}}>
+                        <input
+                          type="text"
+                          id="novoNomeAlternativo"
+                          placeholder="Ex: Prefeitura Municipal de Ibiraçu"
+                          style={{flex:1}}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const val = e.target.value.trim();
+                              if (val && !formData.nomesAlternativos.includes(val)) {
+                                setFormData({...formData, nomesAlternativos: [...(formData.nomesAlternativos||[]), val]});
+                                e.target.value = '';
+                              }
+                            }
+                          }}
+                        />
+                        <button type="button" onClick={() => {
+                          const input = document.getElementById('novoNomeAlternativo');
+                          const val = input.value.trim();
+                          if (val && !formData.nomesAlternativos.includes(val)) {
+                            setFormData({...formData, nomesAlternativos: [...(formData.nomesAlternativos||[]), val]});
+                            input.value = '';
+                          }
+                        }} style={{padding:'0 12px',background:'#3182ce',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer'}}>Adicionar</button>
+                      </div>
                     </div>
 
                     <div className="form-group">

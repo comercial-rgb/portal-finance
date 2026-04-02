@@ -300,6 +300,9 @@ function OrdensPagamento() {
     return matchBusca && matchStatus;
   });
 
+  const ordensPendentes = ordensFiltradas.filter(o => o.status === 'Pendente');
+  const ordensPagas = ordensFiltradas.filter(o => o.status === 'Paga');
+
   return (
     <div className="page-container">
       <Header user={user} />
@@ -539,21 +542,151 @@ function OrdensPagamento() {
                   </select>
                 </div>
 
-                {/* Tabela de ordens */}
+                {/* Tabela ordens PENDENTES */}
+                {(!filtros.status || filtros.status === 'Pendente') && (
                 <div className="section-card">
                   <div className="section-header">
-                    <h2>📋 Ordens de Pagamento</h2>
-                    <span className="badge">{ordensFiltradas.length} registros</span>
+                    <h2>📋 Ordens de Pagamento — Pendentes</h2>
+                    <span className="badge badge-pendente">{ordensPendentes.length} registros</span>
                   </div>
 
-                  {ordensFiltradas.length === 0 ? (
+                  {ordensPendentes.length === 0 ? (
                     <div className="empty-state">
                       <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                         <polyline points="14 2 14 8 20 8"/>
                       </svg>
-                      <p>Nenhuma ordem de pagamento encontrada</p>
-                      <span>{isAdmin ? 'Clique em "Criar Ordem de Pagamento" para começar' : 'Suas ordens de pagamento aparecerão aqui'}</span>
+                      <p>Nenhuma ordem pendente encontrada</p>
+                      <span>{isAdmin ? 'Clique em "Criar Ordem de Pagamento" para começar' : 'Suas ordens pendentes aparecerão aqui'}</span>
+                    </div>
+                  ) : (
+                    <div className="table-responsive">
+                      <table className="data-table">
+                        <thead>
+                          <tr>
+                            <th>Nº Ordem</th>
+                            <th>Cliente</th>
+                            <th>Fornecedor / CNPJ</th>
+                            <th>Fatura</th>
+                            <th>Valor</th>
+                            <th>Data Gerada</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {ordensPendentes.map(ordem => (
+                            <tr key={ordem._id}>
+                              <td><strong>{ordem.numero}</strong></td>
+                              <td>{ordem.cliente?.razaoSocial || '-'}</td>
+                              <td>
+                                <div className="cnpj-cell">
+                                  <div>
+                                    <span className="fornecedor-nome">{ordem.fornecedor?.razaoSocial || '-'}</span>
+                                    <br />
+                                    <small className="cnpj-text">{ordem.fornecedor?.cnpjCpf || ''}</small>
+                                  </div>
+                                  {ordem.fornecedor && (
+                                    <button
+                                      className="btn-bank-info"
+                                      title="Ver Dados Bancários"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setBankInfoId(bankInfoId === ordem._id ? null : ordem._id);
+                                      }}
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                                      </svg>
+                                    </button>
+                                  )}
+                                  {bankInfoId === ordem._id && ordem.fornecedor && (
+                                    <div className="bank-info-overlay" onClick={() => setBankInfoId(null)}>
+                                      <div className="bank-info-popup" onClick={(e) => e.stopPropagation()}>
+                                        <div className="bank-info-header">
+                                          <strong>Dados Bancários</strong>
+                                          <button className="bank-info-close" onClick={() => setBankInfoId(null)}>×</button>
+                                        </div>
+                                        <div className="bank-info-body">
+                                          <div className="bank-info-row">
+                                            <span className="bank-info-label">Banco:</span>
+                                            <span className="bank-info-value">{ordem.fornecedor.banco || '—'}</span>
+                                          </div>
+                                          <div className="bank-info-row">
+                                            <span className="bank-info-label">Tipo Conta:</span>
+                                            <span className="bank-info-value">
+                                              {ordem.fornecedor.tipoConta
+                                                ? ordem.fornecedor.tipoConta.charAt(0).toUpperCase() + ordem.fornecedor.tipoConta.slice(1)
+                                                : '—'}
+                                            </span>
+                                          </div>
+                                          <div className="bank-info-row">
+                                            <span className="bank-info-label">Agência:</span>
+                                            <span className="bank-info-value">{ordem.fornecedor.agencia || '—'}</span>
+                                          </div>
+                                          <div className="bank-info-row">
+                                            <span className="bank-info-label">Conta:</span>
+                                            <span className="bank-info-value">{ordem.fornecedor.conta || '—'}</span>
+                                          </div>
+                                          {ordem.fornecedor.chavePix && (
+                                            <div className="bank-info-row bank-info-pix">
+                                              <span className="bank-info-label">Chave PIX:</span>
+                                              <span className="bank-info-value">{ordem.fornecedor.chavePix}</span>
+                                            </div>
+                                          )}
+                                          {ordem.fornecedor.tipoChavePix && (
+                                            <div className="bank-info-row">
+                                              <span className="bank-info-label">Tipo Chave:</span>
+                                              <span className="bank-info-value">{ordem.fornecedor.tipoChavePix.toUpperCase()}</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                              <td>{ordem.fatura?.numeroFatura || ordem.faturaNumeroManual || '-'}</td>
+                              <td><strong className="valor-destaque">{formatarValor(ordem.valor)}</strong></td>
+                              <td>{formatarData(ordem.dataGeracao)}</td>
+                              <td><span className="status-badge status-pendente">{ordem.status}</span></td>
+                              <td className="acoes-cell">
+                                {isAdmin && (
+                                  <button
+                                    className="btn-pagar"
+                                    title="Registrar Pagamento"
+                                    onClick={() => handleAbrirPagar(ordem)}
+                                  >
+                                    💰 Pagar
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+                )}
+
+                {/* Tabela ordens PAGAS */}
+                {(!filtros.status || filtros.status === 'Paga') && (
+                <div className="section-card">
+                  <div className="section-header">
+                    <h2>✅ Ordens de Pagamento — Pagas</h2>
+                    <span className="badge badge-paga">{ordensPagas.length} registros</span>
+                  </div>
+
+                  {ordensPagas.length === 0 ? (
+                    <div className="empty-state">
+                      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                      </svg>
+                      <p>Nenhuma ordem paga encontrada</p>
+                      <span>Ordens pagas aparecerão aqui</span>
                     </div>
                   ) : (
                     <div className="table-responsive">
@@ -573,7 +706,7 @@ function OrdensPagamento() {
                           </tr>
                         </thead>
                         <tbody>
-                          {ordensFiltradas.map(ordem => (
+                          {ordensPagas.map(ordem => (
                             <tr key={ordem._id}>
                               <td><strong>{ordem.numero}</strong></td>
                               <td>{ordem.cliente?.razaoSocial || '-'}</td>
@@ -649,11 +782,7 @@ function OrdensPagamento() {
                               <td><strong className="valor-destaque">{formatarValor(ordem.valor)}</strong></td>
                               <td>{formatarData(ordem.dataGeracao)}</td>
                               <td>{formatarData(ordem.dataPagamento)}</td>
-                              <td>
-                                <span className={`status-badge ${ordem.status === 'Paga' ? 'status-paga' : 'status-pendente'}`}>
-                                  {ordem.status}
-                                </span>
-                              </td>
+                              <td><span className="status-badge status-paga">{ordem.status}</span></td>
                               <td>
                                 {ordem.faturaVinculada
                                   ? <span className="fatura-vinculada">{ordem.faturaVinculada.numeroFatura}</span>
@@ -661,16 +790,7 @@ function OrdensPagamento() {
                                 }
                               </td>
                               <td className="acoes-cell">
-                                {isAdmin && ordem.status === 'Pendente' && (
-                                  <button
-                                    className="btn-pagar"
-                                    title="Registrar Pagamento"
-                                    onClick={() => handleAbrirPagar(ordem)}
-                                  >
-                                    💰 Pagar
-                                  </button>
-                                )}
-                                {ordem.status === 'Paga' && ordem.comprovante && (
+                                {ordem.comprovante && (
                                   <button
                                     className="btn-link"
                                     title="Ver Comprovante"
@@ -679,7 +799,7 @@ function OrdensPagamento() {
                                     📎 Comprovante
                                   </button>
                                 )}
-                                {isAdmin && ordem.status === 'Paga' && !ordem.faturaVinculada && (
+                                {isAdmin && !ordem.faturaVinculada && (
                                   <button
                                     className="btn-vincular"
                                     title="Vincular a Fatura"
@@ -696,6 +816,7 @@ function OrdensPagamento() {
                     </div>
                   )}
                 </div>
+                )}
               </>
             )}
           </div>

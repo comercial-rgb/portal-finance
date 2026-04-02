@@ -141,6 +141,11 @@ const ClienteSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  // Nomes alternativos usados pelo sistema de frotas (para match no webhook)
+  nomesAlternativos: {
+    type: [String],
+    default: []
+  },
   cnpj: {
     type: String,
     required: true,

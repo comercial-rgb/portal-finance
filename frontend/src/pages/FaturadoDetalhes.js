@@ -898,31 +898,28 @@ function FaturadoDetalhes() {
     doc.text(`Telefone: ${telefone}  |  E-mail: ${email}`, 20, yPos);
     yPos += 6;
 
-    // Dados dos Centros de Custo (apenas nomes únicos)
-    const centrosCustoData = ordensServico
-      .map(item => {
-        const os = item.ordemServico;
-        return os.centroCusto || null;
-      })
-      .filter(Boolean);
-    
-    const centrosCustoUnicos = [...new Set(centrosCustoData)];
-    
-    if (centrosCustoUnicos.length > 0) {
+    // Dados Bancários (lado direito, alinhado com dados da entidade)
+    if (fatura.tipo === 'Fornecedor' && entidade) {
       doc.setFontSize(11);
-      doc.setTextColor(0, 91, 237);
+      doc.setTextColor(37, 28, 89);
       doc.setFont(undefined, 'bold');
-      doc.text('Centros de Custo', 20, yPos);
+      doc.text('Dados Bancários', 110, 57);
       doc.setFont(undefined, 'normal');
       
       doc.setFontSize(9);
       doc.setTextColor(0);
-      yPos += 5;
-      centrosCustoUnicos.forEach((cc) => {
-        doc.text(cc, 20, yPos);
-        yPos += 4;
-      });
-      yPos += 2;
+      let yBanco = 63;
+      doc.text(`Banco: ${entidade?.banco || '-'}`, 110, yBanco);
+      yBanco += 4;
+      doc.text(`Agência: ${entidade?.agencia || '-'}`, 110, yBanco);
+      yBanco += 4;
+      doc.text(`Conta: ${entidade?.conta || '-'}`, 110, yBanco);
+      yBanco += 4;
+      doc.text(`Tipo: ${entidade?.tipoConta || '-'}`, 110, yBanco);
+      if (entidade?.chavePix) {
+        yBanco += 4;
+        doc.text(`Chave Pix: ${entidade.chavePix}`, 110, yBanco);
+      }
     }
 
     // Tabela de Ordens - Completa com Notas Fiscais
@@ -1231,32 +1228,28 @@ function FaturadoDetalhes() {
     doc.text(`Telefone: ${telefone}  |  E-mail: ${email}`, 20, yPos);
     yPos += 6;
 
-    // Dados dos Centros de Custo (apenas nomes únicos)
-    const centrosCustoData = ordensServico
-      .filter(item => (item.ordemServico.valorPecasComDesconto || 0) > 0)
-      .map(item => {
-        const os = item.ordemServico;
-        return os.centroCusto || null;
-      })
-      .filter(Boolean);
-    
-    const centrosCustoUnicos = [...new Set(centrosCustoData)];
-    
-    if (centrosCustoUnicos.length > 0) {
+    // Dados Bancários (lado direito, alinhado com dados da entidade)
+    if (fatura.tipo === 'Fornecedor' && entidade) {
       doc.setFontSize(11);
-      doc.setTextColor(0, 91, 237);
+      doc.setTextColor(37, 28, 89);
       doc.setFont(undefined, 'bold');
-      doc.text('Centros de Custo', 20, yPos);
+      doc.text('Dados Bancários', 110, 57);
       doc.setFont(undefined, 'normal');
       
       doc.setFontSize(9);
       doc.setTextColor(0);
-      yPos += 5;
-      centrosCustoUnicos.forEach((cc) => {
-        doc.text(cc, 20, yPos);
-        yPos += 4;
-      });
-      yPos += 2;
+      let yBanco = 63;
+      doc.text(`Banco: ${entidade?.banco || '-'}`, 110, yBanco);
+      yBanco += 4;
+      doc.text(`Agência: ${entidade?.agencia || '-'}`, 110, yBanco);
+      yBanco += 4;
+      doc.text(`Conta: ${entidade?.conta || '-'}`, 110, yBanco);
+      yBanco += 4;
+      doc.text(`Tipo: ${entidade?.tipoConta || '-'}`, 110, yBanco);
+      if (entidade?.chavePix) {
+        yBanco += 4;
+        doc.text(`Chave Pix: ${entidade.chavePix}`, 110, yBanco);
+      }
     }
 
     // Tabela de Ordens - Somente Peças (filtra OS com valor zerado)
@@ -1520,32 +1513,28 @@ function FaturadoDetalhes() {
     doc.text(`Telefone: ${telefone}  |  E-mail: ${email}`, 20, yPos);
     yPos += 6;
 
-    // Dados dos Centros de Custo (apenas nomes únicos)
-    const centrosCustoData = ordensServico
-      .filter(item => (item.ordemServico.valorServicoComDesconto || 0) > 0)
-      .map(item => {
-        const os = item.ordemServico;
-        return os.centroCusto || null;
-      })
-      .filter(Boolean);
-    
-    const centrosCustoUnicos = [...new Set(centrosCustoData)];
-    
-    if (centrosCustoUnicos.length > 0) {
+    // Dados Bancários (lado direito, alinhado com dados da entidade)
+    if (fatura.tipo === 'Fornecedor' && entidade) {
       doc.setFontSize(11);
-      doc.setTextColor(0, 91, 237);
+      doc.setTextColor(37, 28, 89);
       doc.setFont(undefined, 'bold');
-      doc.text('Centros de Custo', 20, yPos);
+      doc.text('Dados Bancários', 110, 57);
       doc.setFont(undefined, 'normal');
       
       doc.setFontSize(9);
       doc.setTextColor(0);
-      yPos += 5;
-      centrosCustoUnicos.forEach((cc) => {
-        doc.text(cc, 20, yPos);
-        yPos += 4;
-      });
-      yPos += 2;
+      let yBanco = 63;
+      doc.text(`Banco: ${entidade?.banco || '-'}`, 110, yBanco);
+      yBanco += 4;
+      doc.text(`Agência: ${entidade?.agencia || '-'}`, 110, yBanco);
+      yBanco += 4;
+      doc.text(`Conta: ${entidade?.conta || '-'}`, 110, yBanco);
+      yBanco += 4;
+      doc.text(`Tipo: ${entidade?.tipoConta || '-'}`, 110, yBanco);
+      if (entidade?.chavePix) {
+        yBanco += 4;
+        doc.text(`Chave Pix: ${entidade.chavePix}`, 110, yBanco);
+      }
     }
 
     // Tabela de Ordens - Somente Serviços (filtra OS com valor zerado)

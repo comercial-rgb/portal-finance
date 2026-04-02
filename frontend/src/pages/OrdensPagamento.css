@@ -263,6 +263,14 @@
   font-weight: 600;
 }
 
+.badge-pendente {
+  background: #f59e0b;
+}
+
+.badge-paga {
+  background: #10b981;
+}
+
 /* Table */
 .table-responsive {
   overflow-x: auto;

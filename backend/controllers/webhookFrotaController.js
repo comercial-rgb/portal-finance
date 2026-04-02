@@ -53,58 +53,98 @@ exports.receberOSFrota = async (req, res) => {
       });
     }
 
+    // Trim nos campos de texto para evitar problemas com espaços extras
+    const clienteNomeFantasiaTrimmed = clienteNomeFantasia ? clienteNomeFantasia.trim() : clienteNomeFantasia;
+    const fornecedorNomeFantasiaTrimmed = fornecedorNomeFantasia ? fornecedorNomeFantasia.trim() : fornecedorNomeFantasia;
+
     // Array para armazenar observações de divergências
     const observacoesWebhook = [];
 
-    // 1. Buscar Cliente pelo nome fantasia (exato ou aproximado)
+    // Escapar string para uso seguro em regex (previne ReDoS)
+    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // 1. Buscar Cliente pelo nome fantasia (exato ou aproximado) ou nomes alternativos
     let cliente = await Cliente.findOne({ 
-      nomeFantasia: { $regex: new RegExp(`^${clienteNomeFantasia}$`, 'i') }
+      nomeFantasia: { $regex: new RegExp(`^${escapeRegex(clienteNomeFantasiaTrimmed)}$`, 'i') }
     });
 
-    // Se não encontrou exato, tenta busca parcial
+    // Se não encontrou exato, tenta busca parcial no nomeFantasia
     if (!cliente) {
-      console.log(`⚠️  Cliente "${clienteNomeFantasia}" não encontrado (busca exata). Tentando busca aproximada...`);
+      console.log(`⚠️  Cliente "${clienteNomeFantasiaTrimmed}" não encontrado (busca exata). Tentando busca aproximada...`);
       cliente = await Cliente.findOne({ 
-        nomeFantasia: { $regex: new RegExp(clienteNomeFantasia, 'i') }
+        nomeFantasia: { $regex: new RegExp(escapeRegex(clienteNomeFantasiaTrimmed), 'i') }
       });
       
       if (cliente) {
-        const obs = `⚠️ Divergência: Cliente no Frotas="${clienteNomeFantasia}" vs Portal Finance="${cliente.nomeFantasia}"`;
+        const obs = `⚠️ Divergência: Cliente no Frotas="${clienteNomeFantasiaTrimmed}" vs Portal Finance="${cliente.nomeFantasia}"`;
         observacoesWebhook.push(obs);
         console.log(obs);
-      } else {
-        console.log(`❌ Cliente "${clienteNomeFantasia}" não encontrado mesmo com busca aproximada.`);
-        return res.status(404).json({ 
-          success: false, 
-          message: `Cliente "${clienteNomeFantasia}" não encontrado no Portal Finance. Verifique o cadastro ou nome fantasia.`,
-          campo: 'clienteNomeFantasia'
-        });
       }
     } else {
       console.log(`✅ Cliente encontrado (nome exato): ${cliente.nomeFantasia} (ID: ${cliente._id})`);
     }
 
+    // Se ainda não encontrou, tenta buscar nos nomes alternativos
+    if (!cliente) {
+      console.log(`⚠️  Tentando busca em nomesAlternativos...`);
+      cliente = await Cliente.findOne({
+        nomesAlternativos: { $regex: new RegExp(`^${escapeRegex(clienteNomeFantasiaTrimmed)}$`, 'i') }
+      });
+      if (!cliente) {
+        cliente = await Cliente.findOne({
+          nomesAlternativos: { $regex: new RegExp(escapeRegex(clienteNomeFantasiaTrimmed), 'i') }
+        });
+      }
+      if (cliente) {
+        const obs = `⚠️ Divergência: Cliente no Frotas="${clienteNomeFantasiaTrimmed}" vs Portal Finance="${cliente.nomeFantasia}" (encontrado via nome alternativo)`;
+        observacoesWebhook.push(obs);
+        console.log(obs);
+      }
+    }
+
+    // Se ainda não encontrou, tenta buscar pela razão social
+    if (!cliente) {
+      console.log(`⚠️  Tentando busca pela razão social...`);
+      cliente = await Cliente.findOne({
+        razaoSocial: { $regex: new RegExp(escapeRegex(clienteNomeFantasiaTrimmed), 'i') }
+      });
+      if (cliente) {
+        const obs = `⚠️ Divergência: Cliente no Frotas="${clienteNomeFantasiaTrimmed}" vs Portal Finance razaoSocial="${cliente.razaoSocial}"`;
+        observacoesWebhook.push(obs);
+        console.log(obs);
+      }
+    }
+
+    if (!cliente) {
+        console.log(`❌ Cliente "${clienteNomeFantasiaTrimmed}" não encontrado mesmo com busca aproximada.`);
+        return res.status(404).json({ 
+          success: false, 
+          message: `Cliente "${clienteNomeFantasiaTrimmed}" não encontrado no Portal Finance. Verifique o cadastro ou nome fantasia.`,
+          campo: 'clienteNomeFantasia'
+        });
+    }
+
     // 2. Buscar Fornecedor pelo nome fantasia (exato ou aproximado)
     let fornecedor = await Fornecedor.findOne({ 
-      nomeFantasia: { $regex: new RegExp(`^${fornecedorNomeFantasia}$`, 'i') }
+      nomeFantasia: { $regex: new RegExp(`^${escapeRegex(fornecedorNomeFantasiaTrimmed)}$`, 'i') }
     });
 
     // Se não encontrou exato, tenta busca parcial
     if (!fornecedor) {
-      console.log(`⚠️  Fornecedor "${fornecedorNomeFantasia}" não encontrado (busca exata). Tentando busca aproximada...`);
+      console.log(`⚠️  Fornecedor "${fornecedorNomeFantasiaTrimmed}" não encontrado (busca exata). Tentando busca aproximada...`);
       fornecedor = await Fornecedor.findOne({ 
-        nomeFantasia: { $regex: new RegExp(fornecedorNomeFantasia, 'i') }
+        nomeFantasia: { $regex: new RegExp(escapeRegex(fornecedorNomeFantasiaTrimmed), 'i') }
       });
       
       if (fornecedor) {
-        const obs = `⚠️ Divergência: Fornecedor no Frotas="${fornecedorNomeFantasia}" vs Portal Finance="${fornecedor.nomeFantasia}"`;
+        const obs = `⚠️ Divergência: Fornecedor no Frotas="${fornecedorNomeFantasiaTrimmed}" vs Portal Finance="${fornecedor.nomeFantasia}"`;
         observacoesWebhook.push(obs);
         console.log(obs);
       } else {
-        console.log(`❌ Fornecedor "${fornecedorNomeFantasia}" não encontrado mesmo com busca aproximada.`);
+        console.log(`❌ Fornecedor "${fornecedorNomeFantasiaTrimmed}" não encontrado mesmo com busca aproximada.`);
         return res.status(404).json({ 
           success: false, 
-          message: `Fornecedor "${fornecedorNomeFantasia}" não encontrado no Portal Finance. Verifique o cadastro ou nome fantasia.`,
+          message: `Fornecedor "${fornecedorNomeFantasiaTrimmed}" não encontrado no Portal Finance. Verifique o cadastro ou nome fantasia.`,
           campo: 'fornecedorNomeFantasia'
         });
       }

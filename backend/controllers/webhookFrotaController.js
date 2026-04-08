@@ -3,6 +3,47 @@ const Cliente = require('../models/Cliente');
 const Fornecedor = require('../models/Fornecedor');
 const { Tipo, TipoServicoSolicitado } = require('../models/TipoServico');
 
+// Função para normalizar nomes de empresas para comparação (remove acentos, termos societários, etc.)
+const normalizarNomeEmpresa = (nome) => {
+  if (!nome) return '';
+  return nome
+    .toLowerCase()
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\b(ltda|s\/a|s\.a\.|me|epp|eireli)\b/gi, '')
+    .replace(/[-.]|/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+// Função para extrair palavras-chave significativas
+const extrairPalavrasChave = (nome) => {
+  if (!nome) return [];
+  const normalizado = normalizarNomeEmpresa(nome);
+  const palavrasIgnoradas = ['servicos', 'servico', 'comercio', 'comercial', 'e', 'de', 'da', 'do', 'dos', 'das', 'ltda', 'eireli', 'epp'];
+  return normalizado
+    .split(' ')
+    .filter(p => p.length >= 2 && !palavrasIgnoradas.includes(p));
+};
+
+// Função para calcular similaridade entre dois nomes
+const calcularSimilaridade = (nome1, nome2) => {
+  const palavras1 = extrairPalavrasChave(nome1);
+  const palavras2 = extrairPalavrasChave(nome2);
+  if (palavras1.length === 0 || palavras2.length === 0) return 0;
+  let matches = 0;
+  for (const p1 of palavras1) {
+    for (const p2 of palavras2) {
+      if (p1 === p2 || p1.includes(p2) || p2.includes(p1)) {
+        matches++;
+        break;
+      }
+    }
+  }
+  return matches / Math.max(palavras1.length, palavras2.length);
+};
+
 /**
  * Webhook para receber OS do sistema de frotas
  * Quando uma OS é autorizada no sistema de frotas, ela é enviada para cá
@@ -129,7 +170,7 @@ exports.receberOSFrota = async (req, res) => {
       nomeFantasia: { $regex: new RegExp(`^${escapeRegex(fornecedorNomeFantasiaTrimmed)}$`, 'i') }
     });
 
-    // Se não encontrou exato, tenta busca parcial
+    // Se não encontrou exato, tenta busca parcial no nomeFantasia
     if (!fornecedor) {
       console.log(`⚠️  Fornecedor "${fornecedorNomeFantasiaTrimmed}" não encontrado (busca exata). Tentando busca aproximada...`);
       fornecedor = await Fornecedor.findOne({ 
@@ -140,16 +181,82 @@ exports.receberOSFrota = async (req, res) => {
         const obs = `⚠️ Divergência: Fornecedor no Frotas="${fornecedorNomeFantasiaTrimmed}" vs Portal Finance="${fornecedor.nomeFantasia}"`;
         observacoesWebhook.push(obs);
         console.log(obs);
-      } else {
-        console.log(`❌ Fornecedor "${fornecedorNomeFantasiaTrimmed}" não encontrado mesmo com busca aproximada.`);
-        return res.status(404).json({ 
-          success: false, 
-          message: `Fornecedor "${fornecedorNomeFantasiaTrimmed}" não encontrado no Portal Finance. Verifique o cadastro ou nome fantasia.`,
-          campo: 'fornecedorNomeFantasia'
-        });
       }
     } else {
       console.log(`✅ Fornecedor encontrado (nome exato): ${fornecedor.nomeFantasia} (ID: ${fornecedor._id})`);
+    }
+
+    // Se ainda não encontrou, tenta busca pela razaoSocial
+    if (!fornecedor) {
+      console.log(`⚠️  Tentando busca pela razão social do fornecedor...`);
+      fornecedor = await Fornecedor.findOne({
+        razaoSocial: { $regex: new RegExp(escapeRegex(fornecedorNomeFantasiaTrimmed), 'i') }
+      });
+      if (fornecedor) {
+        const obs = `⚠️ Divergência: Fornecedor no Frotas="${fornecedorNomeFantasiaTrimmed}" vs Portal Finance razaoSocial="${fornecedor.razaoSocial}"`;
+        observacoesWebhook.push(obs);
+        console.log(obs);
+      }
+    }
+
+    // Se ainda não encontrou, tenta busca com nomes normalizados (sem acentos)
+    if (!fornecedor) {
+      console.log(`⚠️  Tentando busca normalizada (sem acentos) do fornecedor...`);
+      const nomeNormalizado = normalizarNomeEmpresa(fornecedorNomeFantasiaTrimmed);
+      const todosFornecedores = await Fornecedor.find({});
+
+      fornecedor = todosFornecedores.find(f => {
+        const fantasiaNormalizada = normalizarNomeEmpresa(f.nomeFantasia);
+        const razaoNormalizada = normalizarNomeEmpresa(f.razaoSocial);
+        return fantasiaNormalizada.includes(nomeNormalizado) ||
+               nomeNormalizado.includes(fantasiaNormalizada) ||
+               razaoNormalizada.includes(nomeNormalizado) ||
+               nomeNormalizado.includes(razaoNormalizada);
+      });
+
+      if (fornecedor) {
+        const obs = `⚠️ Divergência: Fornecedor no Frotas="${fornecedorNomeFantasiaTrimmed}" vs Portal Finance="${fornecedor.nomeFantasia}" (encontrado via normalização)`;
+        observacoesWebhook.push(obs);
+        console.log(obs);
+      }
+    }
+
+    // Se ainda não encontrou, tenta busca por similaridade de palavras-chave
+    if (!fornecedor) {
+      console.log(`⚠️  Tentando busca por similaridade de palavras-chave do fornecedor...`);
+      const palavrasChaveBusca = extrairPalavrasChave(fornecedorNomeFantasiaTrimmed);
+      console.log(`🔑 Palavras-chave extraídas: [${palavrasChaveBusca.join(', ')}]`);
+
+      const todosFornecedores = await Fornecedor.find({});
+      let melhorMatch = null;
+      let melhorScore = 0;
+
+      for (const f of todosFornecedores) {
+        const scoreRazao = calcularSimilaridade(fornecedorNomeFantasiaTrimmed, f.razaoSocial);
+        const scoreFantasia = calcularSimilaridade(fornecedorNomeFantasiaTrimmed, f.nomeFantasia);
+        const score = Math.max(scoreRazao, scoreFantasia);
+
+        if (score > melhorScore && score >= 0.5) {
+          melhorScore = score;
+          melhorMatch = f;
+        }
+      }
+
+      if (melhorMatch) {
+        fornecedor = melhorMatch;
+        const obs = `⚠️ Divergência: Fornecedor no Frotas="${fornecedorNomeFantasiaTrimmed}" vs Portal Finance="${fornecedor.nomeFantasia}" (similaridade: ${Math.round(melhorScore * 100)}%)`;
+        observacoesWebhook.push(obs);
+        console.log(obs);
+      }
+    }
+
+    if (!fornecedor) {
+      console.log(`❌ Fornecedor "${fornecedorNomeFantasiaTrimmed}" não encontrado mesmo com todas as buscas.`);
+      return res.status(404).json({ 
+        success: false, 
+        message: `Fornecedor "${fornecedorNomeFantasiaTrimmed}" não encontrado no Portal Finance. Verifique o cadastro ou nome fantasia.`,
+        campo: 'fornecedorNomeFantasia'
+      });
     }
 
 

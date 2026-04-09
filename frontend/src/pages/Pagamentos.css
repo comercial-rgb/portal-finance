@@ -137,15 +137,16 @@
 /* Filtros */
 .pag-filtros-card {
   background: var(--branco);
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   margin-bottom: 1.5rem;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
+  border: 1px solid #e2e8f0;
 }
 
 .filtros-row {
@@ -153,6 +154,8 @@
   gap: 0.75rem;
   flex: 1;
   min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .filtros-acoes {
@@ -202,23 +205,50 @@
   width: 100%;
   max-width: 400px;
   padding: 0.75rem 1rem;
-  border: 1px solid var(--cinza-claro);
+  border: 2px solid #e2e8f0;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.3s ease;
+  background: #f8fafc;
 }
 
 .filtro-input.filtro-date {
   max-width: 180px;
+  background: #f0f7ff;
+  border-color: #bdd4f0;
+  font-weight: 500;
 }
 
 .filtro-input:focus {
   outline: none;
   border-color: var(--azul-tech);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(0, 91, 237, 0.1);
+}
+
+.filtro-select {
+  padding: 0.75rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: 'DM Sans', sans-serif;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 170px;
+}
+
+.filtro-select:focus {
+  outline: none;
+  border-color: var(--azul-tech);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(0, 91, 237, 0.1);
 }
 
 .btn-limpar-filtros {
   padding: 0.75rem 1.25rem;
-  background: #6c757d;
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -230,7 +260,9 @@
 }
 
 .btn-limpar-filtros:hover {
-  background: #5a6268;
+  background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
 }
 
 /* Paginação */
@@ -674,22 +706,6 @@
 }
 
 /* ===== ORDENS DE PAGAMENTO ===== */
-
-/* Filtro Select */
-
-.filtro-select {
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--cinza-claro);
-  border-radius: 8px;
-  font-size: 1rem;
-  min-width: 200px;
-  background: white;
-}
-
-.filtro-select:focus {
-  outline: none;
-  border-color: var(--azul-tech);
-}
 
 /* Form Card */
 .form-card {

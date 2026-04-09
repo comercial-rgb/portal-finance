@@ -21,7 +21,8 @@ function Pagamentos() {
   });
   const [abaAtiva, setAbaAtiva] = useState('ordens-pagamento');
   const [filtros, setFiltros] = useState({ busca: '', statusOrdem: '', dataInicio: '', dataFim: '' });
-  const [currentPage, setCurrentPage] = useState(1);
+  const [pagePendentes, setPagePendentes] = useState(1);
+  const [pagePagas, setPagePagas] = useState(1);
   const ordensPorPagina = 15;
 
   // Modal de Comprovante (aba pagamentos)
@@ -528,13 +529,46 @@ function Pagamentos() {
     return matchBusca && matchStatus && matchDataInicio && matchDataFim;
   }).sort((a, b) => (a.valor || 0) - (b.valor || 0));
 
-  // Paginação
-  const totalPages = Math.ceil(ordensFiltradas.length / ordensPorPagina);
-  const ordensFiltradasPaginadas = ordensFiltradas.slice((currentPage - 1) * ordensPorPagina, currentPage * ordensPorPagina);
+  // Separar ordens pendentes e pagas do total filtrado
+  const todasPendentes = ordensFiltradas.filter(o => o.status === 'Pendente');
+  const todasPagas = ordensFiltradas.filter(o => o.status === 'Paga');
 
-  // Separar ordens pendentes e pagas (da página atual)
-  const ordensPendentes = ordensFiltradasPaginadas.filter(o => o.status === 'Pendente');
-  const ordensPagas = ordensFiltradasPaginadas.filter(o => o.status === 'Paga');
+  // Paginação independente por seção
+  const totalPagesPendentes = Math.ceil(todasPendentes.length / ordensPorPagina);
+  const totalPagesPagas = Math.ceil(todasPagas.length / ordensPorPagina);
+  const ordensPendentes = todasPendentes.slice((pagePendentes - 1) * ordensPorPagina, pagePendentes * ordensPorPagina);
+  const ordensPagas = todasPagas.slice((pagePagas - 1) * ordensPorPagina, pagePagas * ordensPorPagina);
+
+  // Helper para renderizar paginação
+  const renderPaginacao = (currentPage, totalPagesSection, totalItems, itemsOnPage, setPage) => {
+    if (totalPagesSection <= 1) return null;
+    return (
+      <div className="pagination-wrapper">
+        <span className="pagination-total">
+          Exibindo {itemsOnPage} de {totalItems} registro{totalItems !== 1 ? 's' : ''}
+        </span>
+        <div className="pagination">
+          <button className="btn-pagination" onClick={() => setPage(1)} disabled={currentPage === 1} title="Primeira página">«</button>
+          <button className="btn-pagination" onClick={() => setPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>‹ Anterior</button>
+          {(() => {
+            const pages = [];
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPagesSection, currentPage + 2);
+            if (currentPage <= 3) endPage = Math.min(5, totalPagesSection);
+            if (currentPage >= totalPagesSection - 2) startPage = Math.max(1, totalPagesSection - 4);
+            for (let i = startPage; i <= endPage; i++) {
+              pages.push(
+                <button key={i} className={`btn-pagination-number ${currentPage === i ? 'active' : ''}`} onClick={() => setPage(i)}>{i}</button>
+              );
+            }
+            return pages;
+          })()}
+          <button className="btn-pagination" onClick={() => setPage(prev => Math.min(prev + 1, totalPagesSection))} disabled={currentPage === totalPagesSection}>Próxima ›</button>
+          <button className="btn-pagination" onClick={() => setPage(totalPagesSection)} disabled={currentPage === totalPagesSection} title="Última página">»</button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="page-container">
@@ -820,14 +854,14 @@ function Pagamentos() {
                     <div className="pag-filtros-card">
                       <div className="filtros-row">
                         <input type="text" name="busca" value={filtros.busca} onChange={handleFiltroChange} placeholder="Buscar por nº ordem, fornecedor, CNPJ, cliente, fatura..." className="filtro-input" />
-                        <select value={filtros.statusOrdem} onChange={(e) => { setFiltros(prev => ({ ...prev, statusOrdem: e.target.value })); setCurrentPage(1); }} className="filtro-select">
+                        <select value={filtros.statusOrdem} onChange={(e) => { setFiltros(prev => ({ ...prev, statusOrdem: e.target.value })); setPagePendentes(1); setPagePagas(1); }} className="filtro-select">
                           <option value="">Todos os status</option>
                           <option value="Pendente">Pendente</option>
                           <option value="Paga">Paga</option>
                         </select>
-                        <input type="date" name="dataInicio" value={filtros.dataInicio} onChange={(e) => { handleFiltroChange(e); setCurrentPage(1); }} className="filtro-input filtro-date" title="Data início" />
-                        <input type="date" name="dataFim" value={filtros.dataFim} onChange={(e) => { handleFiltroChange(e); setCurrentPage(1); }} className="filtro-input filtro-date" title="Data fim" />
-                        <button className="btn-limpar-filtros" onClick={() => { setFiltros({ busca: '', statusOrdem: '', dataInicio: '', dataFim: '' }); setCurrentPage(1); }}>🗑️ Limpar</button>
+                        <input type="date" name="dataInicio" value={filtros.dataInicio} onChange={(e) => { handleFiltroChange(e); setPagePendentes(1); setPagePagas(1); }} className="filtro-input filtro-date" title="Data início" />
+                        <input type="date" name="dataFim" value={filtros.dataFim} onChange={(e) => { handleFiltroChange(e); setPagePendentes(1); setPagePagas(1); }} className="filtro-input filtro-date" title="Data fim" />
+                        <button className="btn-limpar-filtros" onClick={() => { setFiltros({ busca: '', statusOrdem: '', dataInicio: '', dataFim: '' }); setPagePendentes(1); setPagePagas(1); }}>🗑️ Limpar</button>
                       </div>
                       <div className="filtros-acoes">
                         <button className="btn-export btn-csv" onClick={() => exportarRelatorio('csv')} title="Exportar CSV (Excel)">
@@ -846,7 +880,7 @@ function Pagamentos() {
                     <div className="section-card">
                       <div className="section-header">
                         <h2>📋 Ordens de Pagamento — Pendentes</h2>
-                        <span className="badge badge-pendente">{ordensPendentes.length} registros</span>
+                        <span className="badge badge-pendente">{todasPendentes.length} registros</span>
                       </div>
                       {ordensPendentes.length === 0 ? (
                         <div className="empty-state">
@@ -912,6 +946,7 @@ function Pagamentos() {
                           </table>
                         </div>
                       )}
+                      {renderPaginacao(pagePendentes, totalPagesPendentes, todasPendentes.length, ordensPendentes.length, setPagePendentes)}
                     </div>
                     )}
 
@@ -920,7 +955,7 @@ function Pagamentos() {
                     <div className="section-card">
                       <div className="section-header">
                         <h2>✅ Ordens de Pagamento — Pagas</h2>
-                        <span className="badge badge-paga">{ordensPagas.length} registros</span>
+                        <span className="badge badge-paga">{todasPagas.length} registros</span>
                       </div>
                       {ordensPagas.length === 0 ? (
                         <div className="empty-state">
@@ -993,35 +1028,8 @@ function Pagamentos() {
                           </table>
                         </div>
                       )}
+                      {renderPaginacao(pagePagas, totalPagesPagas, todasPagas.length, ordensPagas.length, setPagePagas)}
                     </div>
-                    )}
-
-                    {/* Paginação */}
-                    {totalPages > 1 && (
-                      <div className="pagination-wrapper">
-                        <span className="pagination-total">
-                          Exibindo {ordensFiltradasPaginadas.length} de {ordensFiltradas.length} registro{ordensFiltradas.length !== 1 ? 's' : ''}
-                        </span>
-                        <div className="pagination">
-                          <button className="btn-pagination" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} title="Primeira página">«</button>
-                          <button className="btn-pagination" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>‹ Anterior</button>
-                          {(() => {
-                            const pages = [];
-                            let startPage = Math.max(1, currentPage - 2);
-                            let endPage = Math.min(totalPages, currentPage + 2);
-                            if (currentPage <= 3) endPage = Math.min(5, totalPages);
-                            if (currentPage >= totalPages - 2) startPage = Math.max(1, totalPages - 4);
-                            for (let i = startPage; i <= endPage; i++) {
-                              pages.push(
-                                <button key={i} className={`btn-pagination-number ${currentPage === i ? 'active' : ''}`} onClick={() => setCurrentPage(i)}>{i}</button>
-                              );
-                            }
-                            return pages;
-                          })()}
-                          <button className="btn-pagination" onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>Próxima ›</button>
-                          <button className="btn-pagination" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} title="Última página">»</button>
-                        </div>
-                      </div>
                     )}
 
                     {/* Modal Dados Bancários (fora da tabela) */}

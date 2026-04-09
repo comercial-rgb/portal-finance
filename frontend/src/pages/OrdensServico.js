@@ -19,8 +19,11 @@ function OrdensServico() {
     codigo: '',
     cliente: '',
     fornecedor: '',
-    status: ''
+    status: '',
+    dataInicio: '',
+    dataFim: ''
   });
+  const [totalRegistros, setTotalRegistros] = useState(0);
 
   const ordensPorPagina = 15;
 
@@ -43,6 +46,7 @@ function OrdensServico() {
       });
       setOrdensServico(response.data.ordensServico || response.data);
       setTotalPages(response.data.totalPages || 1);
+      setTotalRegistros(response.data.total || 0);
     } catch (error) {
       toast.error('Erro ao carregar ordens de serviço');
       console.error(error);
@@ -69,7 +73,9 @@ function OrdensServico() {
       codigo: '',
       cliente: '',
       fornecedor: '',
-      status: ''
+      status: '',
+      dataInicio: '',
+      dataFim: ''
     };
     setFiltros(filtrosLimpos);
     setCurrentPage(1);
@@ -80,6 +86,7 @@ function OrdensServico() {
       });
       setOrdensServico(response.data.ordensServico || response.data);
       setTotalPages(response.data.totalPages || 1);
+      setTotalRegistros(response.data.total || 0);
     } catch (error) {
       toast.error('Erro ao carregar ordens de serviço');
     } finally {
@@ -112,12 +119,11 @@ function OrdensServico() {
 
   const getStatusClass = (status) => {
     const classes = {
-      'Aberta': 'status-aberta',
-      'Em Andamento': 'status-andamento',
-      'Concluída': 'status-concluida',
-      'Cancelada': 'status-cancelada'
+      'Autorizada': 'status-autorizada',
+      'Aguardando pagamento': 'status-aguardando',
+      'Paga': 'status-paga'
     };
-    return classes[status] || 'status-aberta';
+    return classes[status] || 'status-autorizada';
   };
 
   const abreviarNome = (nome, maxLength = 25) => {
@@ -181,11 +187,28 @@ function OrdensServico() {
                     onChange={handleFiltroChange}
                   >
                     <option value="">Todos</option>
-                    <option value="Aberta">Aberta</option>
-                    <option value="Em Andamento">Em Andamento</option>
-                    <option value="Concluída">Concluída</option>
-                    <option value="Cancelada">Cancelada</option>
+                    <option value="Autorizada">Autorizada</option>
+                    <option value="Aguardando pagamento">Aguardando pagamento</option>
+                    <option value="Paga">Paga</option>
                   </select>
+                </div>
+                <div className="form-group">
+                  <label>Data Início</label>
+                  <input
+                    type="date"
+                    name="dataInicio"
+                    value={filtros.dataInicio}
+                    onChange={handleFiltroChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Data Fim</label>
+                  <input
+                    type="date"
+                    name="dataFim"
+                    value={filtros.dataFim}
+                    onChange={handleFiltroChange}
+                  />
                 </div>
               </div>
               <div className="filtros-actions">
@@ -284,27 +307,64 @@ function OrdensServico() {
                   </table>
                 </div>
 
-                {totalPages > 1 && (
-                  <div className="pagination">
-                    <button
-                      className="btn-pagination"
-                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1}
-                    >
-                      ← Anterior
-                    </button>
-                    <span className="pagination-info">
-                      Página {currentPage} de {totalPages}
-                    </span>
-                    <button
-                      className="btn-pagination"
-                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages}
-                    >
-                      Próxima →
-                    </button>
-                  </div>
-                )}
+                <div className="pagination-wrapper">
+                  <span className="pagination-total">
+                    Exibindo {ordensServico.length} de {totalRegistros} registro{totalRegistros !== 1 ? 's' : ''}
+                  </span>
+                  {totalPages > 1 && (
+                    <div className="pagination">
+                      <button
+                        className="btn-pagination"
+                        onClick={() => setCurrentPage(1)}
+                        disabled={currentPage === 1}
+                        title="Primeira página"
+                      >
+                        «
+                      </button>
+                      <button
+                        className="btn-pagination"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                      >
+                        ‹ Anterior
+                      </button>
+                      {(() => {
+                        const pages = [];
+                        let startPage = Math.max(1, currentPage - 2);
+                        let endPage = Math.min(totalPages, currentPage + 2);
+                        if (currentPage <= 3) endPage = Math.min(5, totalPages);
+                        if (currentPage >= totalPages - 2) startPage = Math.max(1, totalPages - 4);
+                        for (let i = startPage; i <= endPage; i++) {
+                          pages.push(
+                            <button
+                              key={i}
+                              className={`btn-pagination-number ${currentPage === i ? 'active' : ''}`}
+                              onClick={() => setCurrentPage(i)}
+                            >
+                              {i}
+                            </button>
+                          );
+                        }
+                        return pages;
+                      })()}
+                      <button
+                        className="btn-pagination"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                      >
+                        Próxima ›
+                      </button>
+                      <button
+                        className="btn-pagination"
+                        onClick={() => setCurrentPage(totalPages)}
+                        disabled={currentPage === totalPages}
+                        title="Última página"
+                      >
+                        »
+                      </button>
+                    </div>
+                  )}
+                </div>
 
                 <div className="filtros-section">
                   <div className="filtros-actions">

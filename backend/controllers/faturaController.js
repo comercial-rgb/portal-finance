@@ -505,6 +505,54 @@ exports.marcarOSComoPaga = async (req, res) => {
   }
 };
 
+// Pagar fatura inteira (todas as OS pendentes de uma vez)
+exports.pagarFaturaInteira = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { dataPagamento } = req.body;
+
+    const fatura = await Fatura.findById(id);
+    if (!fatura || !fatura.ativo) {
+      return res.status(404).json({ message: 'Fatura não encontrada' });
+    }
+
+    const dataEfetiva = dataPagamento || new Date();
+    const osIds = [];
+
+    // Marcar TODAS as OS pendentes como pagas em uma única operação
+    fatura.ordensServico.forEach(os => {
+      if (os.statusPagamento !== 'Paga') {
+        os.statusPagamento = 'Paga';
+        os.dataPagamento = dataEfetiva;
+        osIds.push(os.ordemServico);
+      }
+    });
+
+    if (osIds.length === 0) {
+      return res.status(400).json({ message: 'Todas as ordens de serviço já estão pagas' });
+    }
+
+    await fatura.save();
+
+    // Atualizar status de todas as OS no modelo OrdemServico
+    await OrdemServico.updateMany(
+      { _id: { $in: osIds } },
+      { $set: { status: 'Paga' } }
+    );
+
+    const faturaAtualizada = await Fatura.findById(id)
+      .populate('fornecedor')
+      .populate('cliente')
+      .populate('ordensServico.ordemServico')
+      .populate('impostos');
+
+    res.json(faturaAtualizada);
+  } catch (error) {
+    console.error('Erro ao pagar fatura inteira:', error);
+    res.status(500).json({ message: 'Erro ao pagar fatura inteira', error: error.message });
+  }
+};
+
 // Desativar fatura
 exports.desativar = async (req, res) => {
   try {

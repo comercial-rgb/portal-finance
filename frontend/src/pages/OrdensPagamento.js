@@ -292,6 +292,7 @@ function OrdensPagamento() {
     const matchBusca = !filtros.busca ||
       o.numero?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
       o.fornecedor?.razaoSocial?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
+      o.fornecedor?.nomeFantasia?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
       o.fornecedor?.cnpjCpf?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
       o.cliente?.razaoSocial?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
       o.fatura?.numeroFatura?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
@@ -410,7 +411,7 @@ function OrdensPagamento() {
                           <option value="">Selecione o fornecedor...</option>
                           {fornecedores.map(f => (
                             <option key={f._id} value={f._id}>
-                              {f.razaoSocial} ({f.cnpjCpf})
+                              {f.razaoSocial} {f.nomeFantasia ? `(${f.nomeFantasia})` : ''} ({f.cnpjCpf})
                             </option>
                           ))}
                         </select>

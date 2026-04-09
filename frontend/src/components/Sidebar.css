@@ -164,20 +164,28 @@
   scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
-/* Responsividade para notebooks e tablets */
+/* Responsividade para notebooks e tablets - do maior para menor */
 @media (max-width: 1366px) {
   .sidebar {
     width: 220px;
   }
 
   .nav-item {
-    padding: 12px 14px;
+    padding: 11px 14px;
     font-size: 14px;
   }
 
   .nav-icon {
     width: 20px;
     height: 20px;
+  }
+
+  .nav-section {
+    margin-bottom: 20px;
+  }
+
+  .sidebar-nav {
+    padding: 16px 12px;
   }
 }
 
@@ -191,53 +199,25 @@
   }
 
   .nav-item {
-    padding: 10px 12px;
+    padding: 9px 12px;
     gap: 10px;
   }
 
   .nav-section-title {
     font-size: 11px;
+    margin-bottom: 8px;
+  }
+
+  .nav-section {
+    margin-bottom: 14px;
+  }
+
+  .sidebar-nav {
+    padding: 12px 10px;
   }
 }
 
-/* Para tablets e notebooks pequenos */
-@media (max-width: 1280px) {
-  .sidebar {
-    width: 70px;
-    padding-top: 80px;
-  }
-
-  .nav-text {
-    display: none;
-  }
-
-  .nav-section-title {
-    display: none;
-  }
-
-  .nav-item {
-    justify-content: center;
-    padding: 12px;
-  }
-
-  .nav-icon {
-    width: 24px;
-    height: 24px;
-  }
-
-  .nav-badge {
-    display: none;
-  }
-
-  .sidebar-footer {
-    padding: 12px;
-  }
-
-  .status-text {
-    display: none;
-  }
-}
-
+/* Modo icone apenas para telas bem pequenas (tablets) */
 @media (max-width: 768px) {
   .sidebar {
     position: fixed;
@@ -264,21 +244,58 @@
   }
 }
 
-/* Para telas muito pequenas em altura (notebooks) */
-@media (max-height: 700px) {
+/* Para telas com pouca altura (notebooks) */
+@media (max-height: 800px) {
   .nav-item {
-    padding: 10px 14px;
+    padding: 9px 14px;
   }
 
   .nav-section {
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
 
   .nav-section-title {
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
   .sidebar-nav {
-    padding: 16px 12px;
+    padding: 12px 12px;
+  }
+
+  .sidebar-footer {
+    padding: 12px;
+  }
+}
+
+@media (max-height: 650px) {
+  .nav-item {
+    padding: 7px 12px;
+    font-size: 13px;
+  }
+
+  .nav-section {
+    margin-bottom: 8px;
+  }
+
+  .nav-section-title {
+    margin-bottom: 4px;
+    font-size: 10px;
+  }
+
+  .sidebar-nav {
+    padding: 8px 10px;
+  }
+
+  .sidebar-footer {
+    padding: 8px;
+  }
+
+  .nav-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .nav-list li {
+    margin-bottom: 2px;
   }
 }

@@ -25,9 +25,15 @@
 }
 
 /* Responsividade para notebooks */
-@media (max-width: 1280px) {
+@media (max-width: 1366px) {
   .main-content {
-    margin-left: 70px;
+    margin-left: 220px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 200px;
   }
 }
 

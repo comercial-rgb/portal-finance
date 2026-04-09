@@ -26,6 +26,9 @@ router.delete('/:id/ordem-servico/:ordemServicoId', fornecedorReadOnly, clienteR
 // Marcar ordem de serviço como paga (bloqueado para fornecedores e clientes)
 router.patch('/:id/ordem-servico/:ordemServicoId/pagar', fornecedorReadOnly, clienteReadOnly, faturaController.marcarOSComoPaga);
 
+// Pagar fatura inteira - todas as OS de uma vez (bloqueado para fornecedores e clientes)
+router.patch('/:id/pagar-tudo', fornecedorReadOnly, clienteReadOnly, faturaController.pagarFaturaInteira);
+
 // Desativar fatura (bloqueado para fornecedores e clientes)
 router.delete('/:id', fornecedorReadOnly, clienteReadOnly, faturaController.desativar);
 

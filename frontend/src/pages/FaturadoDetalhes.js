@@ -261,13 +261,10 @@ function FaturadoDetalhes() {
     }
 
     try {
-      const promises = osPendentes.map(item =>
-        api.patch(`/faturas/${id}/ordem-servico/${item.ordemServico._id}/pagar`, {
-          dataPagamento: new Date()
-        })
-      );
+      await api.patch(`/faturas/${id}/pagar-tudo`, {
+        dataPagamento: new Date()
+      });
 
-      await Promise.all(promises);
       toast.success('Fatura paga integralmente!');
       setSelecionadas([]);
       loadFatura();

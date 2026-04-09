@@ -515,6 +515,7 @@ function Pagamentos() {
     const matchBusca = !filtros.busca ||
       o.numero?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
       o.fornecedor?.razaoSocial?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
+      o.fornecedor?.nomeFantasia?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
       o.fornecedor?.cnpjCpf?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
       o.cliente?.razaoSocial?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
       o.fatura?.numeroFatura?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
@@ -725,7 +726,7 @@ function Pagamentos() {
                               <input
                                 type="text"
                                 className="form-input"
-                                placeholder="Buscar fornecedor por nome ou CNPJ..."
+                                placeholder="Buscar fornecedor por nome, nome fantasia ou CNPJ..."
                                 value={formData.fornecedor ? (fornecedoresLista.find(f => f._id === formData.fornecedor)?.razaoSocial || buscaFornecedor) : buscaFornecedor}
                                 onChange={(e) => {
                                   setBuscaFornecedor(e.target.value);
@@ -743,7 +744,7 @@ function Pagamentos() {
                                   {fornecedoresLista
                                     .filter(f => {
                                       const termo = buscaFornecedor.toLowerCase();
-                                      return !termo || f.razaoSocial?.toLowerCase().includes(termo) || f.cnpjCpf?.includes(termo);
+                                      return !termo || f.razaoSocial?.toLowerCase().includes(termo) || f.nomeFantasia?.toLowerCase().includes(termo) || f.cnpjCpf?.includes(termo);
                                     })
                                     .map(f => (
                                       <li key={f._id} onMouseDown={() => {
@@ -752,10 +753,10 @@ function Pagamentos() {
                                         setShowDropdownFornecedor(false);
                                         carregarFaturasFornecedor(f._id);
                                       }}>
-                                        {f.razaoSocial} <span className="select-hint">({f.cnpjCpf})</span>
+                                        {f.razaoSocial} {f.nomeFantasia ? <span className="select-hint">({f.nomeFantasia})</span> : ''} <span className="select-hint">({f.cnpjCpf})</span>
                                       </li>
                                     ))}
-                                  {fornecedoresLista.filter(f => { const t = buscaFornecedor.toLowerCase(); return !t || f.razaoSocial?.toLowerCase().includes(t) || f.cnpjCpf?.includes(t); }).length === 0 && (
+                                  {fornecedoresLista.filter(f => { const t = buscaFornecedor.toLowerCase(); return !t || f.razaoSocial?.toLowerCase().includes(t) || f.nomeFantasia?.toLowerCase().includes(t) || f.cnpjCpf?.includes(t); }).length === 0 && (
                                     <li className="select-empty">Nenhum fornecedor encontrado</li>
                                   )}
                                 </ul>

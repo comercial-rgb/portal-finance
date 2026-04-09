@@ -20,7 +20,9 @@ function Pagamentos() {
     antecipacoes: { total: 0, pendentes: 0, aprovadas: 0, pagas: 0, valorTotal: 0 }
   });
   const [abaAtiva, setAbaAtiva] = useState('ordens-pagamento');
-  const [filtros, setFiltros] = useState({ busca: '', statusOrdem: '' });
+  const [filtros, setFiltros] = useState({ busca: '', statusOrdem: '', dataInicio: '', dataFim: '' });
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordensPorPagina = 15;
 
   // Modal de Comprovante (aba pagamentos)
   const [showModalComprovante, setShowModalComprovante] = useState(false);
@@ -521,12 +523,18 @@ function Pagamentos() {
       o.fatura?.numeroFatura?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
       o.faturaNumeroManual?.toLowerCase().includes(filtros.busca.toLowerCase());
     const matchStatus = !filtros.statusOrdem || o.status === filtros.statusOrdem;
-    return matchBusca && matchStatus;
+    const matchDataInicio = !filtros.dataInicio || new Date(o.dataGeracao) >= new Date(filtros.dataInicio);
+    const matchDataFim = !filtros.dataFim || new Date(o.dataGeracao) <= new Date(filtros.dataFim + 'T23:59:59');
+    return matchBusca && matchStatus && matchDataInicio && matchDataFim;
   }).sort((a, b) => (a.valor || 0) - (b.valor || 0));
 
-  // Separar ordens pendentes e pagas
-  const ordensPendentes = ordensFiltradas.filter(o => o.status === 'Pendente');
-  const ordensPagas = ordensFiltradas.filter(o => o.status === 'Paga');
+  // Paginação
+  const totalPages = Math.ceil(ordensFiltradas.length / ordensPorPagina);
+  const ordensFiltradasPaginadas = ordensFiltradas.slice((currentPage - 1) * ordensPorPagina, currentPage * ordensPorPagina);
+
+  // Separar ordens pendentes e pagas (da página atual)
+  const ordensPendentes = ordensFiltradasPaginadas.filter(o => o.status === 'Pendente');
+  const ordensPagas = ordensFiltradasPaginadas.filter(o => o.status === 'Paga');
 
   return (
     <div className="page-container">
@@ -812,11 +820,14 @@ function Pagamentos() {
                     <div className="pag-filtros-card">
                       <div className="filtros-row">
                         <input type="text" name="busca" value={filtros.busca} onChange={handleFiltroChange} placeholder="Buscar por nº ordem, fornecedor, CNPJ, cliente, fatura..." className="filtro-input" />
-                        <select value={filtros.statusOrdem} onChange={(e) => setFiltros(prev => ({ ...prev, statusOrdem: e.target.value }))} className="filtro-select">
+                        <select value={filtros.statusOrdem} onChange={(e) => { setFiltros(prev => ({ ...prev, statusOrdem: e.target.value })); setCurrentPage(1); }} className="filtro-select">
                           <option value="">Todos os status</option>
                           <option value="Pendente">Pendente</option>
                           <option value="Paga">Paga</option>
                         </select>
+                        <input type="date" name="dataInicio" value={filtros.dataInicio} onChange={(e) => { handleFiltroChange(e); setCurrentPage(1); }} className="filtro-input filtro-date" title="Data início" />
+                        <input type="date" name="dataFim" value={filtros.dataFim} onChange={(e) => { handleFiltroChange(e); setCurrentPage(1); }} className="filtro-input filtro-date" title="Data fim" />
+                        <button className="btn-limpar-filtros" onClick={() => { setFiltros({ busca: '', statusOrdem: '', dataInicio: '', dataFim: '' }); setCurrentPage(1); }}>🗑️ Limpar</button>
                       </div>
                       <div className="filtros-acoes">
                         <button className="btn-export btn-csv" onClick={() => exportarRelatorio('csv')} title="Exportar CSV (Excel)">
@@ -983,6 +994,34 @@ function Pagamentos() {
                         </div>
                       )}
                     </div>
+                    )}
+
+                    {/* Paginação */}
+                    {totalPages > 1 && (
+                      <div className="pagination-wrapper">
+                        <span className="pagination-total">
+                          Exibindo {ordensFiltradasPaginadas.length} de {ordensFiltradas.length} registro{ordensFiltradas.length !== 1 ? 's' : ''}
+                        </span>
+                        <div className="pagination">
+                          <button className="btn-pagination" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} title="Primeira página">«</button>
+                          <button className="btn-pagination" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>‹ Anterior</button>
+                          {(() => {
+                            const pages = [];
+                            let startPage = Math.max(1, currentPage - 2);
+                            let endPage = Math.min(totalPages, currentPage + 2);
+                            if (currentPage <= 3) endPage = Math.min(5, totalPages);
+                            if (currentPage >= totalPages - 2) startPage = Math.max(1, totalPages - 4);
+                            for (let i = startPage; i <= endPage; i++) {
+                              pages.push(
+                                <button key={i} className={`btn-pagination-number ${currentPage === i ? 'active' : ''}`} onClick={() => setCurrentPage(i)}>{i}</button>
+                              );
+                            }
+                            return pages;
+                          })()}
+                          <button className="btn-pagination" onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>Próxima ›</button>
+                          <button className="btn-pagination" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} title="Última página">»</button>
+                        </div>
+                      </div>
                     )}
 
                     {/* Modal Dados Bancários (fora da tabela) */}

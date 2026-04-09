@@ -927,6 +927,14 @@ function FaturasFornecedores() {
                         <span className="info-value">{ordem.placa || '-'} {ordem.veiculo ? `/ ${ordem.veiculo}` : ''}</span>
                       </div>
                       <div className="info-item">
+                        <span className="info-label">Peças</span>
+                        <span className="info-value">{formatCurrency(ordem.valorPecasComDesconto || ordem.valorPecas || 0)}</span>
+                      </div>
+                      <div className="info-item">
+                        <span className="info-label">Serviços</span>
+                        <span className="info-value">{formatCurrency(ordem.valorServicoComDesconto || ordem.valorServico || 0)}</span>
+                      </div>
+                      <div className="info-item info-item-total">
                         <span className="info-label">Valor Final</span>
                         <span className="info-value valor-destaque">{formatCurrency(ordem.valorFinal)}</span>
                       </div>

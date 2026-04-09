@@ -5,11 +5,19 @@ const ImpostosRetencoes = require('../models/ImpostosRetencoes');
 // Listar todas as faturas
 exports.listar = async (req, res) => {
   try {
-    const { tipo, status } = req.query;
+    const { tipo, status, clienteId, fornecedorId } = req.query;
     
     const query = { ativo: true };
     if (tipo) query.tipo = tipo;
     if (status) query.statusFatura = status;
+    if (clienteId) {
+      query.cliente = clienteId;
+      query.tipo = 'Cliente';
+    }
+    if (fornecedorId) {
+      query.fornecedor = fornecedorId;
+      query.tipo = 'Fornecedor';
+    }
     
     // Se usuário é fornecedor, filtrar apenas suas faturas
     if (req.fornecedorFilter) {

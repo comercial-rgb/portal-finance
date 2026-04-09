@@ -98,9 +98,10 @@ function NotasFiscaisClientes() {
     }
     try {
       const response = await api.get('/faturas', {
-        params: { clienteId, limit: 500 }
+        params: { clienteId, tipo: 'Cliente' }
       });
-      setFaturas(response.data.faturas || response.data);
+      const data = response.data.faturas || response.data;
+      setFaturas(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Erro ao carregar faturas:', error);
       setFaturas([]);

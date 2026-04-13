@@ -58,6 +58,9 @@ function Pagamentos() {
   const [showModalOrdemComprovante, setShowModalOrdemComprovante] = useState(false);
   const [ordemComprovanteView, setOrdemComprovanteView] = useState(null);
 
+  // Sincronização em lote
+  const [sincronizandoLote, setSincronizandoLote] = useState(false);
+
   // Bank info popup
   const [bankInfoId, setBankInfoId] = useState(null);
 
@@ -345,6 +348,31 @@ function Pagamentos() {
     }
   };
 
+  // Sincronizar em lote com FinSystem
+  const handleSincronizarLote = async () => {
+    const naoSincronizadas = ordens.filter(o => !o.finsystemSincronizado).length;
+    if (naoSincronizadas === 0) {
+      toast.info('Todas as ordens já estão sincronizadas com o FinSystem');
+      return;
+    }
+    if (!window.confirm(`Deseja sincronizar ${naoSincronizadas} ordem(ns) pendente(s) com o FinSystem?`)) return;
+    try {
+      setSincronizandoLote(true);
+      const res = await api.post('/ordens-pagamento/sincronizar-lote');
+      const { resultados } = res.data;
+      if (resultados.falha === 0) {
+        toast.success(`${resultados.sucesso} ordem(ns) sincronizada(s) com sucesso!`);
+      } else {
+        toast.warning(`${resultados.sucesso} sincronizada(s), ${resultados.falha} com falha`);
+      }
+      loadData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Erro na sincronização em lote');
+    } finally {
+      setSincronizandoLote(false);
+    }
+  };
+
   // Filtros ordens
   const ordensFiltradas = ordens.filter(o => {
     const matchBusca = !filtros.busca ||
@@ -372,9 +400,21 @@ function Pagamentos() {
                 <p>Gerencie ordens de pagamento, acompanhe pagamentos e antecipações</p>
               </div>
               {isAdminGerente && abaAtiva === 'ordens-pagamento' && (
-                <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
-                  {showForm ? '✕ Fechar' : '+ Criar Ordem de Pagamento'}
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  {isAdmin && ordens.some(o => !o.finsystemSincronizado) && (
+                    <button
+                      className="btn-secondary"
+                      onClick={handleSincronizarLote}
+                      disabled={sincronizandoLote}
+                      title="Enviar ordens pendentes para o FinSystem"
+                    >
+                      {sincronizandoLote ? '⏳ Sincronizando...' : `🔄 Sincronizar FinSystem (${ordens.filter(o => !o.finsystemSincronizado).length})`}
+                    </button>
+                  )}
+                  <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
+                    {showForm ? '✕ Fechar' : '+ Criar Ordem de Pagamento'}
+                  </button>
+                </div>
               )}
             </div>
 

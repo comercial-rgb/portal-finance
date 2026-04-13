@@ -246,6 +246,59 @@ exports.resincronizar = async (req, res) => {
   }
 };
 
+// @desc    Sincronizar em lote todas as ordens não sincronizadas com FinSystem
+// @route   POST /api/ordens-pagamento/sincronizar-lote
+exports.sincronizarLote = async (req, res) => {
+  try {
+    const ordensNaoSincronizadas = await OrdemPagamento.find({
+      ativo: true,
+      finsystemSincronizado: { $ne: true }
+    })
+      .populate('fornecedor', 'razaoSocial nomeFantasia')
+      .populate('cliente', 'razaoSocial nomeFantasia');
+
+    if (ordensNaoSincronizadas.length === 0) {
+      return res.json({ success: true, message: 'Todas as ordens já estão sincronizadas', resultados: { total: 0, sucesso: 0, falha: 0, detalhes: [] } });
+    }
+
+    const resultados = { total: ordensNaoSincronizadas.length, sucesso: 0, falha: 0, detalhes: [] };
+
+    for (const ordem of ordensNaoSincronizadas) {
+      try {
+        const resultado = await finsystemService.criarRepasseFornecedor(ordem, ordem.fornecedor, ordem.cliente);
+
+        await OrdemPagamento.findByIdAndUpdate(ordem._id, {
+          finsystemSincronizado: resultado.success,
+          finsystemId: resultado.finsystemId,
+          finsystemErro: resultado.error
+        });
+
+        if (resultado.success) {
+          resultados.sucesso++;
+          resultados.detalhes.push({ codigo: ordem.codigo, status: 'sucesso', finsystemId: resultado.finsystemId });
+        } else {
+          resultados.falha++;
+          resultados.detalhes.push({ codigo: ordem.codigo, status: 'falha', erro: resultado.error });
+        }
+      } catch (err) {
+        resultados.falha++;
+        resultados.detalhes.push({ codigo: ordem.codigo, status: 'falha', erro: err.message });
+        await OrdemPagamento.findByIdAndUpdate(ordem._id, {
+          finsystemSincronizado: false,
+          finsystemErro: err.message
+        });
+      }
+    }
+
+    const mensagem = `Sincronização concluída: ${resultados.sucesso}/${resultados.total} com sucesso`;
+    console.log(`📊 ${mensagem}`);
+    res.json({ success: true, message: mensagem, resultados });
+  } catch (error) {
+    console.error('Erro na sincronização em lote:', error);
+    res.status(500).json({ message: 'Erro na sincronização em lote', error: error.message });
+  }
+};
+
 // @desc    Health check do FinSystem
 // @route   GET /api/ordens-pagamento/finsystem-status
 exports.finsystemStatus = async (req, res) => {

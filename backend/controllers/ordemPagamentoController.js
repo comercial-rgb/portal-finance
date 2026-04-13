@@ -18,7 +18,7 @@ exports.listar = async (req, res) => {
 
     const ordens = await OrdemPagamento.find(query)
       .populate('cliente', 'razaoSocial nomeFantasia cnpjCpf')
-      .populate('fornecedor', 'razaoSocial nomeFantasia cnpjCpf dadosBancarios')
+      .populate('fornecedor', 'razaoSocial nomeFantasia cnpjCpf banco tipoConta agencia conta chavePix tipoChavePix')
       .populate('fatura', 'numeroFatura valorDevido statusFatura')
       .populate('criadoPor', 'name email')
       .sort({ createdAt: -1 });

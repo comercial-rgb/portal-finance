@@ -9,7 +9,6 @@ router.use(protect);
 // Rotas de consulta (antes das rotas com :id)
 router.get('/resumo', ordemPagamentoCtrl.resumo);
 router.get('/finsystem-status', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.finsystemStatus);
-router.post('/sincronizar-lote', authorize('super_admin', 'admin'), ordemPagamentoCtrl.sincronizarLote);
 router.get('/faturas-fornecedor/:fornecedorId', ordemPagamentoCtrl.faturasFornecedor);
 
 // CRUD

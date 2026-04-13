@@ -1,28 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/auth');
-const {
-  listarOrdensPagamento,
-  criarOrdemPagamento,
-  editarOrdemPagamento,
-  pagarOrdemPagamento,
-  vincularFatura,
-  faturasAbertasFornecedor,
-  resumoOrdensPagamento
-} = require('../controllers/ordemPagamentoController');
+const ordemPagamentoCtrl = require('../controllers/ordemPagamentoController');
 
-// Todas rotas precisam de autenticação
+// Todas as rotas requerem autenticação
 router.use(protect);
 
-// Rotas de leitura (admin + fornecedor)
-router.get('/', listarOrdensPagamento);
-router.get('/resumo', resumoOrdensPagamento);
+// Rotas de consulta (antes das rotas com :id)
+router.get('/resumo', ordemPagamentoCtrl.resumo);
+router.get('/finsystem-status', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.finsystemStatus);
+router.get('/faturas-fornecedor/:fornecedorId', ordemPagamentoCtrl.faturasFornecedor);
 
-// Rotas admin only
-router.post('/', authorize('super_admin', 'admin', 'gerente'), criarOrdemPagamento);
-router.put('/:id', authorize('super_admin', 'admin', 'gerente'), editarOrdemPagamento);
-router.put('/:id/pagar', authorize('super_admin', 'admin', 'gerente'), pagarOrdemPagamento);
-router.put('/:id/vincular-fatura', authorize('super_admin', 'admin', 'gerente'), vincularFatura);
-router.get('/faturas-fornecedor/:fornecedorId', authorize('super_admin', 'admin', 'gerente'), faturasAbertasFornecedor);
+// CRUD
+router.get('/', ordemPagamentoCtrl.listar);
+router.post('/', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.criar);
+
+// Ações sobre uma ordem específica
+router.put('/:id/pagar', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.pagar);
+router.put('/:id/vincular-fatura', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.vincularFatura);
+router.post('/:id/resincronizar', authorize('super_admin', 'admin'), ordemPagamentoCtrl.resincronizar);
 
 module.exports = router;

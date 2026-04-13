@@ -1,12 +1,13 @@
 const mongoose = require('mongoose');
 
 const ordemPagamentoSchema = new mongoose.Schema({
-  numero: {
+  // Código sequencial auto-gerado (OP-0001)
+  codigo: {
     type: String,
-    required: true,
-    unique: true,
-    trim: true
+    unique: true
   },
+
+  // Relacionamentos
   cliente: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Cliente',
@@ -24,14 +25,17 @@ const ordemPagamentoSchema = new mongoose.Schema({
   },
   faturaNumeroManual: {
     type: String,
-    trim: true,
     default: null
   },
+
+  // Valores
   valor: {
     type: Number,
     required: [true, 'Valor é obrigatório'],
     min: [0.01, 'Valor deve ser maior que zero']
   },
+
+  // Datas
   dataGeracao: {
     type: Date,
     required: [true, 'Data de geração é obrigatória'],
@@ -41,61 +45,71 @@ const ordemPagamentoSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+
+  // Status: Pendente -> Paga -> Cancelada
   status: {
     type: String,
-    enum: ['Pendente', 'Paga'],
+    enum: ['Pendente', 'Paga', 'Cancelada'],
     default: 'Pendente'
   },
+
+  // Comprovante de pagamento (base64 ou URL)
   comprovante: {
     type: String,
     default: null
   },
-  faturaVinculada: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Fatura',
-    default: null
-  },
+
   observacoes: {
     type: String,
-    trim: true,
     default: ''
   },
+
+  // Integração com FinSystem
+  finsystemId: {
+    type: Number,
+    default: null
+  },
+  finsystemSincronizado: {
+    type: Boolean,
+    default: false
+  },
+  finsystemErro: {
+    type: String,
+    default: null
+  },
+
+  // Quem criou
   criadoPor: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    ref: 'User'
+  },
+
+  ativo: {
+    type: Boolean,
+    default: true
   }
 }, {
   timestamps: true
 });
 
-// Indexes para performance e segurança de consultas
-ordemPagamentoSchema.index({ fornecedor: 1, createdAt: -1 });
-ordemPagamentoSchema.index({ cliente: 1, createdAt: -1 });
-ordemPagamentoSchema.index({ status: 1 });
-ordemPagamentoSchema.index({ numero: 1 });
-ordemPagamentoSchema.index({ fatura: 1 });
-ordemPagamentoSchema.index({ faturaVinculada: 1 });
-
-// Gerar número sequencial antes de salvar
-ordemPagamentoSchema.pre('validate', async function(next) {
-  if (this.isNew && !this.numero) {
-    const ultimo = await mongoose.model('OrdemPagamento')
-      .findOne({}, { numero: 1 })
-      .sort({ createdAt: -1 })
-      .lean();
-
+// Auto-gerar código sequencial OP-XXXX
+ordemPagamentoSchema.pre('save', async function (next) {
+  if (!this.codigo) {
+    const ultima = await this.constructor.findOne({}, {}, { sort: { createdAt: -1 } });
     let proximo = 1;
-    if (ultimo && ultimo.numero) {
-      const match = ultimo.numero.match(/OP-(\d+)/);
-      if (match) {
-        proximo = parseInt(match[1], 10) + 1;
-      }
+    if (ultima && ultima.codigo) {
+      const num = parseInt(ultima.codigo.replace('OP-', ''));
+      if (!isNaN(num)) proximo = num + 1;
     }
-    this.numero = `OP-${String(proximo).padStart(3, '0')}`;
+    this.codigo = `OP-${String(proximo).padStart(4, '0')}`;
   }
   next();
 });
 
-const OrdemPagamento = mongoose.model('OrdemPagamento', ordemPagamentoSchema);
-module.exports = OrdemPagamento;
+// Índices
+ordemPagamentoSchema.index({ fornecedor: 1, status: 1 });
+ordemPagamentoSchema.index({ cliente: 1, createdAt: -1 });
+ordemPagamentoSchema.index({ status: 1, createdAt: -1 });
+ordemPagamentoSchema.index({ finsystemSincronizado: 1 });
+
+module.exports = mongoose.model('OrdemPagamento', ordemPagamentoSchema);

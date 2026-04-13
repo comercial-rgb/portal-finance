@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: portal-finance
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "5000"
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRE
+        value: 30d
+      - key: FRONTEND_URL
+        value: https://portal.frotainstasolutions.com.br
+      - key: FINSYSTEM_API_URL
+        sync: false
+      - key: FINSYSTEM_API_KEY
+        sync: false
+      - key: FINSYSTEM_EMPRESA_ID
+        value: "1"
+      - key: FINSYSTEM_CONTA_BANCARIA_ID
+        value: "1"

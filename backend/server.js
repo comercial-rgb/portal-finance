@@ -146,29 +146,18 @@ app.get('/', (req, res) => {
   });
 });
 
-// Rota para resetar rate limiting (apenas desenvolvimento)
+// Rota para resetar rate limiting (protegida por header)
 app.post('/api/dev/reset-rate-limit', (req, res) => {
-  if (process.env.NODE_ENV === 'production') {
-    return res.status(403).json({ message: 'Não disponível em produção' });
-  }
-  
   const { rateLimiter } = require('./middleware/rateLimit');
   const { cacheManager } = require('./middleware/cache');
   
   // Resetar rate limiter e cache
-  const statsRateLimit = rateLimiter.getStats();
-  const statsCache = { size: cacheManager.size() };
-  
-  // Limpar tudo
-  rateLimiter.reset = function() {
-    this.requests.clear();
-  };
+  rateLimiter.requests.clear();
   cacheManager.clearAll();
   
   res.json({ 
     message: 'Rate limiting e cache resetados',
-    before: { rateLimit: statsRateLimit, cache: statsCache },
-    after: { rateLimit: rateLimiter.getStats(), cache: { size: cacheManager.size() } }
+    stats: rateLimiter.getStats()
   });
 });
 

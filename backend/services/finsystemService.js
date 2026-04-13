@@ -32,7 +32,7 @@ class FinsystemService {
         tipo: 'despesa',
         data_movimentacao: new Date(ordem.dataGeracao).toISOString().split('T')[0],
         descricao: `Repasse ${fornecedorNome} - ${clienteNome} (${ordem.codigo || 'OP'}) - Fatura: ${faturaRef}`,
-        valor_bruto: ordem.valor.toString(),
+        valor_bruto: Number(ordem.valor).toFixed(2).replace('.', ','),
         tipo_operacao: 'repasse',
         forma_pagamento: 'ted',
         status: 'pendente',

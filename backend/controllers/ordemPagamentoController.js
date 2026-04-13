@@ -219,7 +219,8 @@ exports.resincronizar = async (req, res) => {
   try {
     const ordem = await OrdemPagamento.findOne({ _id: req.params.id, ativo: true })
       .populate('fornecedor', 'razaoSocial nomeFantasia')
-      .populate('cliente', 'razaoSocial nomeFantasia');
+      .populate('cliente', 'razaoSocial nomeFantasia')
+      .populate('fatura', 'numeroFatura');
 
     if (!ordem) return res.status(404).json({ message: 'Ordem não encontrada' });
 
@@ -250,12 +251,15 @@ exports.resincronizar = async (req, res) => {
 // @route   POST /api/ordens-pagamento/sincronizar-lote
 exports.sincronizarLote = async (req, res) => {
   try {
+    const dataMinima = new Date('2026-04-09T00:00:00.000Z');
     const ordensNaoSincronizadas = await OrdemPagamento.find({
       ativo: true,
-      finsystemSincronizado: { $ne: true }
+      finsystemSincronizado: { $ne: true },
+      createdAt: { $gte: dataMinima }
     })
       .populate('fornecedor', 'razaoSocial nomeFantasia')
-      .populate('cliente', 'razaoSocial nomeFantasia');
+      .populate('cliente', 'razaoSocial nomeFantasia')
+      .populate('fatura', 'numeroFatura');
 
     if (ordensNaoSincronizadas.length === 0) {
       return res.json({ success: true, message: 'Todas as ordens já estão sincronizadas', resultados: { total: 0, sucesso: 0, falha: 0, detalhes: [] } });

@@ -91,8 +91,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api', rateLimit(1000, 60 * 1000)); // 1000 req/min geral
 
 // Rotas com rate limiting específico e cache
-// Auth com limite mais alto para evitar bloqueios durante testes
-app.use('/api/auth', rateLimit(30, 5 * 60 * 1000), authRoutes); // 30 req / 5 min
+// Auth sem rate limiting restritivo - controle feito por IP apenas
+app.use('/api/auth', rateLimit(200, 60 * 1000), authRoutes); // 200 req/min
 app.use('/api', invalidateCache('fornecedores'), fornecedorRoutes);
 // Clientes SEM cache para garantir dados sempre atualizados
 app.use('/api/clientes', clienteRoutes);

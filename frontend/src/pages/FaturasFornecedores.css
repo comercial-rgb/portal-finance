@@ -120,6 +120,21 @@
   font-size: 0.95rem;
 }
 
+.btn-selecionar-todas {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.btn-selecionar-todas:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+}
+
+.btn-selecionar-todas .selecionadas-count {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
 .btn-excel {
   background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
   color: white;

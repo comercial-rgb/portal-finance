@@ -59,6 +59,12 @@ const ordemPagamentoSchema = new mongoose.Schema({
     default: null
   },
 
+  // Nota de comissão PDF (base64 ou URL)
+  notaComissao: {
+    type: String,
+    default: null
+  },
+
   observacoes: {
     type: String,
     default: ''

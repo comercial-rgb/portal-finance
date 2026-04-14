@@ -331,3 +331,47 @@ exports.ignorarSync = async (req, res) => {
     res.status(500).json({ message: 'Erro ao ignorar sincronização', error: error.message });
   }
 };
+
+// @desc    Anexar/atualizar nota de comissão PDF
+// @route   PUT /api/ordens-pagamento/:id/nota-comissao
+exports.notaComissao = async (req, res) => {
+  try {
+    const { notaComissao } = req.body;
+    if (!notaComissao) return res.status(400).json({ message: 'Arquivo da nota de comissão é obrigatório' });
+
+    const ordem = await OrdemPagamento.findOneAndUpdate(
+      { _id: req.params.id, ativo: true },
+      { notaComissao },
+      { new: true }
+    );
+    if (!ordem) return res.status(404).json({ message: 'Ordem não encontrada' });
+    res.json({ success: true, message: 'Nota de comissão anexada com sucesso' });
+  } catch (error) {
+    console.error('Erro ao anexar nota de comissão:', error);
+    res.status(500).json({ message: 'Erro ao anexar nota de comissão', error: error.message });
+  }
+};
+
+// @desc    Editar ordem de pagamento
+// @route   PUT /api/ordens-pagamento/:id
+exports.editar = async (req, res) => {
+  try {
+    const { valor, dataGeracao, observacoes, faturaNumeroManual } = req.body;
+    const updateData = {};
+    if (valor !== undefined) updateData.valor = valor;
+    if (dataGeracao !== undefined) updateData.dataGeracao = dataGeracao;
+    if (observacoes !== undefined) updateData.observacoes = observacoes;
+    if (faturaNumeroManual !== undefined) updateData.faturaNumeroManual = faturaNumeroManual;
+
+    const ordem = await OrdemPagamento.findOneAndUpdate(
+      { _id: req.params.id, ativo: true },
+      updateData,
+      { new: true }
+    );
+    if (!ordem) return res.status(404).json({ message: 'Ordem não encontrada' });
+    res.json({ success: true, message: 'Ordem atualizada com sucesso', data: ordem });
+  } catch (error) {
+    console.error('Erro ao editar ordem:', error);
+    res.status(500).json({ message: 'Erro ao editar ordem', error: error.message });
+  }
+};

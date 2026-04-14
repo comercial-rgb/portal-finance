@@ -183,6 +183,28 @@ function FaturasFornecedores() {
     }
   };
 
+  const toggleSelecionarTodas = () => {
+    if (selectedOrdens.length === ordensServico.length && ordensServico.length > 0) {
+      // Desmarcar todas
+      setSelectedOrdens([]);
+      setClienteTaxaInfo(null);
+      setTipoPagamento('');
+    } else {
+      // Selecionar todas
+      const todasIds = ordensServico.map(o => o._id);
+      setSelectedOrdens(todasIds);
+      
+      if (ordensServico.length > 0) {
+        const clienteId = ordensServico[0]?.cliente?._id || ordensServico[0]?.cliente;
+        const clienteInfo = clientes.find(c => c._id === clienteId);
+        setClienteTaxaInfo(clienteInfo);
+        if (clienteInfo?.tipoTaxa !== 'antecipacao_variavel') {
+          setTipoPagamento('');
+        }
+      }
+    }
+  };
+
   const exportarExcel = () => {
     if (selectedOrdens.length === 0) {
       toast.warning('Selecione pelo menos uma ordem de serviço');
@@ -863,8 +885,16 @@ function FaturasFornecedores() {
 
             <div className="ordens-list">
               <div className="ordens-header">
-                <h3>{ordensServico.length} Ordem(ns) de Serviço</h3>
+                <h3>{ordensServico.length} Ordem(ns) de Serviço {selectedOrdens.length > 0 && <span className="selecionadas-count">({selectedOrdens.length} selecionada{selectedOrdens.length !== 1 ? 's' : ''})</span>}</h3>
                 <div className="header-actions">
+                  <button 
+                    className="btn-export btn-selecionar-todas"
+                    onClick={toggleSelecionarTodas}
+                    disabled={ordensServico.length === 0}
+                  >
+                    <span>{selectedOrdens.length === ordensServico.length && ordensServico.length > 0 ? '☐' : '☑'}</span>
+                    {selectedOrdens.length === ordensServico.length && ordensServico.length > 0 ? 'Desmarcar Todas' : 'Selecionar Todas'}
+                  </button>
                   <button 
                     className="btn-export btn-excel" 
                     onClick={exportarExcel}

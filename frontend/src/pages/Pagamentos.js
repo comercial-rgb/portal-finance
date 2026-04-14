@@ -99,6 +99,11 @@ function Pagamentos() {
   const [editValorFormatado, setEditValorFormatado] = useState('');
   const [editLoading, setEditLoading] = useState(false);
 
+  // Modal nota de comissão
+  const [showModalNotaComissao, setShowModalNotaComissao] = useState(false);
+  const [ordemNotaComissao, setOrdemNotaComissao] = useState(null);
+  const [uploadingNotaComissao, setUploadingNotaComissao] = useState(false);
+
   // Sincronização em lote FinSystem
   const [sincronizandoLote, setSincronizandoLote] = useState(false);
 
@@ -247,7 +252,7 @@ function Pagamentos() {
         o.dataGeracao ? new Date(o.dataGeracao).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-',
         o.dataPagamento ? new Date(o.dataPagamento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-',
         o.status,
-        o.faturaVinculada?.numeroFatura || '-'
+        o.fatura?.numeroFatura || '-'
       ]);
       const csvContent = [header, ...rows].map(r => r.map(c => `"${c}"`).join(';')).join('\n');
       const bom = '\uFEFF';
@@ -515,6 +520,34 @@ function Pagamentos() {
   };
 
   const handleVerOrdemComprovante = (ordem) => { setOrdemComprovanteView(ordem); setShowModalOrdemComprovante(true); };
+
+  // Nota de comissão
+  const handleAbrirNotaComissao = (ordem) => { setOrdemNotaComissao(ordem); setShowModalNotaComissao(true); };
+
+  const handleUploadNotaComissao = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error('Arquivo muito grande. Máximo 5MB.'); return; }
+    const tiposPermitidos = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+    if (!tiposPermitidos.includes(file.type)) { toast.error('Tipo de arquivo não permitido. Use PDF, JPG ou PNG.'); return; }
+    setUploadingNotaComissao(true);
+    const reader = new FileReader();
+    reader.onerror = () => { toast.error('Erro ao ler o arquivo'); setUploadingNotaComissao(false); };
+    reader.onload = async () => {
+      try {
+        await api.put(`/ordens-pagamento/${ordemNotaComissao._id}/nota-comissao`, { notaComissao: reader.result });
+        toast.success('Nota de comissão anexada com sucesso!');
+        setShowModalNotaComissao(false);
+        setOrdemNotaComissao(null);
+        loadData();
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Erro ao anexar nota de comissão');
+      } finally {
+        setUploadingNotaComissao(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Resincronizar com FinSystem
   const handleResincronizar = async (ordemId) => {
@@ -1094,7 +1127,7 @@ function Pagamentos() {
                                   <td>{formatarData(ordem.dataGeracao)}</td>
                                   <td>{formatarData(ordem.dataPagamento)}</td>
                                   <td><span className="status-badge status-paga">{ordem.status}</span></td>
-                                  <td>{ordem.faturaVinculada ? <span className="fatura-vinculada">{ordem.faturaVinculada.numeroFatura}</span> : <span className="text-muted">-</span>}</td>
+                                  <td>{ordem.fatura ? <span className="fatura-vinculada">{ordem.fatura.numeroFatura}</span> : <span className="text-muted">-</span>}</td>
                                   <td>
                                     {ordem.finsystemSincronizado ? (
                                       <span className="status-badge status-paga" title={ordem.finsystemIgnorado ? 'Ignorado' : `ID: ${ordem.finsystemId}`}>
@@ -1121,7 +1154,12 @@ function Pagamentos() {
                                     {ordem.comprovante && (
                                       <button className="btn-link" title="Ver Comprovante" onClick={() => handleVerOrdemComprovante(ordem)}>📎 Comprovante</button>
                                     )}
-                                    {isAdminGerente && !ordem.faturaVinculada && (
+                                    {isAdminGerente && (
+                                      <button className="btn-nota-comissao" title={ordem.notaComissao ? 'Ver Nota de Comissão' : 'Anexar Nota de Comissão'} onClick={() => handleAbrirNotaComissao(ordem)}>
+                                        {ordem.notaComissao ? '📄 Nota' : '📄 + Nota'}
+                                      </button>
+                                    )}
+                                    {isAdminGerente && !ordem.fatura && (
                                       <button className="btn-vincular" title="Vincular a Fatura" onClick={() => handleAbrirVincular(ordem)}>🔗 Vincular</button>
                                     )}
                                   </td>
@@ -1494,6 +1532,71 @@ function Pagamentos() {
             </div>
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setShowModalOrdemComprovante(false)}>Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Nota de Comissão */}
+      {showModalNotaComissao && ordemNotaComissao && (
+        <div className="modal-overlay" onClick={() => !uploadingNotaComissao && setShowModalNotaComissao(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>📄 Nota de Comissão</h2>
+              <button className="btn-close" onClick={() => !uploadingNotaComissao && setShowModalNotaComissao(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="comprovante-info">
+                <p><strong>Ordem:</strong> {ordemNotaComissao.codigo}</p>
+                <p><strong>Fornecedor:</strong> {ordemNotaComissao.fornecedor?.razaoSocial}</p>
+                <p><strong>Valor:</strong> {formatarValor(ordemNotaComissao.valor)}</p>
+              </div>
+              {ordemNotaComissao.notaComissao ? (
+                <div className="comprovante-preview">
+                  {ordemNotaComissao.notaComissao.startsWith('data:image') ? (
+                    <img src={ordemNotaComissao.notaComissao} alt="Nota de Comissão" />
+                  ) : ordemNotaComissao.notaComissao.startsWith('data:application/pdf') ? (
+                    <div className="pdf-preview">
+                      <a href={ordemNotaComissao.notaComissao} download={`nota-comissao-${ordemNotaComissao.codigo}.pdf`} className="btn-secondary">📥 Baixar Nota de Comissão PDF</a>
+                    </div>
+                  ) : (
+                    <a href={ordemNotaComissao.notaComissao} target="_blank" rel="noopener noreferrer" className="btn-secondary">📥 Baixar Nota de Comissão</a>
+                  )}
+                  {isAdminGerente && (
+                    <div style={{ marginTop: '1rem' }}>
+                      <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.5rem' }}>Substituir nota de comissão:</p>
+                      <div className="upload-area">
+                        <input type="file" id="nota-comissao-replace" accept="application/pdf,image/*" onChange={handleUploadNotaComissao} disabled={uploadingNotaComissao} />
+                        <label htmlFor="nota-comissao-replace" className="upload-label">
+                          {uploadingNotaComissao ? 'Enviando...' : <span>Clique para substituir</span>}
+                        </label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : isAdminGerente ? (
+                <div className="upload-area">
+                  <input type="file" id="nota-comissao-upload" accept="application/pdf,image/*" onChange={handleUploadNotaComissao} disabled={uploadingNotaComissao} />
+                  <label htmlFor="nota-comissao-upload" className="upload-label">
+                    {uploadingNotaComissao ? 'Enviando...' : (
+                      <>
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                          <polyline points="17 8 12 3 7 8"/>
+                          <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        <span>Clique para anexar a Nota de Comissão</span>
+                        <small>PDF, JPG ou PNG até 5MB</small>
+                      </>
+                    )}
+                  </label>
+                </div>
+              ) : (
+                <div className="empty-state"><p>Nota de comissão não anexada</p></div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setShowModalNotaComissao(false)}>Fechar</button>
             </div>
           </div>
         </div>

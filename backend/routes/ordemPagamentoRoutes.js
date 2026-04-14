@@ -17,8 +17,10 @@ router.get('/', ordemPagamentoCtrl.listar);
 router.post('/', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.criar);
 
 // Ações sobre uma ordem específica
+router.put('/:id', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.editar);
 router.put('/:id/pagar', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.pagar);
 router.put('/:id/vincular-fatura', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.vincularFatura);
+router.put('/:id/nota-comissao', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.notaComissao);
 router.post('/:id/resincronizar', authorize('super_admin', 'admin'), ordemPagamentoCtrl.resincronizar);
 router.post('/:id/ignorar-sync', authorize('super_admin', 'admin'), ordemPagamentoCtrl.ignorarSync);
 

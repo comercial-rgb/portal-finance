@@ -9,6 +9,7 @@ router.use(protect);
 // Rotas de consulta (antes das rotas com :id)
 router.get('/resumo', ordemPagamentoCtrl.resumo);
 router.get('/finsystem-status', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.finsystemStatus);
+router.post('/sincronizar-lote', authorize('super_admin', 'admin'), ordemPagamentoCtrl.sincronizarLote);
 router.get('/faturas-fornecedor/:fornecedorId', ordemPagamentoCtrl.faturasFornecedor);
 
 // CRUD
@@ -19,5 +20,6 @@ router.post('/', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtr
 router.put('/:id/pagar', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.pagar);
 router.put('/:id/vincular-fatura', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.vincularFatura);
 router.post('/:id/resincronizar', authorize('super_admin', 'admin'), ordemPagamentoCtrl.resincronizar);
+router.post('/:id/ignorar-sync', authorize('super_admin', 'admin'), ordemPagamentoCtrl.ignorarSync);
 
 module.exports = router;

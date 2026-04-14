@@ -255,6 +255,7 @@ exports.sincronizarLote = async (req, res) => {
     const ordensNaoSincronizadas = await OrdemPagamento.find({
       ativo: true,
       finsystemSincronizado: { $ne: true },
+      finsystemIgnorado: { $ne: true },
       createdAt: { $gte: dataMinima }
     })
       .populate('fornecedor', 'razaoSocial nomeFantasia')
@@ -311,5 +312,22 @@ exports.finsystemStatus = async (req, res) => {
     res.json({ success: true, finsystem: status });
   } catch (error) {
     res.status(500).json({ success: false, finsystem: { online: false } });
+  }
+};
+
+// @desc    Ignorar sincronização FinSystem para uma ordem
+// @route   POST /api/ordens-pagamento/:id/ignorar-sync
+exports.ignorarSync = async (req, res) => {
+  try {
+    const ordem = await OrdemPagamento.findByIdAndUpdate(
+      req.params.id,
+      { finsystemIgnorado: true, finsystemSincronizado: true, finsystemErro: null },
+      { new: true }
+    );
+    if (!ordem) return res.status(404).json({ message: 'Ordem não encontrada' });
+    res.json({ success: true, message: 'Sincronização ignorada com sucesso' });
+  } catch (error) {
+    console.error('Erro ao ignorar sync:', error);
+    res.status(500).json({ message: 'Erro ao ignorar sincronização', error: error.message });
   }
 };

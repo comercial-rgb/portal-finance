@@ -2,7 +2,9 @@
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
   color: #e2e8f0;
   margin-top: auto;
+  margin-left: 250px;
   border-top: 3px solid var(--azul-tech);
+  transition: margin-left 0.3s ease;
 }
 
 .footer-content {
@@ -116,14 +118,28 @@
   gap: 6px;
 }
 
+@media (max-width: 1366px) {
+  .footer {
+    margin-left: 220px;
+  }
+}
+
 @media (max-width: 1024px) {
   .footer-content {
     grid-template-columns: 1fr 1fr;
     gap: 32px;
   }
+
+  .footer {
+    margin-left: 200px;
+  }
 }
 
 @media (max-width: 768px) {
+  .footer {
+    margin-left: 0;
+  }
+
   .footer-content {
     grid-template-columns: 1fr;
     padding: 32px 24px 24px;

@@ -1,5 +1,30 @@
-/* Pagamentos - Página */
+/* Pagamentos - Layout Base (mesma estrutura das demais páginas) */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--cinza-claro, #f1f5f9);
+}
+
+.content-wrapper {
+  display: flex;
+  flex: 1;
+  padding-top: 0;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 250px;
+  padding: 2rem;
+  min-height: calc(100vh - 80px);
+  background-color: var(--surface, #f8fafc);
+  transition: margin-left 0.3s ease;
+}
+
+/* Pagamentos - Container */
 .pagamentos-container {
+  max-width: 1400px;
+  margin: 0 auto;
   padding: 0;
 }
 
@@ -11,9 +36,10 @@
 }
 
 .page-header h1 {
-  font-size: 1.75rem;
+  font-size: 2rem;
   color: var(--azul-corporativo);
   margin: 0;
+  font-weight: 700;
 }
 
 .page-header p {
@@ -1134,6 +1160,28 @@
   font-weight: 600;
 }
 
+/* FinSystem Actions */
+.finsystem-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.finsystem-btns {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.btn-skip-sync {
+  color: #6b7280 !important;
+}
+
+.btn-skip-sync:hover {
+  background: #f3f4f6 !important;
+  color: #374151 !important;
+}
+
 /* PDF Preview */
 .pdf-preview {
   text-align: center;
@@ -1195,5 +1243,37 @@
     min-width: 240px;
     left: auto;
     right: -10px;
+  }
+}
+
+/* Layout Responsivo (mesma lógica de OrdensServico) */
+@media (max-width: 1366px) {
+  .main-content {
+    margin-left: 220px;
+    padding: 1.5rem;
+  }
+
+  .pagamentos-container {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 200px;
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
   }
 }

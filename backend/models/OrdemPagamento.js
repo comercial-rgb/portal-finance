@@ -77,6 +77,10 @@ const ordemPagamentoSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  finsystemIgnorado: {
+    type: Boolean,
+    default: false
+  },
 
   // Quem criou
   criadoPor: {

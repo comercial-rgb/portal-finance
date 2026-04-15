@@ -1136,6 +1136,28 @@ function ClienteForm() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Taxa da Plataforma - visível apenas quando combustível está selecionado */}
+                  {(formData.tiposServico || []).includes('combustivel') && (
+                    <div className="form-grid" style={{ marginTop: '15px' }}>
+                      <div className="form-group">
+                        <label>⛽ Taxa da Plataforma por Litro (R$)</label>
+                        <input
+                          type="number"
+                          name="taxaPlataformaPorLitro"
+                          value={formData.taxaPlataformaPorLitro ?? 0.08}
+                          onChange={handleInputChange}
+                          min="0"
+                          max="1"
+                          step="0.01"
+                          placeholder="0.08"
+                        />
+                        <small style={{ color: '#666', marginTop: '4px', display: 'block' }}>
+                          Varia de R$ 0,08 a R$ 0,15 conforme contrato
+                        </small>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-section">

@@ -11,6 +11,7 @@ function ImpostosRetencoes() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('manutencao');
   const [formData, setFormData] = useState({
     impostosMunicipais: {
       pecas: { ir: 1.20 },
@@ -27,7 +28,6 @@ function ImpostosRetencoes() {
     combustivelMunicipais: { irrf: 0.24, csll: 0, pis: 0, cofins: 0 },
     combustivelEstaduais: { irrf: 0.24, csll: 0, pis: 0, cofins: 0 },
     combustivelFederais: { irrf: 0.24, csll: 1.00, pis: 0, cofins: 0 },
-    taxaPlataformaPorLitro: 0.08,
     retencoesOrgao: { percentual: 0 },
     taxasOperacao: { taxaFixa: 0 },
     taxasAntecipacao: { aVista: 0, aposFechamento: 0, dias30: 0, dias40: 0, dias50: 0, dias60: 0 },
@@ -106,7 +106,6 @@ function ImpostosRetencoes() {
             pis: response.data.combustivelFederais?.pis ?? 0,
             cofins: response.data.combustivelFederais?.cofins ?? 0
           },
-          taxaPlataformaPorLitro: response.data.taxaPlataformaPorLitro ?? 0.08,
           taxasOperacao: {
             taxaFixa: response.data.taxasOperacao?.taxaFixa || 0
           },
@@ -208,564 +207,295 @@ function ImpostosRetencoes() {
               </div>
             </div>
 
+            {/* Tabs de navegação */}
+            <div className="impostos-tabs">
+              <button
+                type="button"
+                className={`impostos-tab ${activeTab === 'manutencao' ? 'active' : ''}`}
+                onClick={() => setActiveTab('manutencao')}
+              >
+                🔧 Manutenção de Frotas
+              </button>
+              <button
+                type="button"
+                className={`impostos-tab ${activeTab === 'combustivel' ? 'active' : ''}`}
+                onClick={() => setActiveTab('combustivel')}
+              >
+                ⛽ Combustível
+              </button>
+              <button
+                type="button"
+                className={`impostos-tab ${activeTab === 'taxas' ? 'active' : ''}`}
+                onClick={() => setActiveTab('taxas')}
+              >
+                💰 Taxas & Antecipação
+              </button>
+            </div>
+
             <form onSubmit={handleSubmit}>
               <div className="impostos-sections">
-                {/* Impostos Municipais */}
-                <div className="imposto-section">
-                  <h3>Impostos Fora do Simples - Órgãos Municipais</h3>
-                  <div className="imposto-grid">
-                    <div className="imposto-column">
-                      <h4>Impostos - Peças</h4>
-                      <div className="imposto-field">
-                        <label>IR</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          value={formData.impostosMunicipais.pecas.ir}
-                          onChange={(e) => handleChange('impostosMunicipais', 'pecas', 'ir', e.target.value)}
-                        />
-                        <span>%</span>
+
+                {/* ════════════════════════════════════════ */}
+                {/* ABA: MANUTENÇÃO DE FROTAS               */}
+                {/* ════════════════════════════════════════ */}
+                {activeTab === 'manutencao' && (
+                  <>
+                    <div className="impostos-tab-header">
+                      <h2>🔧 Impostos — Manutenção de Frotas</h2>
+                      <p>Retenções aplicadas sobre ordens de serviço (peças e serviços) de manutenção</p>
+                    </div>
+
+                    {/* Impostos Municipais */}
+                    <div className="imposto-section">
+                      <h3>Órgãos Municipais</h3>
+                      <div className="imposto-grid">
+                        <div className="imposto-column">
+                          <h4>Peças</h4>
+                          <div className="imposto-field">
+                            <label>IR</label>
+                            <input type="number" step="0.01" min="0" max="100"
+                              value={formData.impostosMunicipais.pecas.ir}
+                              onChange={(e) => handleChange('impostosMunicipais', 'pecas', 'ir', e.target.value)} />
+                            <span>%</span>
+                          </div>
+                        </div>
+                        <div className="imposto-column">
+                          <h4>Serviços</h4>
+                          <div className="imposto-field">
+                            <label>IR</label>
+                            <input type="number" step="0.01" min="0" max="100"
+                              value={formData.impostosMunicipais.servicos.ir}
+                              onChange={(e) => handleChange('impostosMunicipais', 'servicos', 'ir', e.target.value)} />
+                            <span>%</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div className="imposto-column">
-                      <h4>Impostos - Serviços</h4>
-                      <div className="imposto-field">
-                        <label>IR</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          value={formData.impostosMunicipais.servicos.ir}
-                          onChange={(e) => handleChange('impostosMunicipais', 'servicos', 'ir', e.target.value)}
-                        />
-                        <span>%</span>
+
+                    {/* Impostos Estaduais */}
+                    <div className="imposto-section">
+                      <h3>Órgãos Estaduais</h3>
+                      <div className="imposto-grid">
+                        <div className="imposto-column">
+                          <h4>Peças</h4>
+                          {['ir', 'pis', 'cofins', 'csll'].map(field => (
+                            <div className="imposto-field" key={field}>
+                              <label>{field.toUpperCase()}</label>
+                              <input type="number" step="0.01" min="0" max="100"
+                                value={formData.impostosEstaduais.pecas[field]}
+                                onChange={(e) => handleChange('impostosEstaduais', 'pecas', field, e.target.value)} />
+                              <span>%</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="imposto-column">
+                          <h4>Serviços</h4>
+                          {['ir', 'pis', 'cofins', 'csll'].map(field => (
+                            <div className="imposto-field" key={field}>
+                              <label>{field.toUpperCase()}</label>
+                              <input type="number" step="0.01" min="0" max="100"
+                                value={formData.impostosEstaduais.servicos[field]}
+                                onChange={(e) => handleChange('impostosEstaduais', 'servicos', field, e.target.value)} />
+                              <span>%</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                {/* Impostos Estaduais */}
-                <div className="imposto-section">
-                  <h3>Impostos Fora do Simples - Órgãos Estaduais</h3>
-                  <div className="imposto-grid">
-                    <div className="imposto-column">
-                      <h4>Impostos - Peças</h4>
-                      <div className="imposto-field">
-                        <label>IR</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          value={formData.impostosEstaduais.pecas.ir}
-                          onChange={(e) => handleChange('impostosEstaduais', 'pecas', 'ir', e.target.value)}
-                        />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>PIS</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          value={formData.impostosEstaduais.pecas.pis}
-                          onChange={(e) => handleChange('impostosEstaduais', 'pecas', 'pis', e.target.value)}
-                        />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>COFINS</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          value={formData.impostosEstaduais.pecas.cofins}
-                          onChange={(e) => handleChange('impostosEstaduais', 'pecas', 'cofins', e.target.value)}
-                        />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>CSLL</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          value={formData.impostosEstaduais.pecas.csll}
-                          onChange={(e) => handleChange('impostosEstaduais', 'pecas', 'csll', e.target.value)}
-                        />
-                        <span>%</span>
+                    {/* Impostos Federais */}
+                    <div className="imposto-section">
+                      <h3>Órgãos Federais</h3>
+                      <div className="imposto-grid">
+                        <div className="imposto-column">
+                          <h4>Peças</h4>
+                          {['ir', 'pis', 'cofins', 'csll'].map(field => (
+                            <div className="imposto-field" key={field}>
+                              <label>{field.toUpperCase()}</label>
+                              <input type="number" step="0.01" min="0" max="100"
+                                value={formData.impostosFederais.pecas[field]}
+                                onChange={(e) => handleChange('impostosFederais', 'pecas', field, e.target.value)} />
+                              <span>%</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="imposto-column">
+                          <h4>Serviços</h4>
+                          {['ir', 'pis', 'cofins', 'csll'].map(field => (
+                            <div className="imposto-field" key={field}>
+                              <label>{field.toUpperCase()}</label>
+                              <input type="number" step="0.01" min="0" max="100"
+                                value={formData.impostosFederais.servicos[field]}
+                                onChange={(e) => handleChange('impostosFederais', 'servicos', field, e.target.value)} />
+                              <span>%</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                    <div className="imposto-column">
-                      <h4>Impostos - Serviços</h4>
-                      <div className="imposto-field">
-                        <label>IR</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          value={formData.impostosEstaduais.servicos.ir}
-                          onChange={(e) => handleChange('impostosEstaduais', 'servicos', 'ir', e.target.value)}
-                        />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>PIS</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          value={formData.impostosEstaduais.servicos.pis}
-                          onChange={(e) => handleChange('impostosEstaduais', 'servicos', 'pis', e.target.value)}
-                        />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>COFINS</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          value={formData.impostosEstaduais.servicos.cofins}
-                          onChange={(e) => handleChange('impostosEstaduais', 'servicos', 'cofins', e.target.value)}
-                        />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>CSLL</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          value={formData.impostosEstaduais.servicos.csll}
-                          onChange={(e) => handleChange('impostosEstaduais', 'servicos', 'csll', e.target.value)}
-                        />
-                        <span>%</span>
+
+                    {/* Retenções Órgão */}
+                    <div className="imposto-section retencoes-section">
+                      <h3>Retenções Órgão</h3>
+                      <div className="form-group">
+                        <label>Percentual</label>
+                        <input type="number" step="0.01" min="0" max="100"
+                          value={formData.retencoesOrgao.percentual}
+                          onChange={(e) => handleSimpleChange('retencoesOrgao', 'percentual', e.target.value)} />
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                {/* Impostos Federais */}
-                <div className="imposto-section">
-                  <h3>Impostos Fora do Simples - Órgãos Federais</h3>
-                  <div className="imposto-grid">
-                    <div className="imposto-column">
-                      <h4>Impostos - Peças</h4>
-                      <div className="imposto-field">
-                        <label>IR</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          value={formData.impostosFederais.pecas.ir}
-                          onChange={(e) => handleChange('impostosFederais', 'pecas', 'ir', e.target.value)}
-                        />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>PIS</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          value={formData.impostosFederais.pecas.pis}
-                          onChange={(e) => handleChange('impostosFederais', 'pecas', 'pis', e.target.value)}
-                        />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>COFINS</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          value={formData.impostosFederais.pecas.cofins}
-                          onChange={(e) => handleChange('impostosFederais', 'pecas', 'cofins', e.target.value)}
-                        />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>CSLL</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          value={formData.impostosFederais.pecas.csll}
-                          onChange={(e) => handleChange('impostosFederais', 'pecas', 'csll', e.target.value)}
-                        />
-                        <span>%</span>
+                    {/* Taxa Fixa de Operação */}
+                    <div className="imposto-section retencoes-section">
+                      <h3>Taxa de Operação (Manutenção)</h3>
+                      <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.85rem' }}>
+                        Taxa fixa aplicada sobre faturas de manutenção de frotas
+                      </p>
+                      <div className="form-group">
+                        <label>Taxa Fixa (%)</label>
+                        <input type="number" step="0.01" min="0" max="100"
+                          value={formData.taxasOperacao.taxaFixa}
+                          onChange={(e) => handleSimpleChange('taxasOperacao', 'taxaFixa', e.target.value)} />
                       </div>
                     </div>
-                    <div className="imposto-column">
-                      <h4>Impostos - Serviços</h4>
-                      <div className="imposto-field">
-                        <label>IR</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          value={formData.impostosFederais.servicos.ir}
-                          onChange={(e) => handleChange('impostosFederais', 'servicos', 'ir', e.target.value)}
-                        />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>PIS</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          value={formData.impostosFederais.servicos.pis}
-                          onChange={(e) => handleChange('impostosFederais', 'servicos', 'pis', e.target.value)}
-                        />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>COFINS</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          value={formData.impostosFederais.servicos.cofins}
-                          onChange={(e) => handleChange('impostosFederais', 'servicos', 'cofins', e.target.value)}
-                        />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>CSLL</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          value={formData.impostosFederais.servicos.csll}
-                          onChange={(e) => handleChange('impostosFederais', 'servicos', 'csll', e.target.value)}
-                        />
-                        <span>%</span>
+                  </>
+                )}
+
+                {/* ════════════════════════════════════════ */}
+                {/* ABA: COMBUSTÍVEL                         */}
+                {/* ════════════════════════════════════════ */}
+                {activeTab === 'combustivel' && (
+                  <>
+                    <div className="impostos-tab-header">
+                      <h2>⛽ Retenções — Combustível</h2>
+                      <p>IN RFB nº 1.234/2012 (art. 18) e IN RFB nº 2.145/2023 — Alíquotas diferenciadas para combustível</p>
+                    </div>
+
+                    {/* Combustível Municipais */}
+                    <div className="imposto-section imposto-section-combustivel">
+                      <h3>Órgãos Municipais</h3>
+                      <div className="imposto-grid">
+                        <div className="imposto-column">
+                          <h4>Combustível</h4>
+                          {['irrf', 'csll', 'pis', 'cofins'].map(field => (
+                            <div className="imposto-field" key={field}>
+                              <label>{field.toUpperCase()}</label>
+                              <input type="number" step="0.01" min="0" max="100"
+                                value={formData.combustivelMunicipais[field]}
+                                onChange={(e) => handleSimpleChange('combustivelMunicipais', field, e.target.value)} />
+                              <span>%</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                {/* Retenções Órgão */}
-                <div className="imposto-section retencoes-section">
-                  <h3>Retenções Órgão</h3>
-                  <div className="form-group">
-                    <label>Percentual</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      value={formData.retencoesOrgao.percentual}
-                      onChange={(e) => handleSimpleChange('retencoesOrgao', 'percentual', e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {/* Taxas de Operação */}
-                <div className="imposto-section retencoes-section">
-                  <h3>Taxas de Operação</h3>
-
-                {/* ═══ Retenções Combustível (IN RFB 1.234/2012) ═══ */}
-                <div className="imposto-section">
-                  <h3>⛽ Retenções Combustível - Órgãos Municipais</h3>
-                  <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.85rem' }}>
-                    IN RFB nº 1.234/2012 (art. 18) e IN RFB nº 2.145/2023 — Alíquotas diferenciadas para combustível
-                  </p>
-                  <div className="imposto-grid">
-                    <div className="imposto-column">
-                      <h4>Combustível</h4>
-                      <div className="imposto-field">
-                        <label>IRRF</label>
-                        <input type="number" step="0.01" min="0" max="100"
-                          value={formData.combustivelMunicipais.irrf}
-                          onChange={(e) => handleSimpleChange('combustivelMunicipais', 'irrf', e.target.value)} />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>CSLL</label>
-                        <input type="number" step="0.01" min="0" max="100"
-                          value={formData.combustivelMunicipais.csll}
-                          onChange={(e) => handleSimpleChange('combustivelMunicipais', 'csll', e.target.value)} />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>PIS</label>
-                        <input type="number" step="0.01" min="0" max="100"
-                          value={formData.combustivelMunicipais.pis}
-                          onChange={(e) => handleSimpleChange('combustivelMunicipais', 'pis', e.target.value)} />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>COFINS</label>
-                        <input type="number" step="0.01" min="0" max="100"
-                          value={formData.combustivelMunicipais.cofins}
-                          onChange={(e) => handleSimpleChange('combustivelMunicipais', 'cofins', e.target.value)} />
-                        <span>%</span>
+                    {/* Combustível Estaduais */}
+                    <div className="imposto-section imposto-section-combustivel">
+                      <h3>Órgãos Estaduais</h3>
+                      <div className="imposto-grid">
+                        <div className="imposto-column">
+                          <h4>Combustível</h4>
+                          {['irrf', 'csll', 'pis', 'cofins'].map(field => (
+                            <div className="imposto-field" key={field}>
+                              <label>{field.toUpperCase()}</label>
+                              <input type="number" step="0.01" min="0" max="100"
+                                value={formData.combustivelEstaduais[field]}
+                                onChange={(e) => handleSimpleChange('combustivelEstaduais', field, e.target.value)} />
+                              <span>%</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="imposto-section">
-                  <h3>⛽ Retenções Combustível - Órgãos Estaduais</h3>
-                  <div className="imposto-grid">
-                    <div className="imposto-column">
-                      <h4>Combustível</h4>
-                      <div className="imposto-field">
-                        <label>IRRF</label>
-                        <input type="number" step="0.01" min="0" max="100"
-                          value={formData.combustivelEstaduais.irrf}
-                          onChange={(e) => handleSimpleChange('combustivelEstaduais', 'irrf', e.target.value)} />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>CSLL</label>
-                        <input type="number" step="0.01" min="0" max="100"
-                          value={formData.combustivelEstaduais.csll}
-                          onChange={(e) => handleSimpleChange('combustivelEstaduais', 'csll', e.target.value)} />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>PIS</label>
-                        <input type="number" step="0.01" min="0" max="100"
-                          value={formData.combustivelEstaduais.pis}
-                          onChange={(e) => handleSimpleChange('combustivelEstaduais', 'pis', e.target.value)} />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>COFINS</label>
-                        <input type="number" step="0.01" min="0" max="100"
-                          value={formData.combustivelEstaduais.cofins}
-                          onChange={(e) => handleSimpleChange('combustivelEstaduais', 'cofins', e.target.value)} />
-                        <span>%</span>
+                    {/* Combustível Federais */}
+                    <div className="imposto-section imposto-section-combustivel">
+                      <h3>Órgãos Federais</h3>
+                      <div className="imposto-grid">
+                        <div className="imposto-column">
+                          <h4>Combustível</h4>
+                          {['irrf', 'csll', 'pis', 'cofins'].map(field => (
+                            <div className="imposto-field" key={field}>
+                              <label>{field.toUpperCase()}</label>
+                              <input type="number" step="0.01" min="0" max="100"
+                                value={formData.combustivelFederais[field]}
+                                onChange={(e) => handleSimpleChange('combustivelFederais', field, e.target.value)} />
+                              <span>%</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="imposto-section">
-                  <h3>⛽ Retenções Combustível - Órgãos Federais</h3>
-                  <div className="imposto-grid">
-                    <div className="imposto-column">
-                      <h4>Combustível</h4>
-                      <div className="imposto-field">
-                        <label>IRRF</label>
-                        <input type="number" step="0.01" min="0" max="100"
-                          value={formData.combustivelFederais.irrf}
-                          onChange={(e) => handleSimpleChange('combustivelFederais', 'irrf', e.target.value)} />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>CSLL</label>
-                        <input type="number" step="0.01" min="0" max="100"
-                          value={formData.combustivelFederais.csll}
-                          onChange={(e) => handleSimpleChange('combustivelFederais', 'csll', e.target.value)} />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>PIS</label>
-                        <input type="number" step="0.01" min="0" max="100"
-                          value={formData.combustivelFederais.pis}
-                          onChange={(e) => handleSimpleChange('combustivelFederais', 'pis', e.target.value)} />
-                        <span>%</span>
-                      </div>
-                      <div className="imposto-field">
-                        <label>COFINS</label>
-                        <input type="number" step="0.01" min="0" max="100"
-                          value={formData.combustivelFederais.cofins}
-                          onChange={(e) => handleSimpleChange('combustivelFederais', 'cofins', e.target.value)} />
-                        <span>%</span>
+                    {/* Info sobre Taxa da Plataforma */}
+                    <div className="imposto-section imposto-section-combustivel">
+                      <h3>⚙️ Taxa da Plataforma (Gerenciadora)</h3>
+                      <div className="info-box">
+                        <p>💡 A taxa da plataforma por litro (R$/litro) é configurada <strong>individualmente por cliente</strong> no cadastro do cliente, pois varia de R$ 0,08 a R$ 0,15 conforme o contrato.</p>
+                        <p style={{ marginTop: '8px' }}>Para configurar, acesse <strong>Clientes → Editar Cliente → Combustível → Taxa da Plataforma</strong>.</p>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  </>
+                )}
 
-                <div className="imposto-section retencoes-section">
-                  <h3>⛽ Taxa da Plataforma (Gerenciadora)</h3>
-                  <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.85rem' }}>
-                    Valor por litro cobrado como taxa da gerenciadora nos faturamentos de combustível
-                  </p>
-                  <div className="form-group">
-                    <label>Taxa por Litro (R$)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.taxaPlataformaPorLitro}
-                      onChange={(e) => setFormData(prev => ({ ...prev, taxaPlataformaPorLitro: parseFloat(e.target.value) || 0 }))}
-                    />
-                  </div>
-                </div>
-                  <div className="form-group">
-                    <label>Taxa Fixa (%)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      value={formData.taxasOperacao.taxaFixa}
-                      onChange={(e) => handleSimpleChange('taxasOperacao', 'taxaFixa', e.target.value)}
-                    />
-                  </div>
-                </div>
+                {/* ════════════════════════════════════════ */}
+                {/* ABA: TAXAS & ANTECIPAÇÃO                 */}
+                {/* ════════════════════════════════════════ */}
+                {activeTab === 'taxas' && (
+                  <>
+                    <div className="impostos-tab-header">
+                      <h2>💰 Taxas & Antecipação</h2>
+                      <p>Configurações gerais de taxas de antecipação aplicáveis ao sistema</p>
+                    </div>
 
-                {/* Taxas Antecipação & Variáveis */}
-                <div className="imposto-section retencoes-section">
-                  <h3>Taxas Antecipação & Variáveis</h3>
-                  <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.9rem' }}>
-                    Apenas alguns clientes trabalham com estas taxas
-                  </p>
-                  <div className="form-group">
-                    <label>À Vista (%)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      value={formData.taxasAntecipacao.aVista}
-                      onChange={(e) => handleSimpleChange('taxasAntecipacao', 'aVista', e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Receber Após Fechamento (%)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      value={formData.taxasAntecipacao.aposFechamento}
-                      onChange={(e) => handleSimpleChange('taxasAntecipacao', 'aposFechamento', e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>30 Dias Após Fechar a Fatura (%)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      value={formData.taxasAntecipacao.dias30}
-                      onChange={(e) => handleSimpleChange('taxasAntecipacao', 'dias30', e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>40 Dias Após Fechar a Fatura (%)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      value={formData.taxasAntecipacao.dias40}
-                      onChange={(e) => handleSimpleChange('taxasAntecipacao', 'dias40', e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>50 Dias Após Fechar a Fatura (%)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      value={formData.taxasAntecipacao.dias50}
-                      onChange={(e) => handleSimpleChange('taxasAntecipacao', 'dias50', e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>60 Dias Após Fechar a Fatura (%)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      value={formData.taxasAntecipacao.dias60}
-                      onChange={(e) => handleSimpleChange('taxasAntecipacao', 'dias60', e.target.value)}
-                    />
-                  </div>
-                </div>
+                    {/* Taxas Antecipação & Variáveis */}
+                    <div className="imposto-section retencoes-section">
+                      <h3>Taxas Antecipação & Variáveis</h3>
+                      <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                        Apenas alguns clientes trabalham com estas taxas
+                      </p>
+                      {[
+                        { key: 'aVista', label: 'À Vista (%)' },
+                        { key: 'aposFechamento', label: 'Receber Após Fechamento (%)' },
+                        { key: 'dias30', label: '30 Dias Após Fechar a Fatura (%)' },
+                        { key: 'dias40', label: '40 Dias Após Fechar a Fatura (%)' },
+                        { key: 'dias50', label: '50 Dias Após Fechar a Fatura (%)' },
+                        { key: 'dias60', label: '60 Dias Após Fechar a Fatura (%)' }
+                      ].map(({ key, label }) => (
+                        <div className="form-group" key={key}>
+                          <label>{label}</label>
+                          <input type="number" step="0.01" min="0" max="100"
+                            value={formData.taxasAntecipacao[key]}
+                            onChange={(e) => handleSimpleChange('taxasAntecipacao', key, e.target.value)} />
+                        </div>
+                      ))}
+                    </div>
 
-                {/* Taxas de Antecipação por Faixa de Dias */}
-                <div className="imposto-section retencoes-section">
-                  <h3>💰 Taxas de Antecipação por Faixa de Dias</h3>
-                  <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.9rem' }}>
-                    Taxas aplicadas quando o fornecedor solicita antecipação de valores. 
-                    Quanto mais próximo da data de recebimento, menor a taxa.
-                  </p>
-                  <div className="form-group">
-                    <label>01 a 05 dias antes (%) - Menor taxa</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      value={formData.taxasAntecipacaoFaixas?.faixa05a01 || 2.5}
-                      onChange={(e) => handleSimpleChange('taxasAntecipacaoFaixas', 'faixa05a01', e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>06 a 11 dias antes (%)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      value={formData.taxasAntecipacaoFaixas?.faixa11a06 || 4}
-                      onChange={(e) => handleSimpleChange('taxasAntecipacaoFaixas', 'faixa11a06', e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>12 a 18 dias antes (%)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      value={formData.taxasAntecipacaoFaixas?.faixa18a12 || 6}
-                      onChange={(e) => handleSimpleChange('taxasAntecipacaoFaixas', 'faixa18a12', e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>19 a 24 dias antes (%)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      value={formData.taxasAntecipacaoFaixas?.faixa24a19 || 8}
-                      onChange={(e) => handleSimpleChange('taxasAntecipacaoFaixas', 'faixa24a19', e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>25 a 30 dias antes (%) - Maior taxa</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      value={formData.taxasAntecipacaoFaixas?.faixa30a25 || 10}
-                      onChange={(e) => handleSimpleChange('taxasAntecipacaoFaixas', 'faixa30a25', e.target.value)}
-                    />
-                  </div>
-                </div>
+                    {/* Taxas de Antecipação por Faixa de Dias */}
+                    <div className="imposto-section retencoes-section">
+                      <h3>💰 Taxas de Antecipação por Faixa de Dias</h3>
+                      <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                        Taxas aplicadas quando o fornecedor solicita antecipação de valores. 
+                        Quanto mais próximo da data de recebimento, menor a taxa.
+                      </p>
+                      {[
+                        { key: 'faixa05a01', label: '01 a 05 dias antes (%) - Menor taxa', fallback: 2.5 },
+                        { key: 'faixa11a06', label: '06 a 11 dias antes (%)', fallback: 4 },
+                        { key: 'faixa18a12', label: '12 a 18 dias antes (%)', fallback: 6 },
+                        { key: 'faixa24a19', label: '19 a 24 dias antes (%)', fallback: 8 },
+                        { key: 'faixa30a25', label: '25 a 30 dias antes (%) - Maior taxa', fallback: 10 }
+                      ].map(({ key, label, fallback }) => (
+                        <div className="form-group" key={key}>
+                          <label>{label}</label>
+                          <input type="number" step="0.01" min="0" max="100"
+                            value={formData.taxasAntecipacaoFaixas?.[key] || fallback}
+                            onChange={(e) => handleSimpleChange('taxasAntecipacaoFaixas', key, e.target.value)} />
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="actions-footer">

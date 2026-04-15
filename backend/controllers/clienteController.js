@@ -177,6 +177,10 @@ exports.updateCliente = async (req, res) => {
       updatePayload.taxaOperacao = sanitizeNumber(req.body.taxaOperacao, cliente.taxaOperacao || 15);
     }
 
+    if (req.body.taxaPlataformaPorLitro !== undefined) {
+      updatePayload.taxaPlataformaPorLitro = sanitizeNumber(req.body.taxaPlataformaPorLitro, cliente.taxaPlataformaPorLitro || 0.08);
+    }
+
     if (req.body.ativo !== undefined) {
       updatePayload.ativo = req.body.ativo;
     }

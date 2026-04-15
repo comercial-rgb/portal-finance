@@ -2,6 +2,7 @@ const Fatura = require('../models/Fatura');
 const OrdemServico = require('../models/OrdemServico');
 const Abastecimento = require('../models/Abastecimento');
 const ImpostosRetencoes = require('../models/ImpostosRetencoes');
+const Cliente = require('../models/Cliente');
 
 // Listar todas as faturas
 exports.listar = async (req, res) => {
@@ -734,7 +735,9 @@ exports.criarFaturaAbastecimento = async (req, res) => {
     });
 
     // Taxa da plataforma (gerenciadora) = taxa por litro × total de litros
-    const taxaPlataformaPorLitro = impostos.taxaPlataformaPorLitro || 0.08;
+    // Lê do cadastro do cliente (varia de R$ 0,08 a R$ 0,15 por contrato)
+    const clienteDoc = await Cliente.findById(cliente);
+    const taxaPlataformaPorLitro = clienteDoc?.taxaPlataformaPorLitro ?? impostos.taxaPlataformaPorLitro ?? 0.08;
     const valorTaxaPlataforma = Math.round(totalLitros * taxaPlataformaPorLitro * 100) / 100;
     valorTaxasOperacao = valorTaxaPlataforma;
 

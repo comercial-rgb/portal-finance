@@ -238,6 +238,12 @@ const ClienteSchema = new mongoose.Schema({
     enum: ['manutencao', 'combustivel'],
     default: ['manutencao']
   },
+  // Taxa da plataforma (gerenciadora) por litro - varia de R$ 0,08 a R$ 0,15 por cliente
+  taxaPlataformaPorLitro: {
+    type: Number,
+    default: 0.08,
+    min: 0
+  },
   // Flag para permitir que fornecedores solicitem antecipação de faturas vinculadas a este cliente
   permitirAntecipacaoFornecedor: {
     type: Boolean,

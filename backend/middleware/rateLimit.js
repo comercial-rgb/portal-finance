@@ -124,8 +124,8 @@ const rateLimit = (maxRequests = 100, windowMs = 60 * 1000, message = 'Muitas re
  * Presets de rate limiting para diferentes tipos de rotas
  */
 const rateLimitPresets = {
-  // Autenticação - mais restritivo
-  auth: rateLimit(10, 15 * 60 * 1000, 'Muitas tentativas de login. Aguarde 15 minutos.'),
+  // Autenticação - permite 30 tentativas a cada 5 minutos
+  auth: rateLimit(30, 5 * 60 * 1000, 'Muitas tentativas de login. Aguarde 5 minutos.'),
   
   // Operações de escrita - médio
   write: rateLimit(100, 60 * 1000, 'Muitas operações de escrita. Aguarde 1 minuto.'),

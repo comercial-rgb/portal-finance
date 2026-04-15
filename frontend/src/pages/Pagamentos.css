@@ -23,7 +23,7 @@
 
 /* Pagamentos - Container */
 .pagamentos-container {
-  max-width: 1400px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 0;
 }
@@ -369,7 +369,7 @@
   background: var(--branco);
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .section-header {
@@ -410,6 +410,7 @@
 
 .data-table {
   width: 100%;
+  min-width: 1200px;
   border-collapse: collapse;
 }
 

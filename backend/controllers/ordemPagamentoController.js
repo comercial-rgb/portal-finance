@@ -105,20 +105,36 @@ exports.criar = async (req, res) => {
     if (!clienteDoc) return res.status(404).json({ message: 'Cliente não encontrado' });
     if (!fornecedorDoc) return res.status(404).json({ message: 'Fornecedor não encontrado' });
 
-    // Criar ordem
-    const ordem = new OrdemPagamento({
-      cliente,
-      fornecedor,
-      fatura: fatura || null,
-      faturaNumeroManual: faturaNumeroManual || null,
-      valor: valorNumerico,
-      dataGeracao,
-      observacoes: observacoes || '',
-      criadoPor: req.user._id,
-      status: 'Pendente'
-    });
+    // Criar ordem com retry para evitar conflito de código duplicado
+    let ordem;
+    let tentativas = 0;
+    const maxTentativas = 3;
 
-    await ordem.save();
+    while (tentativas < maxTentativas) {
+      try {
+        ordem = new OrdemPagamento({
+          cliente,
+          fornecedor,
+          fatura: fatura || null,
+          faturaNumeroManual: faturaNumeroManual || null,
+          valor: valorNumerico,
+          dataGeracao,
+          observacoes: observacoes || '',
+          criadoPor: req.user._id,
+          status: 'Pendente'
+        });
+        await ordem.save();
+        break; // Sucesso, sai do loop
+      } catch (saveError) {
+        tentativas++;
+        if (saveError.code === 11000 && tentativas < maxTentativas) {
+          // Código duplicado, tentar novamente (pre-save irá gerar novo código)
+          console.warn(`⚠️ Conflito de código OP, tentativa ${tentativas}/${maxTentativas}`);
+          continue;
+        }
+        throw saveError; // Outro erro ou esgotou tentativas
+      }
+    }
 
     // === INTEGRAÇÃO COM FINSYSTEM ===
     // Enviar movimentação como repasse a fornecedor (assíncrono - não bloqueia)

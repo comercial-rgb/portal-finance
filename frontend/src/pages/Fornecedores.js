@@ -14,6 +14,8 @@ function Fornecedores() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [bankInfoId, setBankInfoId] = useState(null);
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false);
+  const [buscandoCep, setBuscandoCep] = useState(false);
   
   // Paginação
   const [paginaAtual, setPaginaAtual] = useState(1);
@@ -32,6 +34,7 @@ function Fornecedores() {
     razaoSocial: '',
     nomeFantasia: '',
     cnpjCpf: '',
+    cep: '',
     endereco: '',
     bairro: '',
     cidade: '',
@@ -169,6 +172,7 @@ function Fornecedores() {
       razaoSocial: '',
       nomeFantasia: '',
       cnpjCpf: '',
+      cep: '',
       endereco: '',
       bairro: '',
       cidade: '',
@@ -211,6 +215,7 @@ function Fornecedores() {
       razaoSocial: fornecedor.razaoSocial || '',
       nomeFantasia: fornecedor.nomeFantasia || '',
       cnpjCpf: fornecedor.cnpjCpf || '',
+      cep: fornecedor.cep || '',
       endereco: fornecedor.endereco || '',
       bairro: fornecedor.bairro || '',
       cidade: fornecedor.cidade || '',
@@ -272,6 +277,59 @@ function Fornecedores() {
     const value = e.target.value.replace(/\D/g, '');
     const formatted = value.length <= 11 ? formatCPF(e.target.value) : formatCNPJ(e.target.value);
     setFormData({ ...formData, cnpjCpf: formatted });
+  };
+
+  const buscarCNPJ = async () => {
+    const cnpjLimpo = formData.cnpjCpf.replace(/\D/g, '');
+    if (cnpjLimpo.length !== 14) {
+      toast.warn('Digite um CNPJ válido com 14 dígitos');
+      return;
+    }
+    setBuscandoCnpj(true);
+    try {
+      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
+      if (!response.ok) throw new Error('CNPJ não encontrado');
+      const data = await response.json();
+      setFormData(prev => ({
+        ...prev,
+        razaoSocial: data.razao_social || prev.razaoSocial,
+        nomeFantasia: data.nome_fantasia || prev.nomeFantasia,
+        endereco: data.logradouro ? `${data.logradouro}${data.numero ? ', ' + data.numero : ''}${data.complemento ? ' - ' + data.complemento : ''}` : prev.endereco,
+        bairro: data.bairro || prev.bairro,
+        cidade: data.municipio || prev.cidade,
+        estado: data.uf || prev.estado,
+        cep: data.cep ? data.cep.replace(/\D/g, '').replace(/(\d{5})(\d{3})/, '$1-$2') : prev.cep,
+        telefone: data.ddd_telefone_1 ? formatTelefone(data.ddd_telefone_1.replace(/\D/g, '')) : prev.telefone
+      }));
+      toast.success('Dados do CNPJ preenchidos!');
+    } catch (error) {
+      toast.error('Não foi possível buscar o CNPJ. Verifique e tente novamente.');
+    } finally {
+      setBuscandoCnpj(false);
+    }
+  };
+
+  const buscarCEP = async (cepValue) => {
+    const cepLimpo = (cepValue || formData.cep || '').replace(/\D/g, '');
+    if (cepLimpo.length !== 8) return;
+    setBuscandoCep(true);
+    try {
+      const response = await fetch(`https://brasilapi.com.br/api/cep/v1/${cepLimpo}`);
+      if (!response.ok) throw new Error('CEP não encontrado');
+      const data = await response.json();
+      setFormData(prev => ({
+        ...prev,
+        endereco: data.street || prev.endereco,
+        bairro: data.neighborhood || prev.bairro,
+        cidade: data.city || prev.cidade,
+        estado: data.state || prev.estado
+      }));
+      toast.success('Endereço preenchido pelo CEP!');
+    } catch (error) {
+      toast.error('CEP não encontrado.');
+    } finally {
+      setBuscandoCep(false);
+    }
   };
 
   const estados = [
@@ -574,14 +632,25 @@ function Fornecedores() {
 
                   <div className="form-group">
                     <label>CNPJ/CPF *</label>
-                    <input
-                      type="text"
-                      name="cnpjCpf"
-                      value={formData.cnpjCpf}
-                      onChange={handleCNPJCPFChange}
-                      required
-                      maxLength="18"
-                    />
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        type="text"
+                        name="cnpjCpf"
+                        value={formData.cnpjCpf}
+                        onChange={handleCNPJCPFChange}
+                        required
+                        maxLength="18"
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={buscarCNPJ}
+                        disabled={buscandoCnpj}
+                        style={{ padding: '0 12px', background: '#3182ce', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                      >
+                        {buscandoCnpj ? '...' : '🔍 Buscar'}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="form-group">
@@ -640,6 +709,33 @@ function Fornecedores() {
               <div className="form-section">
                 <h3>Endereço</h3>
                 <div className="form-grid">
+                  <div className="form-group">
+                    <label>CEP</label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        type="text"
+                        name="cep"
+                        value={formData.cep}
+                        onChange={(e) => {
+                          const v = e.target.value.replace(/\D/g, '').replace(/(\d{5})(\d)/, '$1-$2').slice(0, 9);
+                          setFormData({ ...formData, cep: v });
+                          if (v.replace(/\D/g, '').length === 8) buscarCEP(v);
+                        }}
+                        placeholder="00000-000"
+                        maxLength="9"
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => buscarCEP()}
+                        disabled={buscandoCep}
+                        style={{ padding: '0 12px', background: '#3182ce', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                      >
+                        {buscandoCep ? '...' : '🔍'}
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="form-group full-width">
                     <label>Endereço *</label>
                     <input

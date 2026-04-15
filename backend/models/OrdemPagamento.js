@@ -105,18 +105,17 @@ const ordemPagamentoSchema = new mongoose.Schema({
 // Auto-gerar código sequencial OP-XXXX
 ordemPagamentoSchema.pre('save', async function (next) {
   if (!this.codigo) {
-    // Buscar pelo maior código numérico (não por createdAt) para evitar duplicatas
-    const ultima = await this.constructor
-      .findOne({ codigo: { $regex: /^OP-\d+$/ } })
-      .sort({ codigo: -1 })
+    // Buscar todos os códigos e encontrar o maior numericamente
+    const todas = await this.constructor
+      .find({ codigo: { $regex: /^OP-\d+$/ } })
       .select('codigo')
       .lean();
-    let proximo = 1;
-    if (ultima && ultima.codigo) {
-      const num = parseInt(ultima.codigo.replace('OP-', ''));
-      if (!isNaN(num)) proximo = num + 1;
+    let maiorNum = 0;
+    for (const doc of todas) {
+      const num = parseInt(doc.codigo.replace('OP-', ''));
+      if (!isNaN(num) && num > maiorNum) maiorNum = num;
     }
-    this.codigo = `OP-${String(proximo).padStart(4, '0')}`;
+    this.codigo = `OP-${String(maiorNum + 1).padStart(4, '0')}`;
   }
   next();
 });

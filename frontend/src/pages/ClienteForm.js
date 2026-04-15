@@ -75,6 +75,8 @@ function ClienteForm() {
   const [editingContrato, setEditingContrato] = useState(null);
   const [editingAditivo, setEditingAditivo] = useState(null);
   const [editingEmpenho, setEditingEmpenho] = useState(null);
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false);
+  const [buscandoCep, setBuscandoCep] = useState(false);
   
   const [novoContrato, setNovoContrato] = useState({
     numeroContrato: '',
@@ -339,6 +341,65 @@ function ClienteForm() {
       .replace(/(\d{3})(\d)/, '$1/$2')
       .replace(/(\d{4})(\d)/, '$1-$2')
       .replace(/(-\d{2})\d+?$/, '$1');
+  };
+
+  const buscarCNPJ = async () => {
+    const cnpjLimpo = (formData.cnpj || '').replace(/\D/g, '');
+    if (cnpjLimpo.length !== 14) {
+      toast.warn('Digite um CNPJ válido com 14 dígitos');
+      return;
+    }
+    setBuscandoCnpj(true);
+    try {
+      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
+      if (!response.ok) throw new Error('CNPJ não encontrado');
+      const data = await response.json();
+      setFormData(prev => ({
+        ...prev,
+        razaoSocial: data.razao_social || prev.razaoSocial,
+        nomeFantasia: data.nome_fantasia || prev.nomeFantasia,
+        endereco: {
+          ...prev.endereco,
+          logradouro: data.logradouro ? `${data.logradouro}${data.numero ? ', ' + data.numero : ''}` : prev.endereco.logradouro,
+          complemento: data.complemento || prev.endereco.complemento,
+          bairro: data.bairro || prev.endereco.bairro,
+          cidade: data.municipio || prev.endereco.cidade,
+          estado: data.uf || prev.endereco.estado,
+          cep: data.cep ? data.cep.replace(/\D/g, '').replace(/(\d{5})(\d{3})/, '$1-$2') : prev.endereco.cep
+        }
+      }));
+      toast.success('Dados do CNPJ preenchidos!');
+    } catch (error) {
+      toast.error('Não foi possível buscar o CNPJ. Verifique e tente novamente.');
+    } finally {
+      setBuscandoCnpj(false);
+    }
+  };
+
+  const buscarCEP = async (cepValue) => {
+    const cepLimpo = (cepValue || formData.endereco?.cep || '').replace(/\D/g, '');
+    if (cepLimpo.length !== 8) return;
+    setBuscandoCep(true);
+    try {
+      const response = await fetch(`https://brasilapi.com.br/api/cep/v1/${cepLimpo}`);
+      if (!response.ok) throw new Error('CEP não encontrado');
+      const data = await response.json();
+      setFormData(prev => ({
+        ...prev,
+        endereco: {
+          ...prev.endereco,
+          logradouro: data.street || prev.endereco.logradouro,
+          bairro: data.neighborhood || prev.endereco.bairro,
+          cidade: data.city || prev.endereco.cidade,
+          estado: data.state || prev.endereco.estado
+        }
+      }));
+      toast.success('Endereço preenchido pelo CEP!');
+    } catch (error) {
+      toast.error('CEP não encontrado.');
+    } finally {
+      setBuscandoCep(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -1048,15 +1109,26 @@ function ClienteForm() {
 
                     <div className="form-group">
                       <label>CNPJ *</label>
-                      <input
-                        type="text"
-                        name="cnpj"
-                        value={formData.cnpj}
-                        onChange={(e) => setFormData({ ...formData, cnpj: formatCNPJ(e.target.value) })}
-                        required
-                        placeholder="00.000.000/0000-00"
-                        maxLength="18"
-                      />
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <input
+                          type="text"
+                          name="cnpj"
+                          value={formData.cnpj}
+                          onChange={(e) => setFormData({ ...formData, cnpj: formatCNPJ(e.target.value) })}
+                          required
+                          placeholder="00.000.000/0000-00"
+                          maxLength="18"
+                          style={{ flex: 1 }}
+                        />
+                        <button
+                          type="button"
+                          onClick={buscarCNPJ}
+                          disabled={buscandoCnpj}
+                          style={{ padding: '0 14px', background: '#3182ce', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                        >
+                          {buscandoCnpj ? '...' : '🔍 Buscar CNPJ'}
+                        </button>
+                      </div>
                     </div>
 
                     <div className="form-group">
@@ -1503,14 +1575,29 @@ function ClienteForm() {
 
                     <div className="form-group">
                       <label>CEP</label>
-                      <input
-                        type="text"
-                        name="endereco.cep"
-                        value={formData.endereco.cep}
-                        onChange={handleInputChange}
-                        placeholder="00000-000"
-                        maxLength="9"
-                      />
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <input
+                          type="text"
+                          name="endereco.cep"
+                          value={formData.endereco.cep}
+                          onChange={(e) => {
+                            const v = e.target.value.replace(/\D/g, '').replace(/(\d{5})(\d)/, '$1-$2').slice(0, 9);
+                            setFormData(prev => ({ ...prev, endereco: { ...prev.endereco, cep: v } }));
+                            if (v.replace(/\D/g, '').length === 8) buscarCEP(v);
+                          }}
+                          placeholder="00000-000"
+                          maxLength="9"
+                          style={{ flex: 1 }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => buscarCEP()}
+                          disabled={buscandoCep}
+                          style={{ padding: '0 12px', background: '#3182ce', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                        >
+                          {buscandoCep ? '...' : '🔍'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -644,7 +644,7 @@ exports.criarFaturaAbastecimento = async (req, res) => {
     }
 
     const abastecimentos = await Abastecimento.find(query)
-      .populate('cliente', 'razaoSocial nomeFantasia cnpj tipoImposto tiposServico tipoTaxa taxaOperacao taxasAntecipacao')
+      .populate('cliente', 'razaoSocial nomeFantasia cnpj tipoImposto tipoImpostoCombustivel tiposServico tipoTaxa taxaOperacao taxasAntecipacao taxaPlataformaPorLitro')
       .populate('fornecedor', 'razaoSocial nomeFantasia cnpjCpf naoOptanteSimples');
 
     if (abastecimentos.length !== abastecimentoIds.length) {
@@ -701,8 +701,14 @@ exports.criarFaturaAbastecimento = async (req, res) => {
       const fornecedorAb = ab.fornecedor;
       let impostosAb = 0;
 
-      if (fornecedorAb?.naoOptanteSimples && clienteAb?.tipoImposto && Array.isArray(clienteAb.tipoImposto)) {
-        clienteAb.tipoImposto.forEach(tipoImposto => {
+      // Combustível usa tipoImpostoCombustivel (separado de manutenção)
+      // Fallback para tipoImposto caso tipoImpostoCombustivel não esteja configurado
+      const impostosCombustivel = clienteAb?.tipoImpostoCombustivel?.length > 0
+        ? clienteAb.tipoImpostoCombustivel
+        : clienteAb?.tipoImposto;
+
+      if (fornecedorAb?.naoOptanteSimples && impostosCombustivel && Array.isArray(impostosCombustivel)) {
+        impostosCombustivel.forEach(tipoImposto => {
           if (tipoImposto === 'municipais' && impostos.combustivelMunicipais) {
             const t = impostos.combustivelMunicipais;
             impostosAb += Math.round(valorLiquido * ((t.irrf || 0) + (t.csll || 0) + (t.pis || 0) + (t.cofins || 0)) / 100 * 100) / 100;

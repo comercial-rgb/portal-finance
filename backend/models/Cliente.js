@@ -172,10 +172,16 @@ const ClienteSchema = new mongoose.Schema({
     default: [],
     validate: {
       validator: function(v) {
-        return v.length <= 3;
+        return v.length <= 4;
       },
-      message: 'É permitido selecionar no máximo 3 tipos de impostos'
+      message: 'É permitido selecionar no máximo 4 tipos de impostos'
     }
+  },
+  // Impostos específicos para combustível (separado de manutenção)
+  tipoImpostoCombustivel: {
+    type: [String],
+    enum: ['municipais', 'estaduais', 'federais'],
+    default: []
   },
   // Taxas de Operações
   tipoTaxa: {

@@ -192,6 +192,13 @@ exports.updateCliente = async (req, res) => {
       updatePayload.tipoImposto = tipos;
     }
 
+    if (req.body.tipoImpostoCombustivel !== undefined) {
+      const tipos = Array.isArray(req.body.tipoImpostoCombustivel)
+        ? req.body.tipoImpostoCombustivel
+        : [req.body.tipoImpostoCombustivel].filter(Boolean);
+      updatePayload.tipoImpostoCombustivel = tipos;
+    }
+
     if (req.body.taxasAntecipacao) {
       updatePayload.taxasAntecipacao = {
         aVista: sanitizeNumber(req.body.taxasAntecipacao.aVista, cliente.taxasAntecipacao?.aVista ?? 15),

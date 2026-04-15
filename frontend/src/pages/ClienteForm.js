@@ -28,6 +28,7 @@ function ClienteForm() {
     inscricaoEstadual: '',
     percentualDesconto: '',
     tipoImposto: [],
+    tipoImpostoCombustivel: [],
     impostosSobreValorBruto: false,
     permitirAntecipacaoFornecedor: false,
     tiposServico: ['manutencao'],
@@ -161,6 +162,7 @@ function ClienteForm() {
         cnpj: cnpjFormatado,
         nomesAlternativos: clienteData.nomesAlternativos || [],
         tipoImposto: clienteData.tipoImposto || [],
+        tipoImpostoCombustivel: clienteData.tipoImpostoCombustivel || [],
         tiposServico: clienteData.tiposServico || ['manutencao'],
         impostosSobreValorBruto: clienteData.impostosSobreValorBruto || false,
         permitirAntecipacaoFornecedor: clienteData.permitirAntecipacaoFornecedor || false,
@@ -240,21 +242,30 @@ function ClienteForm() {
   const handleTipoImpostoToggle = (tipo) => {
     const currentTipos = formData.tipoImposto || [];
     if (currentTipos.includes(tipo)) {
-      // Remove se já está selecionado
       setFormData({
         ...formData,
         tipoImposto: currentTipos.filter(t => t !== tipo)
       });
     } else {
-      // Adiciona se não está e se ainda não tem 3
-      if (currentTipos.length < 3) {
-        setFormData({
-          ...formData,
-          tipoImposto: [...currentTipos, tipo]
-        });
-      } else {
-        toast.warning('Você pode selecionar no máximo 3 tipos de impostos');
-      }
+      setFormData({
+        ...formData,
+        tipoImposto: [...currentTipos, tipo]
+      });
+    }
+  };
+
+  const handleTipoImpostoCombustivelToggle = (tipo) => {
+    const currentTipos = formData.tipoImpostoCombustivel || [];
+    if (currentTipos.includes(tipo)) {
+      setFormData({
+        ...formData,
+        tipoImpostoCombustivel: currentTipos.filter(t => t !== tipo)
+      });
+    } else {
+      setFormData({
+        ...formData,
+        tipoImpostoCombustivel: [...currentTipos, tipo]
+      });
     }
   };
 
@@ -1233,47 +1244,29 @@ function ClienteForm() {
                 </div>
 
                 <div className="form-section">
-                  <h3>Impostos & Retenções</h3>
-                  <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '15px' }}>Selecione até 3 tipos de impostos</p>
+                  <h3>🔧 Impostos & Retenções — Manutenção de Frotas</h3>
+                  <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '15px' }}>
+                    Impostos aplicados sobre faturas de manutenção (peças e serviços)
+                  </p>
                   <div className="form-grid">
                     <div className="form-group full-width">
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: (formData.tipoImposto || []).includes('municipais') ? '#e3f2fd' : 'white', transition: 'background-color 0.2s' }}>
-                          <input
-                            type="checkbox"
-                            checked={(formData.tipoImposto || []).includes('municipais')}
-                            onChange={() => handleTipoImpostoToggle('municipais')}
-                            style={{ marginRight: '12px', width: '18px', height: '18px', cursor: 'pointer', flexShrink: 0 }}
-                          />
-                          <span style={{ flex: 1 }}>Impostos Fora do Simples - Órgãos Municipais</span>
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: (formData.tipoImposto || []).includes('estaduais') ? '#e3f2fd' : 'white', transition: 'background-color 0.2s' }}>
-                          <input
-                            type="checkbox"
-                            checked={(formData.tipoImposto || []).includes('estaduais')}
-                            onChange={() => handleTipoImpostoToggle('estaduais')}
-                            style={{ marginRight: '12px', width: '18px', height: '18px', cursor: 'pointer', flexShrink: 0 }}
-                          />
-                          <span style={{ flex: 1 }}>Impostos Fora do Simples - Órgãos Estaduais</span>
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: (formData.tipoImposto || []).includes('federais') ? '#e3f2fd' : 'white', transition: 'background-color 0.2s' }}>
-                          <input
-                            type="checkbox"
-                            checked={(formData.tipoImposto || []).includes('federais')}
-                            onChange={() => handleTipoImpostoToggle('federais')}
-                            style={{ marginRight: '12px', width: '18px', height: '18px', cursor: 'pointer', flexShrink: 0 }}
-                          />
-                          <span style={{ flex: 1 }}>Impostos Fora do Simples - Órgãos Federais</span>
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: (formData.tipoImposto || []).includes('retencoes') ? '#e3f2fd' : 'white', transition: 'background-color 0.2s' }}>
-                          <input
-                            type="checkbox"
-                            checked={(formData.tipoImposto || []).includes('retencoes')}
-                            onChange={() => handleTipoImpostoToggle('retencoes')}
-                            style={{ marginRight: '12px', width: '18px', height: '18px', cursor: 'pointer', flexShrink: 0 }}
-                          />
-                          <span style={{ flex: 1 }}>Retenções Órgão</span>
-                        </label>
+                        {[
+                          { key: 'municipais', label: 'Impostos Fora do Simples - Órgãos Municipais' },
+                          { key: 'estaduais', label: 'Impostos Fora do Simples - Órgãos Estaduais' },
+                          { key: 'federais', label: 'Impostos Fora do Simples - Órgãos Federais' },
+                          { key: 'retencoes', label: 'Retenções Órgão' }
+                        ].map(({ key, label }) => (
+                          <label key={key} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: (formData.tipoImposto || []).includes(key) ? '#e8e5f5' : 'white', transition: 'background-color 0.2s' }}>
+                            <input
+                              type="checkbox"
+                              checked={(formData.tipoImposto || []).includes(key)}
+                              onChange={() => handleTipoImpostoToggle(key)}
+                              style={{ marginRight: '12px', width: '18px', height: '18px', cursor: 'pointer', flexShrink: 0 }}
+                            />
+                            <span style={{ flex: 1 }}>🔧 {label}</span>
+                          </label>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -1311,6 +1304,37 @@ function ClienteForm() {
                     </div>
                   </div>
                 </div>
+
+                {/* Impostos Combustível — aparece apenas quando combustível está nos tipos de serviço */}
+                {(formData.tiposServico || []).includes('combustivel') && (
+                  <div className="form-section">
+                    <h3>⛽ Retenções — Combustível</h3>
+                    <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '15px' }}>
+                      Retenções aplicadas sobre faturas de abastecimento (IN RFB nº 1.234/2012) — independente da manutenção
+                    </p>
+                    <div className="form-grid">
+                      <div className="form-group full-width">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          {[
+                            { key: 'municipais', label: 'Retenções Combustível - Órgãos Municipais' },
+                            { key: 'estaduais', label: 'Retenções Combustível - Órgãos Estaduais' },
+                            { key: 'federais', label: 'Retenções Combustível - Órgãos Federais' }
+                          ].map(({ key, label }) => (
+                            <label key={key} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '10px', border: '1px solid', borderColor: (formData.tipoImpostoCombustivel || []).includes(key) ? '#d97706' : '#ddd', borderRadius: '4px', backgroundColor: (formData.tipoImpostoCombustivel || []).includes(key) ? '#fef3c7' : 'white', transition: 'all 0.2s' }}>
+                              <input
+                                type="checkbox"
+                                checked={(formData.tipoImpostoCombustivel || []).includes(key)}
+                                onChange={() => handleTipoImpostoCombustivelToggle(key)}
+                                style={{ marginRight: '12px', width: '18px', height: '18px', cursor: 'pointer', flexShrink: 0 }}
+                              />
+                              <span style={{ flex: 1 }}>⛽ {label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="form-section">
                   <h3>🔄 Antecipação de Fornecedores</h3>

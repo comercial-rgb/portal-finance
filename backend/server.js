@@ -179,9 +179,30 @@ mongoose.connect(MONGODB_URI, {
   ...mongooseOptimizations,
   family: 4 // Força IPv4
 })
-  .then(() => {
+  .then(async () => {
     console.log('✅ Conectado ao MongoDB com otimizações');
     console.log(`📊 Pool de conexões: ${mongooseOptimizations.maxPoolSize} máx, ${mongooseOptimizations.minPoolSize} mín`);
+    
+    // Inicializar counter de OrdemPagamento se não existir
+    try {
+      const counters = mongoose.connection.collection('counters');
+      const existing = await counters.findOne({ _id: 'ordemPagamento' });
+      if (!existing) {
+        const OrdemPagamento = require('./models/OrdemPagamento');
+        const todas = await OrdemPagamento.find({ codigo: { $regex: /^OP-\d+$/ } }).select('codigo').lean();
+        let maiorNum = 0;
+        for (const doc of todas) {
+          const num = parseInt(doc.codigo.replace('OP-', ''));
+          if (!isNaN(num) && num > maiorNum) maiorNum = num;
+        }
+        await counters.insertOne({ _id: 'ordemPagamento', seq: maiorNum });
+        console.log(`📊 Counter OP inicializado em ${maiorNum}`);
+      } else {
+        console.log(`📊 Counter OP existente: ${existing.seq}`);
+      }
+    } catch (err) {
+      console.warn('⚠️ Erro ao inicializar counter OP:', err.message);
+    }
     
     const server = app.listen(PORT, () => {
       console.log(`🚀 Servidor rodando na porta ${PORT}`);

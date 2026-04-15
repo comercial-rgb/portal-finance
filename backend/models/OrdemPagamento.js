@@ -102,20 +102,38 @@ const ordemPagamentoSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Auto-gerar código sequencial OP-XXXX
+// Auto-gerar código sequencial OP-XXXX via counter atômico
 ordemPagamentoSchema.pre('save', async function (next) {
   if (!this.codigo) {
-    // Buscar todos os códigos e encontrar o maior numericamente
-    const todas = await this.constructor
-      .find({ codigo: { $regex: /^OP-\d+$/ } })
-      .select('codigo')
-      .lean();
-    let maiorNum = 0;
-    for (const doc of todas) {
-      const num = parseInt(doc.codigo.replace('OP-', ''));
-      if (!isNaN(num) && num > maiorNum) maiorNum = num;
+    try {
+      // Counter atômico — findOneAndUpdate com $inc garante unicidade sem race condition
+      const CounterModel = mongoose.connection.collection('counters');
+      const result = await CounterModel.findOneAndUpdate(
+        { _id: 'ordemPagamento' },
+        { $inc: { seq: 1 } },
+        { upsert: true, returnDocument: 'after' }
+      );
+      this.codigo = `OP-${String(result.seq).padStart(4, '0')}`;
+    } catch (error) {
+      // Fallback: ler o maior código existente se counter falhar na primeira vez
+      const todas = await this.constructor
+        .find({ codigo: { $regex: /^OP-\d+$/ } })
+        .select('codigo')
+        .lean();
+      let maiorNum = 0;
+      for (const doc of todas) {
+        const num = parseInt(doc.codigo.replace('OP-', ''));
+        if (!isNaN(num) && num > maiorNum) maiorNum = num;
+      }
+      const nextNum = maiorNum + 1;
+      // Inicializar counter para próximas vezes
+      await mongoose.connection.collection('counters').updateOne(
+        { _id: 'ordemPagamento' },
+        { $set: { seq: nextNum } },
+        { upsert: true }
+      );
+      this.codigo = `OP-${String(nextNum).padStart(4, '0')}`;
     }
-    this.codigo = `OP-${String(maiorNum + 1).padStart(4, '0')}`;
   }
   next();
 });

@@ -86,11 +86,12 @@ exports.getOrdensServico = async (req, res) => {
     }
     
     // Filtro por faturado fornecedor/cliente (para tela de faturas)
+    // Usa $ne: true em vez de === false para capturar docs antigos sem o campo
     if (faturadoFornecedor !== undefined) {
-      query.faturadoFornecedor = faturadoFornecedor === 'true';
+      query.faturadoFornecedor = faturadoFornecedor === 'true' ? true : { $ne: true };
     }
     if (faturadoCliente !== undefined) {
-      query.faturadoCliente = faturadoCliente === 'true';
+      query.faturadoCliente = faturadoCliente === 'true' ? true : { $ne: true };
     }
     
     if (codigo) {

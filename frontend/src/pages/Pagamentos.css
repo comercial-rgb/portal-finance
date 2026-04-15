@@ -9,7 +9,7 @@
 .content-wrapper {
   display: flex;
   flex: 1;
-  padding-top: 0;
+  padding-top: 80px;
 }
 
 .main-content {
@@ -23,7 +23,7 @@
 
 /* Pagamentos - Container */
 .pagamentos-container {
-  max-width: 100%;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0;
 }
@@ -370,6 +370,7 @@
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: visible;
+  margin-bottom: 1.5rem;
 }
 
 .section-header {

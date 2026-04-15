@@ -45,6 +45,35 @@ const faturaSchema = new mongoose.Schema({
       default: null
     }
   }],
+  // Abastecimentos vinculados à fatura
+  abastecimentosVinculados: [{
+    abastecimento: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Abastecimento'
+    },
+    statusPagamento: {
+      type: String,
+      enum: ['Aguardando pagamento', 'Paga'],
+      default: 'Aguardando pagamento'
+    },
+    valorAbastecimento: {
+      type: Number,
+      required: true
+    },
+    dataPagamento: {
+      type: Date
+    },
+    comprovante: {
+      type: String,
+      default: null
+    }
+  }],
+  // Origem da fatura: 'os' (Ordens de Serviço) ou 'abastecimento' (Combustível)
+  origem: {
+    type: String,
+    enum: ['os', 'abastecimento'],
+    default: 'os'
+  },
   periodoInicio: {
     type: Date,
     required: [true, 'Data de início do período é obrigatória']
@@ -146,14 +175,22 @@ faturaSchema.pre('save', function(next) {
     // Calcular o fator de proporção (líquido / bruto)
     const fatorLiquido = valorDevido / valorComDesconto;
     
-    // Valor pago é a soma dos valores líquidos das OS pagas
-    this.valorPago = this.ordensServico
+    // Valor pago é a soma dos valores líquidos das OS pagas + abastecimentos pagos
+    let valorPagoOS = this.ordensServico
       .filter(os => os.statusPagamento === 'Paga')
       .reduce((acc, os) => {
-        // valorOS é o valor bruto da OS, multiplicamos pelo fator para obter o valor líquido
         const valorLiquidoOS = (os.valorOS || 0) * fatorLiquido;
         return acc + valorLiquidoOS;
       }, 0);
+
+    let valorPagoAb = (this.abastecimentosVinculados || [])
+      .filter(ab => ab.statusPagamento === 'Paga')
+      .reduce((acc, ab) => {
+        const valorLiquidoAb = (ab.valorAbastecimento || 0) * fatorLiquido;
+        return acc + valorLiquidoAb;
+      }, 0);
+    
+    this.valorPago = valorPagoOS + valorPagoAb;
     
     // Arredondar para evitar problemas de precisão
     this.valorPago = Math.round(this.valorPago * 100) / 100;

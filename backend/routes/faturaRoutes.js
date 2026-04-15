@@ -17,6 +17,9 @@ router.get('/:id', filterByFornecedor, filterByCliente, faturaController.buscarP
 // Criar nova fatura (bloqueado para fornecedores e clientes)
 router.post('/', fornecedorReadOnly, clienteReadOnly, faturaController.criar);
 
+// Criar fatura a partir de abastecimentos (bloqueado para fornecedores e clientes)
+router.post('/abastecimento', fornecedorReadOnly, clienteReadOnly, faturaController.criarFaturaAbastecimento);
+
 // Atualizar fatura (bloqueado para fornecedores e clientes)
 router.put('/:id', fornecedorReadOnly, clienteReadOnly, faturaController.atualizar);
 

@@ -32,9 +32,11 @@ const antecipacaoRoutes = require('./routes/antecipacaoRoutes');
 const pagamentoRoutes = require('./routes/pagamentoRoutes');
 const notaFiscalClienteRoutes = require('./routes/notaFiscalClienteRoutes');
 const webhookFrotaRoutes = require('./routes/webhookFrotaRoutes');
+const webhookCombustivelRoutes = require('./routes/webhookCombustivelRoutes');
 const importacaoRoutes = require('./routes/importacaoRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const ordemPagamentoRoutes = require('./routes/ordemPagamentoRoutes');
+const abastecimentoRoutes = require('./routes/abastecimentoRoutes');
 
 const app = express();
 
@@ -113,6 +115,10 @@ app.use('/api/ordens-pagamento', ordemPagamentoRoutes);
 app.use('/api/notas-fiscais-clientes', notaFiscalClienteRoutes);
 // Webhook de integração com sistema de frotas (protegido por token)
 app.use('/api/webhook/frota', webhookFrotaRoutes);
+// Webhook de integração com sistema de combustível (protegido por token)
+app.use('/api/webhook/combustivel', webhookCombustivelRoutes);
+// Abastecimentos
+app.use('/api/abastecimentos', abastecimentoRoutes);
 // Importação em lote de OS (apenas admin)
 app.use('/api/importacao', importacaoRoutes);
 // Rotas administrativas (apenas super_admin)
@@ -141,7 +147,9 @@ app.get('/', (req, res) => {
       fornecedores: '/api/fornecedores',
       clientes: '/api/clientes',
       ordensServico: '/api/ordens-servico',
-      faturas: '/api/faturas'
+      abastecimentos: '/api/abastecimentos',
+      faturas: '/api/faturas',
+      webhookCombustivel: '/api/webhook/combustivel'
     }
   });
 });

@@ -232,6 +232,12 @@ const ClienteSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // Tipos de serviço que o cliente utiliza
+  tiposServico: {
+    type: [String],
+    enum: ['manutencao', 'combustivel'],
+    default: ['manutencao']
+  },
   // Flag para permitir que fornecedores solicitem antecipação de faturas vinculadas a este cliente
   permitirAntecipacaoFornecedor: {
     type: Boolean,

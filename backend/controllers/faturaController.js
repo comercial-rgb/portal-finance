@@ -1,5 +1,6 @@
 const Fatura = require('../models/Fatura');
 const OrdemServico = require('../models/OrdemServico');
+const Abastecimento = require('../models/Abastecimento');
 const ImpostosRetencoes = require('../models/ImpostosRetencoes');
 
 // Listar todas as faturas
@@ -608,5 +609,213 @@ exports.desativar = async (req, res) => {
   } catch (error) {
     console.error('Erro ao desativar fatura:', error);
     res.status(500).json({ message: 'Erro ao desativar fatura', error: error.message });
+  }
+};
+
+// Criar fatura a partir de abastecimentos selecionados
+exports.criarFaturaAbastecimento = async (req, res) => {
+  try {
+    const { tipo, fornecedor, cliente, abastecimentoIds, periodoInicio, periodoFim, impostosId, tipoPagamento } = req.body;
+
+    if (!tipo || !abastecimentoIds || abastecimentoIds.length === 0) {
+      return res.status(400).json({ message: 'Tipo e abastecimentos são obrigatórios' });
+    }
+
+    if (tipo === 'Fornecedor' && !fornecedor) {
+      return res.status(400).json({ message: 'Fornecedor é obrigatório para faturas de fornecedor' });
+    }
+
+    if (tipo === 'Cliente' && !cliente) {
+      return res.status(400).json({ message: 'Cliente é obrigatório para faturas de cliente' });
+    }
+
+    // Buscar abastecimentos
+    const query = {
+      _id: { $in: abastecimentoIds },
+      ativo: true
+    };
+
+    // Filtrar por status de faturamento
+    if (tipo === 'Fornecedor') {
+      query.faturadoFornecedor = false;
+    } else {
+      query.faturadoCliente = false;
+    }
+
+    const abastecimentos = await Abastecimento.find(query)
+      .populate('cliente', 'razaoSocial nomeFantasia cnpj tipoImposto tiposServico tipoTaxa taxaOperacao taxasAntecipacao')
+      .populate('fornecedor', 'razaoSocial nomeFantasia cnpjCpf naoOptanteSimples');
+
+    if (abastecimentos.length !== abastecimentoIds.length) {
+      return res.status(400).json({
+        message: 'Alguns abastecimentos não estão disponíveis ou já foram faturados'
+      });
+    }
+
+    // Buscar impostos
+    let impostos;
+    if (impostosId) {
+      impostos = await ImpostosRetencoes.findById(impostosId);
+    } else {
+      impostos = await ImpostosRetencoes.findOne({ ativo: true });
+    }
+
+    if (!impostos) {
+      return res.status(400).json({
+        message: 'Configuração de impostos não encontrada. Configure em Impostos & Retenções'
+      });
+    }
+
+    // Gerar número da fatura
+    const prefixo = tipo === 'Cliente' ? 'C' : 'F';
+    let numeroFatura;
+    let tentativas = 0;
+    do {
+      const numeroAleatorio = Math.floor(1000 + Math.random() * 9000);
+      numeroFatura = `${prefixo}${numeroAleatorio}`;
+      const existe = await Fatura.findOne({ numeroFatura }).lean();
+      if (!existe) break;
+      tentativas++;
+      if (tentativas >= 100) {
+        return res.status(500).json({ message: 'Não foi possível gerar número único para a fatura.' });
+      }
+    } while (true);
+
+    // Calcular valores usando motor fiscal de combustível
+    let valorTotal = 0;
+    let valorDesconto = 0;
+    let valorComDesconto = 0;
+    let valorImpostos = 0;
+    let valorTaxasOperacao = 0;
+    let totalLitros = 0;
+
+    const abastecimentosComValores = abastecimentos.map(ab => {
+      const valorBruto = ab.valor || 0;
+      const descontoPerc = ab.descontoPercentual || 0;
+      const desconto = Math.round((valorBruto * descontoPerc / 100) * 100) / 100;
+      const valorLiquido = Math.round((valorBruto - desconto) * 100) / 100;
+
+      // Motor fiscal de combustível - usa tabelas específicas (IN RFB 1.234/2012)
+      const clienteAb = ab.cliente;
+      const fornecedorAb = ab.fornecedor;
+      let impostosAb = 0;
+
+      if (fornecedorAb?.naoOptanteSimples && clienteAb?.tipoImposto && Array.isArray(clienteAb.tipoImposto)) {
+        clienteAb.tipoImposto.forEach(tipoImposto => {
+          if (tipoImposto === 'municipais' && impostos.combustivelMunicipais) {
+            const t = impostos.combustivelMunicipais;
+            impostosAb += Math.round(valorLiquido * ((t.irrf || 0) + (t.csll || 0) + (t.pis || 0) + (t.cofins || 0)) / 100 * 100) / 100;
+          }
+          if (tipoImposto === 'estaduais' && impostos.combustivelEstaduais) {
+            const t = impostos.combustivelEstaduais;
+            impostosAb += Math.round(valorLiquido * ((t.irrf || 0) + (t.csll || 0) + (t.pis || 0) + (t.cofins || 0)) / 100 * 100) / 100;
+          }
+          if (tipoImposto === 'federais' && impostos.combustivelFederais) {
+            const t = impostos.combustivelFederais;
+            impostosAb += Math.round(valorLiquido * ((t.irrf || 0) + (t.csll || 0) + (t.pis || 0) + (t.cofins || 0)) / 100 * 100) / 100;
+          }
+          if (tipoImposto === 'retencoes' && impostos.retencoesOrgao) {
+            impostosAb += Math.round(valorLiquido * (impostos.retencoesOrgao.percentual || 0) / 100 * 100) / 100;
+          }
+        });
+      }
+
+      valorTotal += valorBruto;
+      valorDesconto += desconto;
+      valorComDesconto += valorLiquido;
+      valorImpostos += impostosAb;
+      totalLitros += ab.litrosAbastecidos || 0;
+
+      return {
+        abastecimento: ab._id,
+        statusPagamento: 'Aguardando pagamento',
+        valorAbastecimento: valorLiquido
+      };
+    });
+
+    // Taxa da plataforma (gerenciadora) = taxa por litro × total de litros
+    const taxaPlataformaPorLitro = impostos.taxaPlataformaPorLitro || 0.08;
+    const valorTaxaPlataforma = Math.round(totalLitros * taxaPlataformaPorLitro * 100) / 100;
+    valorTaxasOperacao = valorTaxaPlataforma;
+
+    const valorDevido = Math.round((valorComDesconto - valorImpostos - valorTaxasOperacao) * 100) / 100;
+
+    // Criar fatura
+    const novaFatura = new Fatura({
+      numeroFatura,
+      tipo,
+      fornecedor: tipo === 'Fornecedor' ? fornecedor : undefined,
+      cliente: tipo === 'Cliente' ? cliente : undefined,
+      ordensServico: [], // Vazio pois é fatura de abastecimento
+      abastecimentosVinculados: abastecimentosComValores,
+      origem: 'abastecimento',
+      periodoInicio,
+      periodoFim,
+      valorTotal,
+      valorDesconto,
+      valorComDesconto,
+      valorImpostos,
+      valorTaxasOperacao,
+      valorDevido,
+      valorPago: 0,
+      valorRestante: valorDevido,
+      impostos: impostosId,
+      statusFatura: 'Aguardando pagamento'
+    });
+
+    await novaFatura.save();
+
+    // Atualizar status dos abastecimentos
+    for (const abId of abastecimentoIds) {
+      const ab = await Abastecimento.findById(abId).populate('cliente', 'tipoTaxa taxaOperacao taxasAntecipacao');
+      if (ab) {
+        if (tipo === 'Fornecedor') {
+          ab.faturadoFornecedor = true;
+        } else if (tipo === 'Cliente') {
+          ab.faturadoCliente = true;
+        }
+
+        if (tipo === 'Fornecedor' && tipoPagamento === 'aVista') {
+          ab.status = 'Paga';
+        } else {
+          ab.status = 'Aguardando pagamento';
+        }
+
+        if (!ab.tipoFatura) {
+          ab.tipoFatura = tipo;
+        }
+
+        if (tipo === 'Fornecedor') {
+          ab.tipoPagamento = tipoPagamento;
+          let taxaAplicada = 0;
+          if (ab.cliente?.tipoTaxa === 'operacao') {
+            taxaAplicada = ab.cliente.taxaOperacao || 15;
+          } else if (ab.cliente?.tipoTaxa === 'antecipacao_variavel' && tipoPagamento) {
+            switch (tipoPagamento) {
+              case 'aVista': taxaAplicada = ab.cliente.taxasAntecipacao?.aVista || 15; break;
+              case 'aposFechamento': taxaAplicada = ab.cliente.taxasAntecipacao?.aposFechamento || 13; break;
+              case 'dias30': taxaAplicada = ab.cliente.taxasAntecipacao?.dias30 || 10; break;
+              case 'dias40': taxaAplicada = ab.cliente.taxasAntecipacao?.dias40 || 8; break;
+              case 'dias50': taxaAplicada = ab.cliente.taxasAntecipacao?.dias50 || 6; break;
+              case 'dias60': taxaAplicada = ab.cliente.taxasAntecipacao?.dias60 || 0; break;
+            }
+          }
+          ab.taxaAplicada = taxaAplicada;
+        }
+
+        await ab.save();
+      }
+    }
+
+    const faturaCompleta = await Fatura.findById(novaFatura._id)
+      .populate('fornecedor')
+      .populate('cliente')
+      .populate('abastecimentosVinculados.abastecimento')
+      .populate('impostos');
+
+    res.status(201).json(faturaCompleta);
+  } catch (error) {
+    console.error('Erro ao criar fatura de abastecimento:', error);
+    res.status(500).json({ message: 'Erro ao criar fatura de abastecimento', error: error.message });
   }
 };

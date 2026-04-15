@@ -24,6 +24,10 @@ function ImpostosRetencoes() {
       pecas: { ir: 1.20, pis: 0.65, cofins: 3.00, csll: 1.00 },
       servicos: { ir: 4.80, pis: 0.65, cofins: 3.00, csll: 1.00 }
     },
+    combustivelMunicipais: { irrf: 0.24, csll: 0, pis: 0, cofins: 0 },
+    combustivelEstaduais: { irrf: 0.24, csll: 0, pis: 0, cofins: 0 },
+    combustivelFederais: { irrf: 0.24, csll: 1.00, pis: 0, cofins: 0 },
+    taxaPlataformaPorLitro: 0.08,
     retencoesOrgao: { percentual: 0 },
     taxasOperacao: { taxaFixa: 0 },
     taxasAntecipacao: { aVista: 0, aposFechamento: 0, dias30: 0, dias40: 0, dias50: 0, dias60: 0 },
@@ -84,6 +88,25 @@ function ImpostosRetencoes() {
           retencoesOrgao: {
             percentual: response.data.retencoesOrgao?.percentual || 0
           },
+          combustivelMunicipais: {
+            irrf: response.data.combustivelMunicipais?.irrf ?? 0.24,
+            csll: response.data.combustivelMunicipais?.csll ?? 0,
+            pis: response.data.combustivelMunicipais?.pis ?? 0,
+            cofins: response.data.combustivelMunicipais?.cofins ?? 0
+          },
+          combustivelEstaduais: {
+            irrf: response.data.combustivelEstaduais?.irrf ?? 0.24,
+            csll: response.data.combustivelEstaduais?.csll ?? 0,
+            pis: response.data.combustivelEstaduais?.pis ?? 0,
+            cofins: response.data.combustivelEstaduais?.cofins ?? 0
+          },
+          combustivelFederais: {
+            irrf: response.data.combustivelFederais?.irrf ?? 0.24,
+            csll: response.data.combustivelFederais?.csll ?? 1.00,
+            pis: response.data.combustivelFederais?.pis ?? 0,
+            cofins: response.data.combustivelFederais?.cofins ?? 0
+          },
+          taxaPlataformaPorLitro: response.data.taxaPlataformaPorLitro ?? 0.08,
           taxasOperacao: {
             taxaFixa: response.data.taxasOperacao?.taxaFixa || 0
           },
@@ -461,6 +484,138 @@ function ImpostosRetencoes() {
                 {/* Taxas de Operação */}
                 <div className="imposto-section retencoes-section">
                   <h3>Taxas de Operação</h3>
+
+                {/* ═══ Retenções Combustível (IN RFB 1.234/2012) ═══ */}
+                <div className="imposto-section">
+                  <h3>⛽ Retenções Combustível - Órgãos Municipais</h3>
+                  <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.85rem' }}>
+                    IN RFB nº 1.234/2012 (art. 18) e IN RFB nº 2.145/2023 — Alíquotas diferenciadas para combustível
+                  </p>
+                  <div className="imposto-grid">
+                    <div className="imposto-column">
+                      <h4>Combustível</h4>
+                      <div className="imposto-field">
+                        <label>IRRF</label>
+                        <input type="number" step="0.01" min="0" max="100"
+                          value={formData.combustivelMunicipais.irrf}
+                          onChange={(e) => handleSimpleChange('combustivelMunicipais', 'irrf', e.target.value)} />
+                        <span>%</span>
+                      </div>
+                      <div className="imposto-field">
+                        <label>CSLL</label>
+                        <input type="number" step="0.01" min="0" max="100"
+                          value={formData.combustivelMunicipais.csll}
+                          onChange={(e) => handleSimpleChange('combustivelMunicipais', 'csll', e.target.value)} />
+                        <span>%</span>
+                      </div>
+                      <div className="imposto-field">
+                        <label>PIS</label>
+                        <input type="number" step="0.01" min="0" max="100"
+                          value={formData.combustivelMunicipais.pis}
+                          onChange={(e) => handleSimpleChange('combustivelMunicipais', 'pis', e.target.value)} />
+                        <span>%</span>
+                      </div>
+                      <div className="imposto-field">
+                        <label>COFINS</label>
+                        <input type="number" step="0.01" min="0" max="100"
+                          value={formData.combustivelMunicipais.cofins}
+                          onChange={(e) => handleSimpleChange('combustivelMunicipais', 'cofins', e.target.value)} />
+                        <span>%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="imposto-section">
+                  <h3>⛽ Retenções Combustível - Órgãos Estaduais</h3>
+                  <div className="imposto-grid">
+                    <div className="imposto-column">
+                      <h4>Combustível</h4>
+                      <div className="imposto-field">
+                        <label>IRRF</label>
+                        <input type="number" step="0.01" min="0" max="100"
+                          value={formData.combustivelEstaduais.irrf}
+                          onChange={(e) => handleSimpleChange('combustivelEstaduais', 'irrf', e.target.value)} />
+                        <span>%</span>
+                      </div>
+                      <div className="imposto-field">
+                        <label>CSLL</label>
+                        <input type="number" step="0.01" min="0" max="100"
+                          value={formData.combustivelEstaduais.csll}
+                          onChange={(e) => handleSimpleChange('combustivelEstaduais', 'csll', e.target.value)} />
+                        <span>%</span>
+                      </div>
+                      <div className="imposto-field">
+                        <label>PIS</label>
+                        <input type="number" step="0.01" min="0" max="100"
+                          value={formData.combustivelEstaduais.pis}
+                          onChange={(e) => handleSimpleChange('combustivelEstaduais', 'pis', e.target.value)} />
+                        <span>%</span>
+                      </div>
+                      <div className="imposto-field">
+                        <label>COFINS</label>
+                        <input type="number" step="0.01" min="0" max="100"
+                          value={formData.combustivelEstaduais.cofins}
+                          onChange={(e) => handleSimpleChange('combustivelEstaduais', 'cofins', e.target.value)} />
+                        <span>%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="imposto-section">
+                  <h3>⛽ Retenções Combustível - Órgãos Federais</h3>
+                  <div className="imposto-grid">
+                    <div className="imposto-column">
+                      <h4>Combustível</h4>
+                      <div className="imposto-field">
+                        <label>IRRF</label>
+                        <input type="number" step="0.01" min="0" max="100"
+                          value={formData.combustivelFederais.irrf}
+                          onChange={(e) => handleSimpleChange('combustivelFederais', 'irrf', e.target.value)} />
+                        <span>%</span>
+                      </div>
+                      <div className="imposto-field">
+                        <label>CSLL</label>
+                        <input type="number" step="0.01" min="0" max="100"
+                          value={formData.combustivelFederais.csll}
+                          onChange={(e) => handleSimpleChange('combustivelFederais', 'csll', e.target.value)} />
+                        <span>%</span>
+                      </div>
+                      <div className="imposto-field">
+                        <label>PIS</label>
+                        <input type="number" step="0.01" min="0" max="100"
+                          value={formData.combustivelFederais.pis}
+                          onChange={(e) => handleSimpleChange('combustivelFederais', 'pis', e.target.value)} />
+                        <span>%</span>
+                      </div>
+                      <div className="imposto-field">
+                        <label>COFINS</label>
+                        <input type="number" step="0.01" min="0" max="100"
+                          value={formData.combustivelFederais.cofins}
+                          onChange={(e) => handleSimpleChange('combustivelFederais', 'cofins', e.target.value)} />
+                        <span>%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="imposto-section retencoes-section">
+                  <h3>⛽ Taxa da Plataforma (Gerenciadora)</h3>
+                  <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.85rem' }}>
+                    Valor por litro cobrado como taxa da gerenciadora nos faturamentos de combustível
+                  </p>
+                  <div className="form-group">
+                    <label>Taxa por Litro (R$)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.taxaPlataformaPorLitro}
+                      onChange={(e) => setFormData(prev => ({ ...prev, taxaPlataformaPorLitro: parseFloat(e.target.value) || 0 }))}
+                    />
+                  </div>
+                </div>
                   <div className="form-group">
                     <label>Taxa Fixa (%)</label>
                     <input

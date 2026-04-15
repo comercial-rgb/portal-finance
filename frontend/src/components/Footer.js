@@ -32,27 +32,27 @@ const Footer = () => {
             <li><a href="/dashboard">Dashboard</a></li>
             <li><a href="/fornecedores">Fornecedores</a></li>
             <li><a href="/clientes">Clientes</a></li>
-            <li><a href="/faturas">Faturas</a></li>
+            <li><a href="/faturas-fornecedores">Faturas</a></li>
           </ul>
         </div>
 
         <div className="footer-section">
           <h4>Suporte</h4>
           <ul className="footer-links">
-            <li><a href="/ajuda">Central de Ajuda</a></li>
-            <li><a href="/documentacao">Documentação</a></li>
-            <li><a href="/contato">Contato</a></li>
+            <li><a href="/suporte">Central de Ajuda</a></li>
             <li><a href="/suporte">Suporte Técnico</a></li>
+            <li><a href="/contato">Contato</a></li>
+            <li><a href="/sobre">Sobre Nós</a></li>
           </ul>
         </div>
 
         <div className="footer-section">
           <h4>Informações</h4>
           <ul className="footer-links">
-            <li><a href="/sobre">Sobre Nós</a></li>
             <li><a href="/politica-privacidade">Política de Privacidade</a></li>
             <li><a href="/termos-uso">Termos de Uso</a></li>
             <li><a href="/lgpd">LGPD</a></li>
+            <li><a href="/contato">Fale Conosco</a></li>
           </ul>
         </div>
       </div>

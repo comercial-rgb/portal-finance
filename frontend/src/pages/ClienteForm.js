@@ -30,6 +30,7 @@ function ClienteForm() {
     tipoImposto: [],
     impostosSobreValorBruto: false,
     permitirAntecipacaoFornecedor: false,
+    tiposServico: ['manutencao'],
     tipoTaxa: 'nenhum',
     taxaOperacao: 15,
     taxasAntecipacao: {
@@ -158,6 +159,7 @@ function ClienteForm() {
         cnpj: cnpjFormatado,
         nomesAlternativos: clienteData.nomesAlternativos || [],
         tipoImposto: clienteData.tipoImposto || [],
+        tiposServico: clienteData.tiposServico || ['manutencao'],
         impostosSobreValorBruto: clienteData.impostosSobreValorBruto || false,
         permitirAntecipacaoFornecedor: clienteData.permitirAntecipacaoFornecedor || false,
         tipoTaxa: clienteData.tipoTaxa || 'nenhum',
@@ -251,6 +253,19 @@ function ClienteForm() {
       } else {
         toast.warning('Você pode selecionar no máximo 3 tipos de impostos');
       }
+    }
+  };
+
+  const handleTiposServicoToggle = (tipo) => {
+    const current = formData.tiposServico || [];
+    if (current.includes(tipo)) {
+      if (current.length === 1) {
+        toast.warning('Selecione pelo menos um tipo de serviço');
+        return;
+      }
+      setFormData({ ...formData, tiposServico: current.filter(t => t !== tipo) });
+    } else {
+      setFormData({ ...formData, tiposServico: [...current, tipo] });
     }
   };
 
@@ -1078,6 +1093,47 @@ function ClienteForm() {
                         step="0.01"
                         placeholder="0.00"
                       />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <h3>Tipos de Serviço</h3>
+                  <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '15px' }}>Defina se o cliente utiliza manutenção, combustível ou ambos</p>
+                  <div className="form-grid">
+                    <div className="form-group full-width">
+                      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleTiposServicoToggle('manutencao')}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            padding: '12px 20px', border: '2px solid',
+                            borderColor: (formData.tiposServico || []).includes('manutencao') ? '#251C59' : '#ddd',
+                            borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '0.95rem',
+                            backgroundColor: (formData.tiposServico || []).includes('manutencao') ? '#e8e5f5' : 'white',
+                            color: (formData.tiposServico || []).includes('manutencao') ? '#251C59' : '#666',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          🔧 Manutenção
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleTiposServicoToggle('combustivel')}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            padding: '12px 20px', border: '2px solid',
+                            borderColor: (formData.tiposServico || []).includes('combustivel') ? '#d97706' : '#ddd',
+                            borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '0.95rem',
+                            backgroundColor: (formData.tiposServico || []).includes('combustivel') ? '#fef3c7' : 'white',
+                            color: (formData.tiposServico || []).includes('combustivel') ? '#92400e' : '#666',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          ⛽ Combustível
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

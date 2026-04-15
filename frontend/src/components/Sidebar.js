@@ -83,6 +83,20 @@ const Sidebar = ({ user }) => {
       roles: ['super_admin', 'admin', 'gerente', 'funcionario', 'fornecedor', 'cliente']
     },
     {
+      name: 'Abastecimentos',
+      path: '/abastecimentos',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M3 22V8l4-6h6l4 6v14"/>
+          <path d="M3 22h14"/>
+          <path d="M10 2v4"/>
+          <path d="M17 12v-2a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v6a4 4 0 0 1-4 4h-1"/>
+          <rect x="6" y="12" width="6" height="5"/>
+        </svg>
+      ),
+      roles: ['super_admin', 'admin', 'gerente', 'funcionario', 'fornecedor', 'cliente']
+    },
+    {
       name: 'Faturas Fornecedores',
       path: '/faturas-fornecedores',
       icon: (
@@ -92,6 +106,20 @@ const Sidebar = ({ user }) => {
           <line x1="16" y1="13" x2="8" y2="13"/>
           <line x1="16" y1="17" x2="8" y2="17"/>
           <polyline points="10 9 9 9 8 9"/>
+        </svg>
+      ),
+      roles: ['super_admin', 'admin', 'gerente', 'funcionario', 'fornecedor']
+    },
+    {
+      name: 'Faturas Abastecimento',
+      path: '/faturas-abastecimento',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <path d="M10 12v4"/>
+          <path d="M8 16h4"/>
+          <circle cx="11" cy="14" r="4" strokeDasharray="2 2"/>
         </svg>
       ),
       roles: ['super_admin', 'admin', 'gerente', 'funcionario', 'fornecedor']

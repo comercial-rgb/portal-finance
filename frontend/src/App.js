@@ -20,6 +20,8 @@ import ClienteForm from './pages/ClienteForm';
 import TipoServicos from './pages/TipoServicos';
 import OrdensServico from './pages/OrdensServico';
 import OrdemServicoForm from './pages/OrdemServicoForm';
+import Abastecimentos from './pages/Abastecimentos';
+import FaturasAbastecimento from './pages/FaturasAbastecimento';
 import FaturasFornecedores from './pages/FaturasFornecedores';
 import FaturasClientes from './pages/FaturasClientes';
 import Faturados from './pages/Faturados';
@@ -32,6 +34,12 @@ import ValoresPendentes from './pages/ValoresPendentes';
 import Pagamentos from './pages/Pagamentos';
 import NotasFiscaisClientes from './pages/NotasFiscaisClientes';
 import SsoCallback from './pages/SsoCallback';
+import Sobre from './pages/Sobre';
+import Contato from './pages/Contato';
+import Suporte from './pages/Suporte';
+import PoliticaPrivacidade from './pages/PoliticaPrivacidade';
+import TermosUso from './pages/TermosUso';
+import LGPD from './pages/LGPD';
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {
@@ -54,6 +62,12 @@ function App() {
         <Route path="/sso-callback" element={<SsoCallback />} />
         <Route path="/esqueci-senha" element={<EsqueciSenha />} />
         <Route path="/redefinir-senha/:token" element={<RedefinirSenha />} />
+        <Route path="/sobre" element={<Sobre />} />
+        <Route path="/contato" element={<Contato />} />
+        <Route path="/suporte" element={<Suporte />} />
+        <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
+        <Route path="/termos-uso" element={<TermosUso />} />
+        <Route path="/lgpd" element={<LGPD />} />
         <Route path="/alterar-senha-obrigatoria" element={
           <PrivateRoute>
             <AlterarSenhaObrigatoria />
@@ -196,10 +210,26 @@ function App() {
           }
         />
         <Route
+          path="/abastecimentos"
+          element={
+            <PrivateRoute>
+              <Abastecimentos />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/faturas-fornecedores"
           element={
             <PrivateRoute>
               <FaturasFornecedores />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/faturas-abastecimento"
+          element={
+            <PrivateRoute>
+              <FaturasAbastecimento />
             </PrivateRoute>
           }
         />

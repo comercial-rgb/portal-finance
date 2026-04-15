@@ -43,6 +43,35 @@ const impostosRetencoesSchema = new mongoose.Schema({
     }
   },
   
+  // ═══ Retenções de Combustível (IN RFB 1.234/2012 e IN RFB 2.145/2023) ═══
+  // Combustível - Órgãos Municipais
+  combustivelMunicipais: {
+    irrf: { type: Number, default: 0.24, min: 0, max: 100 },
+    csll: { type: Number, default: 0, min: 0, max: 100 },
+    pis: { type: Number, default: 0, min: 0, max: 100 },
+    cofins: { type: Number, default: 0, min: 0, max: 100 }
+  },
+  // Combustível - Órgãos Estaduais
+  combustivelEstaduais: {
+    irrf: { type: Number, default: 0.24, min: 0, max: 100 },
+    csll: { type: Number, default: 0, min: 0, max: 100 },
+    pis: { type: Number, default: 0, min: 0, max: 100 },
+    cofins: { type: Number, default: 0, min: 0, max: 100 }
+  },
+  // Combustível - Órgãos Federais
+  combustivelFederais: {
+    irrf: { type: Number, default: 0.24, min: 0, max: 100 },
+    csll: { type: Number, default: 1.00, min: 0, max: 100 },
+    pis: { type: Number, default: 0, min: 0, max: 100 },
+    cofins: { type: Number, default: 0, min: 0, max: 100 }
+  },
+  // Taxa da plataforma (gerenciadora) por litro - R$/litro
+  taxaPlataformaPorLitro: {
+    type: Number,
+    default: 0.08,
+    min: 0
+  },
+
   // Retenções Órgão
   retencoesOrgao: {
     percentual: { type: Number, default: 0, min: 0, max: 100 }

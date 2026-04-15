@@ -57,7 +57,7 @@ function FaturasClientes() {
     try {
       setLoading(true);
       const [ordensRes, clientesRes, fornecedoresRes, tiposRes, tiposServicoRes, impostosRes] = await Promise.all([
-        api.get('/ordens-servico?limit=5000&faturadoCliente=false&statusIn=Autorizada,Aguardando pagamento,Paga'),
+        api.get('/ordens-servico', { params: { limit: 5000, faturadoCliente: 'false', statusIn: 'Autorizada,Aguardando pagamento,Paga' } }),
         api.get('/clientes'),
         api.get('/fornecedores'),
         api.get('/tipo-servicos/tipos'),

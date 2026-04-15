@@ -47,9 +47,9 @@ function FaturasFornecedores() {
     try {
       setLoading(true);
       const [ordensRes, clientesRes, fornecedoresRes, impostosRes] = await Promise.all([
-        api.get('/ordens-servico?limit=5000&faturadoFornecedor=false&statusIn=Autorizada,Aguardando pagamento,Paga'),
-        api.get('/clientes?limit=1000'),
-        api.get('/fornecedores?limit=1000'),
+        api.get('/ordens-servico', { params: { limit: 5000, faturadoFornecedor: 'false', statusIn: 'Autorizada,Aguardando pagamento,Paga' } }),
+        api.get('/clientes', { params: { limit: 1000 } }),
+        api.get('/fornecedores', { params: { limit: 1000 } }),
         api.get('/impostos-retencoes')
       ]);
       

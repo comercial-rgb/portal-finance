@@ -82,16 +82,20 @@ exports.getOrdensServico = async (req, res) => {
     
     // Filtro por múltiplos statuses (para tela de faturas)
     if (statusIn) {
-      query.status = { $in: statusIn.split(',') };
+      // statusIn pode vir como string "A,B,C" ou como array ["A","B","C"] dependendo do parser
+      const statusList = Array.isArray(statusIn) ? statusIn : String(statusIn).split(',');
+      query.status = { $in: statusList.map(s => s.trim()) };
     }
     
     // Filtro por faturado fornecedor/cliente (para tela de faturas)
-    // Usa $ne: true em vez de === false para capturar docs antigos sem o campo
+    // Usa $ne: true para capturar docs antigos sem o campo (null/undefined/false)
     if (faturadoFornecedor !== undefined) {
-      query.faturadoFornecedor = faturadoFornecedor === 'true' ? true : { $ne: true };
+      const val = String(faturadoFornecedor).toLowerCase();
+      query.faturadoFornecedor = val === 'true' ? true : { $ne: true };
     }
     if (faturadoCliente !== undefined) {
-      query.faturadoCliente = faturadoCliente === 'true' ? true : { $ne: true };
+      const val = String(faturadoCliente).toLowerCase();
+      query.faturadoCliente = val === 'true' ? true : { $ne: true };
     }
     
     if (codigo) {

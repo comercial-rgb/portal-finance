@@ -104,18 +104,32 @@ const ordemPagamentoSchema = new mongoose.Schema({
 
 // Auto-gerar código sequencial OP-XXXX via counter atômico
 ordemPagamentoSchema.pre('save', async function (next) {
-  if (!this.codigo) {
+  if (this.codigo) return next();
+  
+  const maxRetries = 5;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      // Counter atômico — findOneAndUpdate com $inc garante unicidade sem race condition
-      const CounterModel = mongoose.connection.collection('counters');
-      const result = await CounterModel.findOneAndUpdate(
+      // Counter atômico — $inc garante unicidade mesmo com requisições concorrentes
+      const counters = mongoose.connection.db.collection('counters');
+      const result = await counters.findOneAndUpdate(
         { _id: 'ordemPagamento' },
         { $inc: { seq: 1 } },
         { upsert: true, returnDocument: 'after' }
       );
-      this.codigo = `OP-${String(result.seq).padStart(4, '0')}`;
-    } catch (error) {
-      // Fallback: ler o maior código existente se counter falhar na primeira vez
+      
+      const seq = result?.seq || result?.value?.seq;
+      if (!seq) throw new Error('Counter retornou sem seq');
+      
+      this.codigo = `OP-${String(seq).padStart(4, '0')}`;
+      
+      // Verificar se código já existe (safety check)
+      const existe = await this.constructor.findOne({ codigo: this.codigo }).lean();
+      if (!existe) {
+        return next(); // Código único, prosseguir
+      }
+      
+      // Se existe, o counter estava desatualizado — corrigir e tentar de novo
+      console.warn(`⚠️ OP código ${this.codigo} já existe, sincronizando counter...`);
       const todas = await this.constructor
         .find({ codigo: { $regex: /^OP-\d+$/ } })
         .select('codigo')
@@ -125,14 +139,18 @@ ordemPagamentoSchema.pre('save', async function (next) {
         const num = parseInt(doc.codigo.replace('OP-', ''));
         if (!isNaN(num) && num > maiorNum) maiorNum = num;
       }
-      const nextNum = maiorNum + 1;
-      // Inicializar counter para próximas vezes
-      await mongoose.connection.collection('counters').updateOne(
-        { _id: 'ordemPagamento' },
-        { $set: { seq: nextNum } },
-        { upsert: true }
+      // Atualizar counter para o valor correto (só se for maior)
+      await counters.updateOne(
+        { _id: 'ordemPagamento', seq: { $lt: maiorNum + 1 } },
+        { $set: { seq: maiorNum + 1 } }
       );
-      this.codigo = `OP-${String(nextNum).padStart(4, '0')}`;
+      this.codigo = undefined; // Reset para próxima tentativa
+      
+    } catch (error) {
+      console.error(`❌ Erro ao gerar código OP (tentativa ${attempt + 1}):`, error.message);
+      if (attempt === maxRetries - 1) {
+        return next(new Error('Não foi possível gerar código único para ordem de pagamento'));
+      }
     }
   }
   next();

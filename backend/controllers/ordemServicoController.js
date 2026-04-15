@@ -58,7 +58,7 @@ const estornarValorEmpenho = async (clienteId, contratoId, empenhoId, valorEstor
 exports.getOrdensServico = async (req, res) => {
   try {
     console.log('📋 GET /api/ordens-servico - Query params:', req.query);
-    const { page = 1, limit = 15, cliente, fornecedor, status, codigo, dataInicio, dataFim } = req.query;
+    const { page = 1, limit = 15, cliente, fornecedor, status, codigo, dataInicio, dataFim, faturadoFornecedor, faturadoCliente, statusIn } = req.query;
     
     const query = {};
     
@@ -79,6 +79,20 @@ exports.getOrdensServico = async (req, res) => {
     }
     
     if (status) query.status = status;
+    
+    // Filtro por múltiplos statuses (para tela de faturas)
+    if (statusIn) {
+      query.status = { $in: statusIn.split(',') };
+    }
+    
+    // Filtro por faturado fornecedor/cliente (para tela de faturas)
+    if (faturadoFornecedor !== undefined) {
+      query.faturadoFornecedor = faturadoFornecedor === 'true';
+    }
+    if (faturadoCliente !== undefined) {
+      query.faturadoCliente = faturadoCliente === 'true';
+    }
+    
     if (codigo) {
       query.$or = [
         { codigo: new RegExp(codigo, 'i') },

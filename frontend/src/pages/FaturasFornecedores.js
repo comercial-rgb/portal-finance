@@ -47,7 +47,7 @@ function FaturasFornecedores() {
     try {
       setLoading(true);
       const [ordensRes, clientesRes, fornecedoresRes, impostosRes] = await Promise.all([
-        api.get('/ordens-servico?limit=1000'),
+        api.get('/ordens-servico?limit=5000&faturadoFornecedor=false&statusIn=Autorizada,Aguardando pagamento,Paga'),
         api.get('/clientes?limit=1000'),
         api.get('/fornecedores?limit=1000'),
         api.get('/impostos-retencoes')
@@ -55,13 +55,12 @@ function FaturasFornecedores() {
       
       console.log('=== CARREGANDO DADOS FATURA FORNECEDORES ===');
       
-      // Garantir que ordensServico seja sempre um array e filtrar
+      // Garantir que ordensServico seja sempre um array
       const ordensData = ordensRes.data.ordensServico || ordensRes.data;
       let ordensArray = Array.isArray(ordensData) ? ordensData : [];
       
-      // Filtrar ordens para Faturas Fornecedores:
-      // - Não pode ter faturadoFornecedor = true
-      // - Status "Autorizada" OU Status "Aguardando pagamento" ou "Paga" (permite ordens já faturadas para cliente)
+      // Backend já filtra por faturadoFornecedor=false e status válido
+      // Safety net: filtro client-side como backup
       ordensArray = ordensArray.filter(o => 
         !o.faturadoFornecedor && (o.status === 'Autorizada' || o.status === 'Aguardando pagamento' || o.status === 'Paga')
       );
@@ -111,33 +110,24 @@ function FaturasFornecedores() {
     try {
       setLoading(true);
       const params = {
-        limit: 1000  // Garantir que busque todos os registros
+        limit: 5000,
+        faturadoFornecedor: 'false',
+        statusIn: 'Autorizada,Aguardando pagamento,Paga'
       };
       if (filtros.codigo) params.codigo = filtros.codigo;
       if (filtros.cliente) params.cliente = filtros.cliente;
       if (filtros.fornecedor) params.fornecedor = filtros.fornecedor;
+      if (filtros.dataInicio) params.dataInicio = filtros.dataInicio;
+      if (filtros.dataFim) params.dataFim = filtros.dataFim;
       
       const response = await api.get('/ordens-servico', { params });
       let ordensData = response.data.ordensServico || response.data;
       ordensData = Array.isArray(ordensData) ? ordensData : [];
       
-      // FILTRO CRÍTICO: Aplicar os mesmos filtros do loadData inicial
-      // - Não pode ter faturadoFornecedor = true
-      // - Status "Autorizada" OU Status "Aguardando pagamento" ou "Paga"
+      // Backend já filtra - safety net client-side
       ordensData = ordensData.filter(o => 
         !o.faturadoFornecedor && (o.status === 'Autorizada' || o.status === 'Aguardando pagamento' || o.status === 'Paga')
       );
-      
-      if (filtros.dataInicio) {
-        ordensData = ordensData.filter(o => 
-          new Date(o.createdAt) >= new Date(filtros.dataInicio)
-        );
-      }
-      if (filtros.dataFim) {
-        ordensData = ordensData.filter(o => 
-          new Date(o.createdAt) <= new Date(filtros.dataFim + 'T23:59:59')
-        );
-      }
       
       setOrdensServico(ordensData);
     } catch (error) {

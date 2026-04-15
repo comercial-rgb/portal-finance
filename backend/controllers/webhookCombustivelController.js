@@ -202,12 +202,51 @@ exports.receberAbastecimento = async (req, res) => {
       if (resultado.divergencia) observacoesWebhook.push(resultado.divergencia);
     }
 
+    // Auto-create fornecedor if not found (using webhook data)
     if (!fornecedor) {
-      return res.status(404).json({
-        success: false,
-        message: `Fornecedor/Posto "${fornecedorNomeFantasia || fornecedorCnpj}" não encontrado no Portal Finance.`,
-        campo: 'fornecedor'
-      });
+      const cnpjLimpo = (fornecedorCnpj || '').replace(/\D/g, '');
+      if (cnpjLimpo.length >= 11) {
+        try {
+          fornecedor = await Fornecedor.create({
+            razaoSocial: fornecedorNomeFantasia || `Posto ${cnpjLimpo}`,
+            nomeFantasia: fornecedorNomeFantasia || `Posto ${cnpjLimpo}`,
+            cnpjCpf: cnpjLimpo,
+            endereco: 'Cadastrado automaticamente via webhook',
+            bairro: 'N/A',
+            cidade: 'N/A',
+            estado: 'N/A',
+            email: `auto_${cnpjLimpo}@webhook.instasolutions.com.br`,
+            telefone: '0000000000',
+            banco: 'A definir',
+            tipoConta: 'corrente',
+            agencia: '0000',
+            conta: '00000',
+            senha: require('crypto').randomBytes(16).toString('hex'),
+            role: 'fornecedor',
+          });
+          observacoesWebhook.push(`✅ Fornecedor "${fornecedorNomeFantasia || cnpjLimpo}" cadastrado automaticamente via webhook`);
+          console.log(`📝 Auto-criado fornecedor: ${fornecedor.nomeFantasia} (${cnpjLimpo})`);
+        } catch (autoCreateErr) {
+          // Possibly duplicate email — retry search
+          if (autoCreateErr.code === 11000) {
+            fornecedor = await Fornecedor.findOne({ cnpjCpf: { $regex: new RegExp(escapeRegex(cnpjLimpo)) } });
+          }
+          if (!fornecedor) {
+            console.error('Auto-create fornecedor error:', autoCreateErr.message);
+            return res.status(404).json({
+              success: false,
+              message: `Fornecedor/Posto "${fornecedorNomeFantasia || fornecedorCnpj}" não encontrado e não pôde ser cadastrado automaticamente: ${autoCreateErr.message}`,
+              campo: 'fornecedor'
+            });
+          }
+        }
+      } else {
+        return res.status(404).json({
+          success: false,
+          message: `Fornecedor/Posto "${fornecedorNomeFantasia || fornecedorCnpj}" não encontrado no Portal Finance e CNPJ inválido para auto-cadastro.`,
+          campo: 'fornecedor'
+        });
+      }
     }
 
     // 3. Verificar se já existe abastecimento com este código externo
@@ -359,6 +398,31 @@ exports.receberLote = async (req, res) => {
           fornecedor = res.doc;
         }
 
+        // Auto-create fornecedor if not found
+        if (!fornecedor && item.fornecedorCnpj) {
+          const cnpjLimpo = item.fornecedorCnpj.replace(/\D/g, '');
+          if (cnpjLimpo.length >= 11) {
+            try {
+              fornecedor = await Fornecedor.create({
+                razaoSocial: item.fornecedorNomeFantasia || `Posto ${cnpjLimpo}`,
+                nomeFantasia: item.fornecedorNomeFantasia || `Posto ${cnpjLimpo}`,
+                cnpjCpf: cnpjLimpo,
+                endereco: 'Cadastrado automaticamente via webhook lote',
+                bairro: 'N/A', cidade: 'N/A', estado: 'N/A',
+                email: `auto_${cnpjLimpo}@webhook.instasolutions.com.br`,
+                telefone: '0000000000',
+                banco: 'A definir', tipoConta: 'corrente', agencia: '0000', conta: '00000',
+                senha: require('crypto').randomBytes(16).toString('hex'),
+                role: 'fornecedor',
+              });
+            } catch (autoErr) {
+              if (autoErr.code === 11000) {
+                fornecedor = await Fornecedor.findOne({ cnpjCpf: { $regex: new RegExp(escapeRegex(cnpjLimpo)) } });
+              }
+            }
+          }
+        }
+
         if (!cliente || !fornecedor) {
           resultados.falha++;
           resultados.detalhes.push({
@@ -440,7 +504,111 @@ exports.testeConexao = async (req, res) => {
     endpoints: {
       receberAbastecimento: 'POST /api/webhook/combustivel/receber-abastecimento',
       receberLote: 'POST /api/webhook/combustivel/receber-lote',
+      buscarFornecedor: 'GET /api/webhook/combustivel/fornecedor/:cnpj',
+      registrarFornecedor: 'POST /api/webhook/combustivel/registrar-fornecedor',
       teste: 'GET /api/webhook/combustivel/teste'
     }
   });
+};
+
+/**
+ * Buscar fornecedor por CNPJ (token-authenticated)
+ * GET /api/webhook/combustivel/fornecedor/:cnpj
+ */
+exports.buscarFornecedorPorCnpj = async (req, res) => {
+  try {
+    const cnpjLimpo = (req.params.cnpj || '').replace(/\D/g, '');
+    if (!cnpjLimpo || cnpjLimpo.length < 11) {
+      return res.status(400).json({ success: false, message: 'CNPJ inválido' });
+    }
+
+    const fornecedor = await Fornecedor.findOne({
+      cnpjCpf: { $regex: new RegExp(escapeRegex(cnpjLimpo)) }
+    }).select('_id razaoSocial nomeFantasia cnpjCpf email cidade estado');
+
+    if (!fornecedor) {
+      return res.status(404).json({ success: false, found: false, message: 'Fornecedor não encontrado' });
+    }
+
+    res.json({ success: true, found: true, fornecedor });
+  } catch (error) {
+    console.error('Buscar fornecedor error:', error);
+    res.status(500).json({ success: false, message: 'Erro interno' });
+  }
+};
+
+/**
+ * Registrar fornecedor via webhook token (auto-cadastro)
+ * POST /api/webhook/combustivel/registrar-fornecedor
+ */
+exports.registrarFornecedor = async (req, res) => {
+  try {
+    const { cnpjCpf, razaoSocial, nomeFantasia, endereco, bairro, cidade, estado, cep, email, telefone, banco, tipoConta, agencia, conta, chavePix, tipoChavePix, naoOptanteSimples, inscricaoEstadual } = req.body;
+
+    const cnpjLimpo = (cnpjCpf || '').replace(/\D/g, '');
+    if (!cnpjLimpo || cnpjLimpo.length < 11) {
+      return res.status(400).json({ success: false, message: 'CNPJ inválido' });
+    }
+
+    // Check if already exists
+    const existing = await Fornecedor.findOne({
+      cnpjCpf: { $regex: new RegExp(escapeRegex(cnpjLimpo)) }
+    });
+
+    if (existing) {
+      return res.json({
+        success: true,
+        already_existed: true,
+        fornecedor: { _id: existing._id, nomeFantasia: existing.nomeFantasia, cnpjCpf: existing.cnpjCpf },
+        message: 'Fornecedor já cadastrado'
+      });
+    }
+
+    const fornecedor = await Fornecedor.create({
+      razaoSocial: razaoSocial || nomeFantasia || `Posto ${cnpjLimpo}`,
+      nomeFantasia: nomeFantasia || razaoSocial || `Posto ${cnpjLimpo}`,
+      cnpjCpf: cnpjLimpo,
+      inscricaoEstadual: inscricaoEstadual || '',
+      endereco: endereco || 'Não informado',
+      bairro: bairro || 'N/A',
+      cidade: cidade || 'N/A',
+      estado: estado || 'N/A',
+      cep: (cep || '').replace(/\D/g, '') || '',
+      email: email || `auto_${cnpjLimpo}@webhook.instasolutions.com.br`,
+      telefone: telefone || '0000000000',
+      banco: banco || 'A definir',
+      tipoConta: tipoConta || 'corrente',
+      agencia: agencia || '0000',
+      conta: conta || '00000',
+      chavePix: chavePix || '',
+      tipoChavePix: tipoChavePix || '',
+      senha: require('crypto').randomBytes(16).toString('hex'),
+      naoOptanteSimples: naoOptanteSimples || false,
+      role: 'fornecedor',
+    });
+
+    console.log(`📝 Fornecedor registrado via webhook: ${fornecedor.nomeFantasia} (${cnpjLimpo})`);
+
+    res.status(201).json({
+      success: true,
+      already_existed: false,
+      fornecedor: { _id: fornecedor._id, nomeFantasia: fornecedor.nomeFantasia, cnpjCpf: fornecedor.cnpjCpf },
+      message: 'Fornecedor cadastrado com sucesso'
+    });
+  } catch (error) {
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      const existing = await Fornecedor.findOne({ cnpjCpf: { $regex: new RegExp(escapeRegex((req.body.cnpjCpf || '').replace(/\D/g, ''))) } });
+      if (existing) {
+        return res.json({
+          success: true,
+          already_existed: true,
+          fornecedor: { _id: existing._id, nomeFantasia: existing.nomeFantasia, cnpjCpf: existing.cnpjCpf },
+          message: 'Fornecedor já cadastrado (chave duplicada)'
+        });
+      }
+    }
+    console.error('Registrar fornecedor error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Erro interno' });
+  }
 };

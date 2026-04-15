@@ -40,4 +40,10 @@ router.post('/receber-abastecimento', validarTokenWebhook, webhookCombustivelCon
 // Receber lote de abastecimentos (protegido por token)
 router.post('/receber-lote', validarTokenWebhook, webhookCombustivelController.receberLote);
 
+// Buscar fornecedor por CNPJ (protegido por token) — usado pelo sistema de combustível
+router.get('/fornecedor/:cnpj', validarTokenWebhook, webhookCombustivelController.buscarFornecedorPorCnpj);
+
+// Registrar fornecedor via webhook token (protegido por token) — auto-cadastro
+router.post('/registrar-fornecedor', validarTokenWebhook, webhookCombustivelController.registrarFornecedor);
+
 module.exports = router;

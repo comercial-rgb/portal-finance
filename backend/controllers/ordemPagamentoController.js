@@ -2,6 +2,7 @@ const OrdemPagamento = require('../models/OrdemPagamento');
 const Fornecedor = require('../models/Fornecedor');
 const Cliente = require('../models/Cliente');
 const Fatura = require('../models/Fatura');
+const OrdemServico = require('../models/OrdemServico');
 const finsystemService = require('../services/finsystemService');
 
 // @desc    Listar ordens de pagamento
@@ -195,6 +196,61 @@ exports.pagar = async (req, res) => {
     }
     await ordem.save();
 
+    // Sincronizar pagamento com a Fatura vinculada
+    if (ordem.fatura) {
+      const fatura = await Fatura.findById(ordem.fatura);
+      if (fatura && fatura.ativo) {
+        // Somar valor total pago por todas as OPs desta fatura
+        const ordensPagasFatura = await OrdemPagamento.find({
+          fatura: ordem.fatura,
+          status: 'Paga',
+          ativo: true
+        }).lean();
+
+        const totalPagoOPs = ordensPagasFatura.reduce((sum, op) => sum + (op.valor || 0), 0);
+        const valorDevido = fatura.valorDevido || 0;
+
+        const osIds = [];
+        if (totalPagoOPs >= valorDevido) {
+          // Pagamento cobre toda a fatura - marcar todas as OS como pagas
+          fatura.ordensServico.forEach(os => {
+            if (os.statusPagamento !== 'Paga') {
+              os.statusPagamento = 'Paga';
+              os.dataPagamento = ordem.dataPagamento;
+              os.comprovante = ordem.comprovante || null;
+              osIds.push(os.ordemServico);
+            }
+          });
+        } else {
+          // Pagamento parcial - marcar OS proporcionalmente até cobrir o valor pago
+          let restante = totalPagoOPs;
+          for (const os of fatura.ordensServico) {
+            if (os.statusPagamento !== 'Paga' && restante > 0) {
+              if (restante >= (os.valorOS || 0)) {
+                os.statusPagamento = 'Paga';
+                os.dataPagamento = ordem.dataPagamento;
+                os.comprovante = ordem.comprovante || null;
+                osIds.push(os.ordemServico);
+                restante -= (os.valorOS || 0);
+              } else {
+                break;
+              }
+            }
+          }
+        }
+
+        await fatura.save(); // pre-save recalcula statusFatura, valorPago, valorRestante
+
+        // Atualizar status das OS no modelo OrdemServico
+        if (osIds.length > 0) {
+          await OrdemServico.updateMany(
+            { _id: { $in: osIds } },
+            { $set: { status: 'Paga' } }
+          );
+        }
+      }
+    }
+
     res.json({ success: true, message: 'Ordem marcada como paga', data: ordem });
   } catch (error) {
     console.error('Erro ao pagar ordem:', error);
@@ -218,6 +274,54 @@ exports.vincularFatura = async (req, res) => {
     ordem.fatura = faturaId;
     ordem.faturaNumeroManual = null;
     await ordem.save();
+
+    // Se a OP já está paga, sincronizar com a fatura vinculada
+    if (ordem.status === 'Paga' && faturaDoc.ativo) {
+      const ordensPagasFatura = await OrdemPagamento.find({
+        fatura: faturaId,
+        status: 'Paga',
+        ativo: true
+      }).lean();
+
+      const totalPagoOPs = ordensPagasFatura.reduce((sum, op) => sum + (op.valor || 0), 0);
+      const valorDevido = faturaDoc.valorDevido || 0;
+
+      const osIds = [];
+      if (totalPagoOPs >= valorDevido) {
+        faturaDoc.ordensServico.forEach(os => {
+          if (os.statusPagamento !== 'Paga') {
+            os.statusPagamento = 'Paga';
+            os.dataPagamento = ordem.dataPagamento || new Date();
+            os.comprovante = ordem.comprovante || null;
+            osIds.push(os.ordemServico);
+          }
+        });
+      } else {
+        let restante = totalPagoOPs;
+        for (const os of faturaDoc.ordensServico) {
+          if (os.statusPagamento !== 'Paga' && restante > 0) {
+            if (restante >= (os.valorOS || 0)) {
+              os.statusPagamento = 'Paga';
+              os.dataPagamento = ordem.dataPagamento || new Date();
+              os.comprovante = ordem.comprovante || null;
+              osIds.push(os.ordemServico);
+              restante -= (os.valorOS || 0);
+            } else {
+              break;
+            }
+          }
+        }
+      }
+
+      await faturaDoc.save();
+
+      if (osIds.length > 0) {
+        await OrdemServico.updateMany(
+          { _id: { $in: osIds } },
+          { $set: { status: 'Paga' } }
+        );
+      }
+    }
 
     res.json({ success: true, message: 'Fatura vinculada com sucesso', data: ordem });
   } catch (error) {

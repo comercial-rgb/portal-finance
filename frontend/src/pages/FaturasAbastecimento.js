@@ -226,20 +226,6 @@ function FaturasAbastecimento() {
     setShowFaturaModal(true);
   };
 
-  const handleGerarFaturaDirecta = () => {
-    if (selectedIds.length === 0) {
-      toast.warning('Selecione pelo menos um abastecimento');
-      return;
-    }
-    if (!window.confirm(`Deseja gerar a fatura com ${selectedIds.length} abastecimento(s) selecionado(s)?`)) {
-      return;
-    }
-    const hoje = new Date();
-    hoje.setDate(hoje.getDate() + prazoRecebimentoDias);
-    setDataVencimento(hoje.toISOString().split('T')[0]);
-    handleGerarFatura();
-  };
-
   const handleGerarFatura = async () => {
     if (selectedIds.length === 0) return;
 

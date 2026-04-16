@@ -9,9 +9,14 @@ const webhookCombustivelController = require('../controllers/webhookCombustivelC
  */
 
 // Middleware de validação de token secreto
+const TOKENS_VALIDOS = [
+  process.env.WEBHOOK_COMBUSTIVEL_TOKEN,
+  process.env.WEBHOOK_FROTA_TOKEN,
+  'instasolutions_webhook_frota_2025',
+].filter(Boolean);
+
 const validarTokenWebhook = (req, res, next) => {
   const tokenRecebido = req.headers['x-webhook-token'] || req.query.token;
-  const tokenEsperado = process.env.WEBHOOK_COMBUSTIVEL_TOKEN || process.env.WEBHOOK_FROTA_TOKEN || 'seu-token-secreto-aqui';
 
   if (!tokenRecebido) {
     return res.status(401).json({ 
@@ -20,7 +25,7 @@ const validarTokenWebhook = (req, res, next) => {
     });
   }
 
-  if (tokenRecebido !== tokenEsperado) {
+  if (!TOKENS_VALIDOS.includes(tokenRecebido)) {
     console.warn('⚠️ Tentativa de acesso ao webhook combustível com token inválido:', tokenRecebido);
     return res.status(403).json({ 
       success: false,

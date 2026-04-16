@@ -52,19 +52,23 @@ const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
  * Buscar por CNPJ: tenta formato brasileiro E digits-only para compatibilidade
+ * Suporta tanto campo 'cnpjCpf' (Fornecedor) quanto 'cnpj' (Cliente)
  */
 const buscarPorCnpj = async (Model, cnpjRaw) => {
   const digits = (cnpjRaw || '').replace(/\D/g, '');
   if (!digits || digits.length < 11) return null;
   const formatted = formatCnpjBr(digits);
-  // Try formatted first (new standard), then digits-only (legacy)
-  let doc = await Model.findOne({ cnpjCpf: formatted });
-  if (doc) return doc;
-  doc = await Model.findOne({ cnpjCpf: digits });
-  if (doc) return doc;
-  // Fallback regex (partial match)
-  doc = await Model.findOne({ cnpjCpf: { $regex: new RegExp(escapeRegex(digits)) } });
-  return doc;
+  // Try both field names: cnpjCpf (Fornecedor) and cnpj (Cliente)
+  const campos = ['cnpjCpf', 'cnpj'];
+  for (const campo of campos) {
+    let doc = await Model.findOne({ [campo]: formatted });
+    if (doc) return doc;
+    doc = await Model.findOne({ [campo]: digits });
+    if (doc) return doc;
+    doc = await Model.findOne({ [campo]: { $regex: new RegExp(escapeRegex(digits)) } });
+    if (doc) return doc;
+  }
+  return null;
 };
 
 /**
@@ -94,6 +98,14 @@ const buscarEntidadePorNome = async (Model, nomeBusca, tipo) => {
   });
   if (doc) {
     return { doc, divergencia: `⚠️ ${tipo} no Combustível="${nomeTrimmed}" vs Portal razaoSocial="${doc.razaoSocial}"` };
+  }
+
+  // 3.5 Busca nos nomes alternativos (Frotas)
+  doc = await Model.findOne({
+    nomesAlternativos: { $regex: new RegExp(`^${escapeRegex(nomeTrimmed)}$`, 'i') }
+  });
+  if (doc) {
+    return { doc, divergencia: `⚠️ ${tipo} encontrado via nomeAlternativo="${nomeTrimmed}"` };
   }
 
   // 4. Busca por CNPJ (se parecer um CNPJ)

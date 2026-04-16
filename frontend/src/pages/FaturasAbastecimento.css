@@ -265,6 +265,44 @@
   padding: 1.5rem 2rem;
 }
 
+/* Orientação NF Box */
+.orientacao-nf-box {
+  background: #f0f4ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.2rem;
+  font-size: 0.85rem;
+  color: #1e293b;
+  line-height: 1.5;
+}
+
+.orientacao-nf-box h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+  color: #251C59;
+}
+
+.orientacao-nf-box p {
+  margin: 0.3rem 0;
+}
+
+.orientacao-nf-box ul {
+  margin: 0.5rem 0;
+  padding-left: 1.2rem;
+}
+
+.orientacao-nf-box ul li {
+  margin-bottom: 0.4rem;
+}
+
+.orientacao-nf-box .orientacao-nota {
+  font-style: italic;
+  color: #475569;
+  font-size: 0.82rem;
+  margin-top: 0.5rem;
+}
+
 .modal-footer {
   display: flex;
   justify-content: flex-end;

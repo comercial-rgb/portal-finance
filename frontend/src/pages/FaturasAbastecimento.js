@@ -408,14 +408,9 @@ function FaturasAbastecimento() {
                       ? 'Desmarcar Todos' : 'Selecionar Todos'}
                   </button>
                   {!isFornecedor && (
-                    <>
-                      <button className="btn-secondary" onClick={handleVisualizarFatura} disabled={selectedIds.length === 0}>
-                        👁️ Visualizar Prévia ({selectedIds.length})
-                      </button>
-                      <button className="btn-primary" onClick={handleGerarFaturaDirecta} disabled={selectedIds.length === 0}>
-                        ⛽ Gerar Fatura ({selectedIds.length})
-                      </button>
-                    </>
+                    <button className="btn-primary" onClick={handleVisualizarFatura} disabled={selectedIds.length === 0}>
+                      ⛽ Gerar Fatura ({selectedIds.length})
+                    </button>
                   )}
                 </div>
               </div>
@@ -481,11 +476,22 @@ function FaturasAbastecimento() {
               <div className="modal-overlay" onClick={() => setShowFaturaModal(false)}>
                 <div className="modal-fatura" onClick={e => e.stopPropagation()}>
                   <div className="modal-header">
-                    <h2>👁️ Prévia do Faturamento de Abastecimentos</h2>
+                    <h2>Prévia do Faturamento de Abastecimentos</h2>
                     <button className="close-btn" onClick={() => setShowFaturaModal(false)}>×</button>
                   </div>
 
                   <div className="modal-body">
+                    {/* Orientação sobre emissão da NF */}
+                    <div className="orientacao-nf-box">
+                      <h4>📋 Orientação para Emissão da Nota Fiscal</h4>
+                      <p>O fornecedor pode emitir a NF de duas formas:</p>
+                      <ul>
+                        <li><strong>Opção 1 — Valor Líquido:</strong> Emitir a NF pelo valor líquido (já com o desconto do contrato aplicado), informando no corpo da NF: Valor Bruto, Desconto do Contrato e Valor Líquido.</li>
+                        <li><strong>Opção 2 — Valor Bruto com Desconto:</strong> Emitir a NF pelo valor bruto e lançar o desconto do contrato no campo de desconto da NF.</li>
+                      </ul>
+                      <p className="orientacao-nota">Ambas as formas são válidas. O importante é que o valor líquido final seja consistente com o desconto contratual.</p>
+                    </div>
+
                     {/* Cabeçalho do Cliente */}
                     <div className="fatura-cliente-info">
                       <div>

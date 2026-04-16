@@ -27,7 +27,3 @@ services:
         value: "1"
       - key: FINSYSTEM_CONTA_BANCARIA_ID
         value: "1"
-      - key: WEBHOOK_COMBUSTIVEL_TOKEN
-        value: instasolutions_webhook_frota_2025
-      - key: WEBHOOK_FROTA_TOKEN
-        value: instasolutions_webhook_frota_2025

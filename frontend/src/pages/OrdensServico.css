@@ -414,6 +414,23 @@
   box-shadow: 0 4px 12px rgba(37, 28, 89, 0.3);
 }
 
+/* Search input above selects */
+.filtro-busca-input {
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+  background: #fafbfc;
+  transition: border-color 0.2s;
+}
+.filtro-busca-input:focus {
+  outline: none;
+  border-color: #005bed;
+  background: #fff;
+}
+
 /* RESPONSIVE */
 @media (max-width: 1366px) {
   .main-content {

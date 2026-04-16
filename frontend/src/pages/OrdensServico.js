@@ -26,6 +26,8 @@ function OrdensServico() {
   const [totalRegistros, setTotalRegistros] = useState(0);
   const [clientes, setClientes] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
+  const [buscaCliente, setBuscaCliente] = useState('');
+  const [buscaFornecedor, setBuscaFornecedor] = useState('');
 
   const ordensPorPagina = 15;
 
@@ -199,18 +201,36 @@ function OrdensServico() {
                 </div>
                 <div className="form-group">
                   <label>Cliente</label>
+                  <input
+                    type="text"
+                    placeholder="Buscar cliente por nome..."
+                    value={buscaCliente}
+                    onChange={(e) => setBuscaCliente(e.target.value)}
+                    className="filtro-busca-input"
+                  />
                   <select name="cliente" value={filtros.cliente} onChange={handleFiltroChange}>
                     <option value="">Todos</option>
-                    {clientes.map(c => (
+                    {clientes
+                      .filter(c => !buscaCliente || (c.razaoSocial || c.nomeFantasia || '').toLowerCase().includes(buscaCliente.toLowerCase()))
+                      .map(c => (
                       <option key={c._id} value={c._id}>{c.razaoSocial || c.nomeFantasia}</option>
                     ))}
                   </select>
                 </div>
                 <div className="form-group">
                   <label>Fornecedor</label>
+                  <input
+                    type="text"
+                    placeholder="Buscar fornecedor por nome..."
+                    value={buscaFornecedor}
+                    onChange={(e) => setBuscaFornecedor(e.target.value)}
+                    className="filtro-busca-input"
+                  />
                   <select name="fornecedor" value={filtros.fornecedor} onChange={handleFiltroChange}>
                     <option value="">Todos</option>
-                    {fornecedores.map(f => (
+                    {fornecedores
+                      .filter(f => !buscaFornecedor || (f.razaoSocial || f.nomeFantasia || '').toLowerCase().includes(buscaFornecedor.toLowerCase()))
+                      .map(f => (
                       <option key={f._id} value={f._id}>{f.razaoSocial || f.nomeFantasia}</option>
                     ))}
                   </select>

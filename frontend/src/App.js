@@ -23,7 +23,6 @@ import OrdemServicoForm from './pages/OrdemServicoForm';
 import Abastecimentos from './pages/Abastecimentos';
 import FaturasAbastecimento from './pages/FaturasAbastecimento';
 import FaturasFornecedores from './pages/FaturasFornecedores';
-import FaturasClientes from './pages/FaturasClientes';
 import Faturados from './pages/Faturados';
 import FaturadoDetalhes from './pages/FaturadoDetalhes';
 import Configuracoes from './pages/Configuracoes';
@@ -32,7 +31,6 @@ import ImpostosRetencoes from './pages/ImpostosRetencoes';
 import Relatorios from './pages/Relatorios';
 import ValoresPendentes from './pages/ValoresPendentes';
 import Pagamentos from './pages/Pagamentos';
-import NotasFiscaisClientes from './pages/NotasFiscaisClientes';
 import SsoCallback from './pages/SsoCallback';
 import Sobre from './pages/Sobre';
 import Contato from './pages/Contato';
@@ -230,22 +228,6 @@ function App() {
           element={
             <PrivateRoute>
               <FaturasAbastecimento />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/faturas-clientes"
-          element={
-            <PrivateRoute>
-              <FaturasClientes />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/notas-fiscais-clientes"
-          element={
-            <PrivateRoute allowedRoles={['super_admin', 'admin']}>
-              <NotasFiscaisClientes />
             </PrivateRoute>
           }
         />

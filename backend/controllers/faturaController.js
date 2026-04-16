@@ -74,6 +74,13 @@ exports.buscarPorId = async (req, res) => {
           { path: 'tipoServicoSolicitado', select: 'nome' }
         ]
       })
+      .populate({
+        path: 'abastecimentosVinculados.abastecimento',
+        populate: [
+          { path: 'cliente', select: 'razaoSocial nomeFantasia cnpj tipoImposto' },
+          { path: 'fornecedor', select: 'razaoSocial nomeFantasia cnpjCpf naoOptanteSimples' }
+        ]
+      })
       .populate('impostos');
     
     if (!fatura) {

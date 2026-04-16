@@ -816,6 +816,29 @@ function FaturadoDetalhes() {
     return { total, detalhamento };
   };
 
+  // Helper: normalizar dados da entidade (fornecedor tem campos flat, cliente pode ter nested)
+  const getEntidadeDados = (ent) => {
+    if (!ent) return { cnpj: '-', inscMunicipal: '-', inscEstadual: '-', endereco: '-', bairro: '-', cidade: '-', estado: '-', cep: '-', telefone: '-', email: '-' };
+    return {
+      cnpj: ent.cnpjCpf || ent.cnpj || '-',
+      inscMunicipal: ent.inscricoes?.inscricaoMunicipal || ent.inscricaoMunicipal || '-',
+      inscEstadual: ent.inscricoes?.inscricaoEstadual || ent.inscricaoEstadual || '-',
+      endereco: ent.endereco?.logradouro 
+        ? `${ent.endereco.logradouro}, ${ent.endereco.numero || 's/n'}${ent.endereco.complemento ? ', ' + ent.endereco.complemento : ''}`
+        : (ent.endereco || '-'),
+      bairro: ent.endereco?.bairro || ent.bairro || '-',
+      cidade: ent.endereco?.cidade || ent.cidade || '-',
+      estado: ent.endereco?.estado || ent.estado || '-',
+      cep: ent.endereco?.cep || ent.cep || '-',
+      telefone: ent.contatos?.telefone || ent.telefone || '-',
+      email: ent.contatos?.email || ent.email || '-'
+    };
+  };
+
+  // Helper: verificar se fatura é de abastecimento
+  const isAbastecimento = fatura?.origem === 'abastecimento';
+  const abastecimentosVinculados = fatura?.abastecimentosVinculados || [];
+
   const imprimirCompleta = () => {
     if (!fatura) return;
 
@@ -832,7 +855,7 @@ function FaturadoDetalhes() {
     doc.setFont(undefined, 'normal');
     doc.setTextColor(0);
     doc.text('CNPJ: 47.611.398/0001-66', 105, 21, { align: 'center' });
-    doc.text('Telefone: (11) 5118-3784 | WhatsApp: (67) 98218-2448', 105, 26, { align: 'center' });
+    doc.text('Telefone: (11) 5118-3784 | WhatsApp: (11) 3336-6941', 105, 26, { align: 'center' });
     doc.text('Alameda Rio Negro, N° 1030, Escritório 2304 - Alphaville Industrial, Barueri - SP', 105, 31, { align: 'center' });
     
     // Linha separadora
@@ -844,7 +867,8 @@ function FaturadoDetalhes() {
     doc.setFontSize(14);
     doc.setTextColor(37, 28, 89);
     doc.setFont(undefined, 'bold');
-    doc.text('FATURA DE SERVIÇOS - COMPLETA', 105, 42, { align: 'center' });
+    const tituloFatura = isAbastecimento ? 'FATURA DE ABASTECIMENTOS - COMPLETA' : 'FATURA DE SERVIÇOS - COMPLETA';
+    doc.text(tituloFatura, 105, 42, { align: 'center' });
     
     doc.setFontSize(9);
     doc.setTextColor(0);
@@ -862,37 +886,22 @@ function FaturadoDetalhes() {
     doc.setTextColor(0);
     doc.setFont(undefined, 'normal');
     let yPos = 63;
+    const dados = getEntidadeDados(entidade);
     doc.text(`Razão Social: ${entidade?.razaoSocial || '-'}`, 20, yPos);
     yPos += 4;
     doc.text(`Nome Fantasia: ${entidade?.nomeFantasia || '-'}`, 20, yPos);
     yPos += 4;
-    doc.text(`CNPJ: ${entidade?.cnpj || '-'}`, 20, yPos);
+    doc.text(`CNPJ: ${dados.cnpj}`, 20, yPos);
     yPos += 4;
-    
-    const inscMunicipal = entidade?.inscricoes?.inscricaoMunicipal || entidade?.inscricaoMunicipal || '-';
-    const inscEstadual = entidade?.inscricoes?.inscricaoEstadual || entidade?.inscricaoEstadual || '-';
-    doc.text(`Insc. Municipal: ${inscMunicipal}  |  Insc. Estadual: ${inscEstadual}`, 20, yPos);
+    doc.text(`Insc. Municipal: ${dados.inscMunicipal}  |  Insc. Estadual: ${dados.inscEstadual}`, 20, yPos);
     yPos += 4;
-    
-    const logradouro = entidade?.endereco?.logradouro || '-';
-    const numero = entidade?.endereco?.numero || '-';
-    const complemento = entidade?.endereco?.complemento ? `, ${entidade.endereco.complemento}` : '';
-    doc.text(`Endereço: ${logradouro}, ${numero}${complemento}`, 20, yPos);
+    doc.text(`Endereço: ${dados.endereco}`, 20, yPos);
     yPos += 4;
-    
-    const bairro = entidade?.endereco?.bairro || '-';
-    doc.text(`Bairro: ${bairro}`, 20, yPos);
+    doc.text(`Bairro: ${dados.bairro}`, 20, yPos);
     yPos += 4;
-    
-    const cidade = entidade?.endereco?.cidade || '-';
-    const estado = entidade?.endereco?.estado || '-';
-    const cep = entidade?.endereco?.cep || '-';
-    doc.text(`Cidade/UF: ${cidade}/${estado}  -  CEP: ${cep}`, 20, yPos);
+    doc.text(`Cidade/UF: ${dados.cidade}/${dados.estado}  -  CEP: ${dados.cep}`, 20, yPos);
     yPos += 4;
-    
-    const telefone = entidade?.contatos?.telefone || entidade?.telefone || '-';
-    const email = entidade?.contatos?.email || entidade?.email || '-';
-    doc.text(`Telefone: ${telefone}  |  E-mail: ${email}`, 20, yPos);
+    doc.text(`Telefone: ${dados.telefone}  |  E-mail: ${dados.email}`, 20, yPos);
     yPos += 6;
 
     // Dados Bancários (lado direito, alinhado com dados da entidade)
@@ -919,8 +928,41 @@ function FaturadoDetalhes() {
       }
     }
 
-    // Tabela de Ordens - Completa com Notas Fiscais
-    const tableData = ordensServico.map(item => {
+    // Tabela - OS ou Abastecimentos dependendo da origem
+    let tableData, tableHead;
+    if (isAbastecimento && abastecimentosVinculados.length > 0) {
+      tableHead = [['Data', 'Cliente', 'Veículo', 'Motorista', 'Combustível', 'Litros', 'Vlr Bruto', 'Desc%', 'Vlr c/Desc', 'CC']];
+      const TIPOS_COMB = { alcool: 'Álcool', gasolina_comum: 'Gas. Comum', gasolina_aditivada: 'Gas. Adit.', gnv: 'GNV', diesel: 'Diesel', diesel_500: 'Diesel S-500', diesel_s10: 'Diesel S-10', arla: 'ARLA', querosene: 'Querosene', glp: 'GLP' };
+      tableData = abastecimentosVinculados.map(item => {
+        const ab = item.abastecimento || {};
+        return [
+          ab.dataReferencia ? new Date(ab.dataReferencia).toLocaleDateString('pt-BR') : '-',
+          ab.cliente?.razaoSocial || ab.cliente?.nomeFantasia || '-',
+          ab.placa || '-',
+          ab.motorista || '-',
+          TIPOS_COMB[ab.tipoCombustivel] || ab.tipoCombustivel || '-',
+          (ab.litrosAbastecidos || 0).toFixed(2),
+          formatarValor(ab.valor || 0),
+          `${(ab.descontoPercentual || 0).toFixed(1)}%`,
+          formatarValor(ab.valorComDesconto || ab.valor || 0),
+          ab.centroCusto || '-'
+        ];
+      });
+    } else {
+      tableHead = [[
+        'Nº OS', 
+        fatura.tipo === 'Fornecedor' ? 'Cliente' : 'Fornecedor', 
+        'Veículo',
+        'NF',
+        'Vlr Peças', 
+        'Desc%', 
+        'Vlr c/Desc', 
+        'Vlr Serv.', 
+        'Desc%', 
+        'Vlr c/Desc', 
+        'Total'
+      ]];
+    tableData = ordensServico.map(item => {
       const os = item.ordemServico;
       const entityName = fatura.tipo === 'Fornecedor' 
         ? (os.cliente?.razaoSocial || os.cliente?.nomeFantasia || '-')
@@ -946,31 +988,20 @@ function FaturadoDetalhes() {
         formatarValor(os.valorFinal || 0)
       ];
     });
+    } // end else (OS)
+
+    const tableColumnStyles = isAbastecimento
+      ? { 0: { cellWidth: 16 }, 1: { cellWidth: 25 }, 2: { cellWidth: 16 }, 3: { cellWidth: 22 }, 4: { cellWidth: 18 }, 5: { cellWidth: 14 }, 6: { cellWidth: 18 }, 7: { cellWidth: 10 }, 8: { cellWidth: 19 }, 9: { cellWidth: 14 } }
+      : { 0: { cellWidth: 16 }, 1: { cellWidth: 28 }, 2: { cellWidth: 12 }, 3: { cellWidth: 14 }, 4: { cellWidth: 18 }, 5: { cellWidth: 10 }, 6: { cellWidth: 19 }, 7: { cellWidth: 18 }, 8: { cellWidth: 10 }, 9: { cellWidth: 19 }, 10: { cellWidth: 20 } };
 
     autoTable(doc, {
       startY: yPos,
-      head: [[
-        'Nº OS', 
-        fatura.tipo === 'Fornecedor' ? 'Cliente' : 'Fornecedor', 
-        'Veículo',
-        'NF',
-        'Vlr Peças', 
-        'Desc%', 
-        'Vlr c/Desc', 
-        'Vlr Serv.', 
-        'Desc%', 
-        'Vlr c/Desc', 
-        'Total'
-      ]],
+      head: tableHead,
       body: tableData,
       theme: 'striped',
       headStyles: { fillColor: [37, 28, 89], fontSize: 7, fontStyle: 'bold' },
       styles: { fontSize: 6.5, cellPadding: 2, overflow: 'linebreak' },
-      columnStyles: {
-        0: { cellWidth: 16 }, 1: { cellWidth: 28 }, 2: { cellWidth: 12 }, 3: { cellWidth: 14 },
-        4: { cellWidth: 18 }, 5: { cellWidth: 10 }, 6: { cellWidth: 19 },
-        7: { cellWidth: 18 }, 8: { cellWidth: 10 }, 9: { cellWidth: 19 }, 10: { cellWidth: 20 }
-      }
+      columnStyles: tableColumnStyles
     });
 
     // Resumo Financeiro com fórmula corrigida
@@ -993,27 +1024,27 @@ function FaturadoDetalhes() {
       valorImpostosExibir = temNaoOptante ? (fatura.valorImpostos || 0) : 0;
     }
     
-    // Calcular valores separados por peças e serviços
+    // Calcular valores separados por peças e serviços (apenas para OS)
     let valorTotalPecas = 0;
     let valorTotalServicos = 0;
     
-    ordensServico.forEach(item => {
-      valorTotalPecas += item.ordemServico.valorPecas || 0;
-      valorTotalServicos += item.ordemServico.valorServico || 0;
-    });
+    if (!isAbastecimento) {
+      ordensServico.forEach(item => {
+        valorTotalPecas += item.ordemServico.valorPecas || 0;
+        valorTotalServicos += item.ordemServico.valorServico || 0;
+      });
+    }
     
     // Calcular detalhamento de impostos para determinar altura do box
     const detalhamentoPreCalculo = calcularDetalhamentoImpostos();
     const totalLinhasDetalhamento = detalhamentoPreCalculo.detalhamento.reduce((acc, item) => {
-      return acc + 1 + item.subitens.length; // título + subitens
+      return acc + 1 + item.subitens.length;
     }, 0);
     
-    // Altura do box: calculada com base no conteúdo real
     const numImpostoItems = detalhamentoPreCalculo.detalhamento.length;
-    // Base sem impostos: padding(6) + peças(7) + serviços(7) + desconto(7) + destaque(10) + taxa(10) + margem(2) = 49
-    let alturaBox = 49;
+    // Abastecimento: sem linhas peças/serviços, com linhas litros/bruto
+    let alturaBox = isAbastecimento ? 49 : 49;
     if (detalhamentoPreCalculo.total > 0) {
-      // Com impostos: base(63) + títulos(numItems*5) + subitens((totalLinhas-numItems)*3.5) + margem(2)
       const detalheAltura = numImpostoItems * 5 + (totalLinhasDetalhamento - numImpostoItems) * 3.5;
       alturaBox = 65 + detalheAltura;
     }
@@ -1036,17 +1067,24 @@ function FaturadoDetalhes() {
     doc.setTextColor(0);
     doc.setFont(undefined, 'normal');
     
-    // Valor Total Peças
-    doc.text('Valor Total Peças:', 25, finalY);
-    doc.text(formatarValor(valorTotalPecas), 185, finalY, { align: 'right' });
-    doc.line(20, finalY + 2, 190, finalY + 2);
-    finalY += 7;
-    
-    // Valor Total Serviços
-    doc.text('Valor Total Serviços:', 25, finalY);
-    doc.text(formatarValor(valorTotalServicos), 185, finalY, { align: 'right' });
-    doc.line(20, finalY + 2, 190, finalY + 2);
-    finalY += 7;
+    if (isAbastecimento) {
+      // Abastecimentos: Valor Bruto
+      doc.text('Valor Bruto (Total Abastecimentos):', 25, finalY);
+      doc.text(formatarValor(fatura.valorTotal || 0), 185, finalY, { align: 'right' });
+      doc.line(20, finalY + 2, 190, finalY + 2);
+      finalY += 7;
+    } else {
+      // OS: Valor Total Peças e Serviços
+      doc.text('Valor Total Peças:', 25, finalY);
+      doc.text(formatarValor(valorTotalPecas), 185, finalY, { align: 'right' });
+      doc.line(20, finalY + 2, 190, finalY + 2);
+      finalY += 7;
+      
+      doc.text('Valor Total Serviços:', 25, finalY);
+      doc.text(formatarValor(valorTotalServicos), 185, finalY, { align: 'right' });
+      doc.line(20, finalY + 2, 190, finalY + 2);
+      finalY += 7;
+    }
     
     // Desconto Contrato
     doc.text('(-) Desconto Contrato:', 25, finalY);
@@ -1142,6 +1180,23 @@ function FaturadoDetalhes() {
     doc.text('VALOR DEVIDO:', 25, finalY);
     doc.text(formatarValor(valorDevidoCorreto), 185, finalY, { align: 'right' });
 
+    // Texto informativo sobre retenções
+    finalY += 12;
+    if (finalY + 30 > 280) {
+      doc.addPage();
+      finalY = 20;
+    }
+    doc.setFontSize(7.5);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont(undefined, 'italic');
+    if (isAbastecimento) {
+      doc.text('Informações sobre retenções tributárias de combustível: consulte o sistema de Combustível na página "Manuais".', 20, finalY);
+    } else {
+      doc.text('Informações sobre retenções tributárias de Manutenção (OS): consulte a página "Tributação e Precificação" para orientações sobre ressarcimento.', 20, finalY);
+    }
+    finalY += 4;
+    doc.text('Em caso de dúvidas, entre em contato pelo telefone (11) 3336-6941.', 20, finalY);
+
     doc.save(`${fatura.numeroFatura}_completa.pdf`);
     toast.success('PDF completo gerado com sucesso!');
   };
@@ -1162,7 +1217,7 @@ function FaturadoDetalhes() {
     doc.setFont(undefined, 'normal');
     doc.setTextColor(0);
     doc.text('CNPJ: 47.611.398/0001-66', 105, 21, { align: 'center' });
-    doc.text('Telefone: (11) 5118-3784 | WhatsApp: (67) 98218-2448', 105, 26, { align: 'center' });
+    doc.text('Telefone: (11) 5118-3784 | WhatsApp: (11) 3336-6941', 105, 26, { align: 'center' });
     doc.text('Alameda Rio Negro, N° 1030, Escritório 2304 - Alphaville Industrial, Barueri - SP', 105, 31, { align: 'center' });
     
     // Linha separadora
@@ -1192,40 +1247,25 @@ function FaturadoDetalhes() {
     doc.setTextColor(0);
     doc.setFont(undefined, 'normal');
     let yPos = 63;
+    const dados = getEntidadeDados(entidade);
     doc.text(`Razão Social: ${entidade?.razaoSocial || '-'}`, 20, yPos);
     yPos += 4;
     doc.text(`Nome Fantasia: ${entidade?.nomeFantasia || '-'}`, 20, yPos);
     yPos += 4;
-    doc.text(`CNPJ: ${entidade?.cnpj || '-'}`, 20, yPos);
+    doc.text(`CNPJ: ${dados.cnpj}`, 20, yPos);
     yPos += 4;
-    
-    const inscMunicipal = entidade?.inscricoes?.inscricaoMunicipal || entidade?.inscricaoMunicipal || '-';
-    const inscEstadual = entidade?.inscricoes?.inscricaoEstadual || entidade?.inscricaoEstadual || '-';
-    doc.text(`Insc. Municipal: ${inscMunicipal}  |  Insc. Estadual: ${inscEstadual}`, 20, yPos);
+    doc.text(`Insc. Municipal: ${dados.inscMunicipal}  |  Insc. Estadual: ${dados.inscEstadual}`, 20, yPos);
     yPos += 4;
-    
-    const logradouro = entidade?.endereco?.logradouro || '-';
-    const numero = entidade?.endereco?.numero || '-';
-    const complemento = entidade?.endereco?.complemento ? `, ${entidade.endereco.complemento}` : '';
-    doc.text(`Endereço: ${logradouro}, ${numero}${complemento}`, 20, yPos);
+    doc.text(`Endereço: ${dados.endereco}`, 20, yPos);
     yPos += 4;
-    
-    const bairro = entidade?.endereco?.bairro || '-';
-    doc.text(`Bairro: ${bairro}`, 20, yPos);
+    doc.text(`Bairro: ${dados.bairro}`, 20, yPos);
     yPos += 4;
-    
-    const cidade = entidade?.endereco?.cidade || '-';
-    const estado = entidade?.endereco?.estado || '-';
-    const cep = entidade?.endereco?.cep || '-';
-    doc.text(`Cidade/UF: ${cidade}/${estado}  -  CEP: ${cep}`, 20, yPos);
+    doc.text(`Cidade/UF: ${dados.cidade}/${dados.estado}  -  CEP: ${dados.cep}`, 20, yPos);
     yPos += 4;
-    
-    const telefone = entidade?.contatos?.telefone || entidade?.telefone || '-';
-    const email = entidade?.contatos?.email || entidade?.email || '-';
-    doc.text(`Telefone: ${telefone}  |  E-mail: ${email}`, 20, yPos);
+    doc.text(`Telefone: ${dados.telefone}  |  E-mail: ${dados.email}`, 20, yPos);
     yPos += 6;
 
-    // Dados Bancários (lado direito, alinhado com dados da entidade)
+    // Dados Bancários
     if (fatura.tipo === 'Fornecedor' && entidade) {
       doc.setFontSize(11);
       doc.setTextColor(37, 28, 89);
@@ -1427,6 +1467,19 @@ function FaturadoDetalhes() {
     doc.text('VALOR DEVIDO:', 25, finalY);
     doc.text(formatarValor(valorDevidoPecas), 185, finalY, { align: 'right' });
 
+    // Texto informativo sobre retenções
+    finalY += 10;
+    if (finalY + 20 > 280) {
+      doc.addPage();
+      finalY = 20;
+    }
+    doc.setFontSize(7);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont(undefined, 'italic');
+    doc.text('* As retenções de impostos aplicadas nesta fatura seguem as regras de tributação configuradas para cada cliente/órgão.', 20, finalY);
+    finalY += 4;
+    doc.text('Para mais informações sobre as regras de retenção aplicáveis, consulte a página "Tributação e Precificação" no sistema.', 20, finalY);
+
     doc.save(`${fatura.numeroFatura}_pecas.pdf`);
     toast.success('PDF de peças gerado com sucesso!');
   };
@@ -1447,7 +1500,7 @@ function FaturadoDetalhes() {
     doc.setFont(undefined, 'normal');
     doc.setTextColor(0);
     doc.text('CNPJ: 47.611.398/0001-66', 105, 21, { align: 'center' });
-    doc.text('Telefone: (11) 5118-3784 | WhatsApp: (67) 98218-2448', 105, 26, { align: 'center' });
+    doc.text('Telefone: (11) 5118-3784 | WhatsApp: (11) 3336-6941', 105, 26, { align: 'center' });
     doc.text('Alameda Rio Negro, N° 1030, Escritório 2304 - Alphaville Industrial, Barueri - SP', 105, 31, { align: 'center' });
     
     // Linha separadora
@@ -1477,40 +1530,25 @@ function FaturadoDetalhes() {
     doc.setTextColor(0);
     doc.setFont(undefined, 'normal');
     let yPos = 63;
+    const dados = getEntidadeDados(entidade);
     doc.text(`Razão Social: ${entidade?.razaoSocial || '-'}`, 20, yPos);
     yPos += 4;
     doc.text(`Nome Fantasia: ${entidade?.nomeFantasia || '-'}`, 20, yPos);
     yPos += 4;
-    doc.text(`CNPJ: ${entidade?.cnpj || '-'}`, 20, yPos);
+    doc.text(`CNPJ: ${dados.cnpj}`, 20, yPos);
     yPos += 4;
-    
-    const inscMunicipal = entidade?.inscricoes?.inscricaoMunicipal || entidade?.inscricaoMunicipal || '-';
-    const inscEstadual = entidade?.inscricoes?.inscricaoEstadual || entidade?.inscricaoEstadual || '-';
-    doc.text(`Insc. Municipal: ${inscMunicipal}  |  Insc. Estadual: ${inscEstadual}`, 20, yPos);
+    doc.text(`Insc. Municipal: ${dados.inscMunicipal}  |  Insc. Estadual: ${dados.inscEstadual}`, 20, yPos);
     yPos += 4;
-    
-    const logradouro = entidade?.endereco?.logradouro || '-';
-    const numero = entidade?.endereco?.numero || '-';
-    const complemento = entidade?.endereco?.complemento ? `, ${entidade.endereco.complemento}` : '';
-    doc.text(`Endereço: ${logradouro}, ${numero}${complemento}`, 20, yPos);
+    doc.text(`Endereço: ${dados.endereco}`, 20, yPos);
     yPos += 4;
-    
-    const bairro = entidade?.endereco?.bairro || '-';
-    doc.text(`Bairro: ${bairro}`, 20, yPos);
+    doc.text(`Bairro: ${dados.bairro}`, 20, yPos);
     yPos += 4;
-    
-    const cidade = entidade?.endereco?.cidade || '-';
-    const estado = entidade?.endereco?.estado || '-';
-    const cep = entidade?.endereco?.cep || '-';
-    doc.text(`Cidade/UF: ${cidade}/${estado}  -  CEP: ${cep}`, 20, yPos);
+    doc.text(`Cidade/UF: ${dados.cidade}/${dados.estado}  -  CEP: ${dados.cep}`, 20, yPos);
     yPos += 4;
-    
-    const telefone = entidade?.contatos?.telefone || entidade?.telefone || '-';
-    const email = entidade?.contatos?.email || entidade?.email || '-';
-    doc.text(`Telefone: ${telefone}  |  E-mail: ${email}`, 20, yPos);
+    doc.text(`Telefone: ${dados.telefone}  |  E-mail: ${dados.email}`, 20, yPos);
     yPos += 6;
 
-    // Dados Bancários (lado direito, alinhado com dados da entidade)
+    // Dados Bancários
     if (fatura.tipo === 'Fornecedor' && entidade) {
       doc.setFontSize(11);
       doc.setTextColor(37, 28, 89);
@@ -1712,6 +1750,19 @@ function FaturadoDetalhes() {
     doc.text('VALOR DEVIDO:', 25, finalY);
     doc.text(formatarValor(valorDevidoServicos), 185, finalY, { align: 'right' });
 
+    // Texto informativo sobre retenções
+    finalY += 10;
+    if (finalY + 20 > 280) {
+      doc.addPage();
+      finalY = 20;
+    }
+    doc.setFontSize(7);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont(undefined, 'italic');
+    doc.text('* As retenções de impostos aplicadas nesta fatura seguem as regras de tributação configuradas para cada cliente/órgão.', 20, finalY);
+    finalY += 4;
+    doc.text('Para mais informações sobre as regras de retenção aplicáveis, consulte a página "Tributação e Precificação" no sistema.', 20, finalY);
+
     doc.save(`${fatura.numeroFatura}_servicos.pdf`);
     toast.success('PDF de serviços gerado com sucesso!');
   };
@@ -1866,7 +1917,7 @@ function FaturadoDetalhes() {
 
             {/* Filtros */}
             <div className="filtros-card">
-              <h3>Ordens de Serviço da Fatura</h3>
+              <h3>{isAbastecimento ? 'Abastecimentos da Fatura' : 'Ordens de Serviço da Fatura'}</h3>
               <div className="filtros-grid">
                 <div className="filtro-group">
                   <input
@@ -1904,30 +1955,89 @@ function FaturadoDetalhes() {
               </div>
             </div>
 
-            {/* Tabela de ordens de serviço */}
+            {/* Tabela */}
             <div className="table-card">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th style={{ width: '50px' }}></th>
-                    <th>Código</th>
-                    <th>Nº OS</th>
-                    <th>{fatura.tipo === 'Fornecedor' ? 'Cliente' : 'Fornecedor'}</th>
-                    <th>Tipo</th>
-                    <th>Valor Bruto</th>
-                    <th>Valor Líquido</th>
-                    <th>Status</th>
-                    <th>Data Pagamento</th>
-                    <th>Ações</th>
+                    {isAbastecimento ? (
+                      <>
+                        <th style={{ width: '50px' }}></th>
+                        <th>Data</th>
+                        <th>Cliente</th>
+                        <th>Veículo</th>
+                        <th>Motorista</th>
+                        <th>Combustível</th>
+                        <th>Litros</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                      </>
+                    ) : (
+                      <>
+                        <th style={{ width: '50px' }}></th>
+                        <th>Código</th>
+                        <th>Nº OS</th>
+                        <th>{fatura.tipo === 'Fornecedor' ? 'Cliente' : 'Fornecedor'}</th>
+                        <th>Tipo</th>
+                        <th>Valor Bruto</th>
+                        <th>Valor Líquido</th>
+                        <th>Status</th>
+                        <th>Data Pagamento</th>
+                        <th>Ações</th>
+                      </>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
-                  {ordemFiltradas.length === 0 ? (
-                    <tr>
-                      <td colSpan="10" style={{ textAlign: 'center', padding: '2rem' }}>
-                        Nenhuma ordem de serviço encontrada
-                      </td>
-                    </tr>
+                  {isAbastecimento ? (
+                    abastecimentosVinculados.length === 0 ? (
+                      <tr>
+                        <td colSpan="10" style={{ textAlign: 'center', padding: '2rem' }}>
+                          Nenhum abastecimento encontrado
+                        </td>
+                      </tr>
+                    ) : (
+                      abastecimentosVinculados.map(item => {
+                        const ab = item.abastecimento || item;
+                        const isPaga = item.statusPagamento === 'Paga';
+                        return (
+                          <tr key={ab._id} className={isPaga ? 'row-paga' : ''}>
+                            <td>
+                              <input
+                                type="checkbox"
+                                checked={selecionadas.includes(ab._id)}
+                                onChange={() => handleSelecionar(ab._id)}
+                                disabled={isPaga || isReadOnly}
+                              />
+                            </td>
+                            <td>{formatarData(ab.dataReferencia)}</td>
+                            <td>{ab.cliente?.razaoSocial || ab.cliente?.nomeFantasia || '-'}</td>
+                            <td>{ab.placa || ab.veiculo || '-'}</td>
+                            <td>{ab.motorista || '-'}</td>
+                            <td>{ab.tipoCombustivel || '-'}</td>
+                            <td>{ab.litrosAbastecidos?.toFixed(2) || '-'}</td>
+                            <td>{formatarValor(item.valorAbastecimento || ab.valorComDesconto || ab.valor || 0)}</td>
+                            <td>
+                              <span className={getStatusBadgeClass(item.statusPagamento)}>
+                                {item.statusPagamento}
+                              </span>
+                            </td>
+                            <td>
+                              {!isPaga && !isReadOnly && (
+                                <button
+                                  className="btn-icon btn-delete"
+                                  onClick={() => handleRemoverOS(ab._id)}
+                                  title="Remover da fatura"
+                                >
+                                  🗑️
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )
                   ) : (
                     ordemFiltradas.map(item => {
                       const os = item.ordemServico;

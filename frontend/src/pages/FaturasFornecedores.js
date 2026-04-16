@@ -504,7 +504,7 @@ function FaturasFornecedores() {
     doc.setFont(undefined, 'normal');
     doc.setTextColor(0);
     doc.text('CNPJ: 47.611.398/0001-66', 105, 21, { align: 'center' });
-    doc.text('Telefone: (11) 5118-3784 | WhatsApp: (67) 98218-2448', 105, 26, { align: 'center' });
+    doc.text('Telefone: (11) 5118-3784 | WhatsApp: (11) 3336-6941', 105, 26, { align: 'center' });
     doc.text('Alameda Rio Negro, N° 1030, Escritório 2304 - Alphaville Industrial, Barueri - SP', 105, 31, { align: 'center' });
     
     // Linha separadora
@@ -997,7 +997,7 @@ function FaturasFornecedores() {
               <div className="fatura-empresa-info">
                 <h2>InstaSolutions Produtos e Gestão Empresarial LTDA</h2>
                 <p><strong>CNPJ:</strong> 47.611.398/0001-66</p>
-                <p><strong>Telefone:</strong> (11) 5118-3784 | <strong>WhatsApp:</strong> (67) 98218-2448</p>
+                <p><strong>Telefone:</strong> (11) 5118-3784 | <strong>WhatsApp:</strong> (11) 3336-6941</p>
                 <p><strong>Endereço:</strong> Alameda Rio Negro, N° 1030, Escritório 2304 - Alphaville Industrial, Barueri - SP</p>
                 <hr />
               </div>

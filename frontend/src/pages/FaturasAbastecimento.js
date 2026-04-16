@@ -226,6 +226,20 @@ function FaturasAbastecimento() {
     setShowFaturaModal(true);
   };
 
+  const handleGerarFaturaDirecta = () => {
+    if (selectedIds.length === 0) {
+      toast.warning('Selecione pelo menos um abastecimento');
+      return;
+    }
+    if (!window.confirm(`Deseja gerar a fatura com ${selectedIds.length} abastecimento(s) selecionado(s)?`)) {
+      return;
+    }
+    const hoje = new Date();
+    hoje.setDate(hoje.getDate() + prazoRecebimentoDias);
+    setDataVencimento(hoje.toISOString().split('T')[0]);
+    handleGerarFatura();
+  };
+
   const handleGerarFatura = async () => {
     if (selectedIds.length === 0) return;
 
@@ -394,9 +408,14 @@ function FaturasAbastecimento() {
                       ? 'Desmarcar Todos' : 'Selecionar Todos'}
                   </button>
                   {!isFornecedor && (
-                    <button className="btn-primary" onClick={handleVisualizarFatura} disabled={selectedIds.length === 0}>
-                      ⛽ Gerar Fatura ({selectedIds.length})
-                    </button>
+                    <>
+                      <button className="btn-secondary" onClick={handleVisualizarFatura} disabled={selectedIds.length === 0}>
+                        👁️ Visualizar Prévia ({selectedIds.length})
+                      </button>
+                      <button className="btn-primary" onClick={handleGerarFaturaDirecta} disabled={selectedIds.length === 0}>
+                        ⛽ Gerar Fatura ({selectedIds.length})
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -420,7 +439,8 @@ function FaturasAbastecimento() {
                         <th>Motorista</th>
                         <th>Combustível</th>
                         <th>Litros</th>
-                        <th>Valor</th>
+                        <th>Valor Bruto</th>
+                        <th>Valor c/ Desc.</th>
                         <th>CC</th>
                       </tr>
                     </thead>
@@ -440,6 +460,7 @@ function FaturasAbastecimento() {
                           <td>{TIPOS_COMBUSTIVEL[ab.tipoCombustivel] || ab.tipoCombustivel}</td>
                           <td>{formatNumber(ab.litrosAbastecidos, 2)}</td>
                           <td>{formatCurrency(ab.valor)}</td>
+                          <td>{formatCurrency(ab.valorComDesconto || ab.valor)}</td>
                           <td>{ab.centroCusto || '-'}</td>
                         </tr>
                       ))}
@@ -460,7 +481,7 @@ function FaturasAbastecimento() {
               <div className="modal-overlay" onClick={() => setShowFaturaModal(false)}>
                 <div className="modal-fatura" onClick={e => e.stopPropagation()}>
                   <div className="modal-header">
-                    <h2>⛽ Confirmar Faturamento de Abastecimentos</h2>
+                    <h2>👁️ Prévia do Faturamento de Abastecimentos</h2>
                     <button className="close-btn" onClick={() => setShowFaturaModal(false)}>×</button>
                   </div>
 

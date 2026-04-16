@@ -24,6 +24,8 @@ function OrdensServico() {
     dataFim: ''
   });
   const [totalRegistros, setTotalRegistros] = useState(0);
+  const [clientes, setClientes] = useState([]);
+  const [fornecedores, setFornecedores] = useState([]);
 
   const ordensPorPagina = 15;
 
@@ -31,8 +33,24 @@ function OrdensServico() {
     const currentUser = authService.getCurrentUser();
     setUser(currentUser);
     loadOrdensServico();
+    loadListas();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
+
+  const loadListas = async () => {
+    try {
+      const [cliRes, fornRes] = await Promise.all([
+        api.get('/clientes', { params: { limit: 1000 } }),
+        api.get('/fornecedores', { params: { limit: 1000 } })
+      ]);
+      const cliData = cliRes.data.clientes || cliRes.data;
+      setClientes(Array.isArray(cliData) ? cliData : []);
+      const fornData = fornRes.data.fornecedores || fornRes.data;
+      setFornecedores(Array.isArray(fornData) ? fornData : []);
+    } catch (error) {
+      console.error('Erro ao carregar listas:', error);
+    }
+  };
 
   const loadOrdensServico = async () => {
     try {
@@ -178,6 +196,24 @@ function OrdensServico() {
                     onChange={handleFiltroChange}
                     placeholder="Ex: OS-000001"
                   />
+                </div>
+                <div className="form-group">
+                  <label>Cliente</label>
+                  <select name="cliente" value={filtros.cliente} onChange={handleFiltroChange}>
+                    <option value="">Todos</option>
+                    {clientes.map(c => (
+                      <option key={c._id} value={c._id}>{c.razaoSocial || c.nomeFantasia}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Fornecedor</label>
+                  <select name="fornecedor" value={filtros.fornecedor} onChange={handleFiltroChange}>
+                    <option value="">Todos</option>
+                    {fornecedores.map(f => (
+                      <option key={f._id} value={f._id}>{f.razaoSocial || f.nomeFantasia}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="form-group">
                   <label>Status</label>

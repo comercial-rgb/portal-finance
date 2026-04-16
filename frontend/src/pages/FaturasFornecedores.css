@@ -117,7 +117,8 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 .btn-selecionar-todas {
@@ -246,6 +247,80 @@
   height: 80px;
   margin-bottom: 1rem;
   opacity: 0.5;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .faturas-fornecedores-container {
+    padding: 1rem;
+  }
+
+  .filtros-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .ordem-info {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .faturas-fornecedores-container {
+    padding: 0.75rem;
+  }
+
+  .filtros-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ordens-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .btn-export {
+    flex: 1;
+    justify-content: center;
+    font-size: 0.85rem;
+    padding: 0.6rem 1rem;
+  }
+
+  .ordem-info {
+    grid-template-columns: 1fr;
+  }
+
+  .fatura-modal-content {
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .fatura-document {
+    padding: 1.5rem;
+  }
+
+  .modal-footer {
+    padding: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .fatura-table {
+    font-size: 10px;
+  }
+
+  .fatura-table th,
+  .fatura-table td {
+    padding: 6px 4px;
+  }
 }
 
 /* Modal de Fatura */

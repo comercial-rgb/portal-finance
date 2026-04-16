@@ -53,11 +53,21 @@ function Faturados() {
     try {
       setLoading(true);
       const tipo = abaAtiva === 'fornecedores' ? 'Fornecedor' : 'Cliente';
+      console.log('Carregando faturas tipo:', tipo);
       const response = await api.get(`/faturas?tipo=${tipo}`);
-      setFaturas(response.data);
+      console.log('Faturas recebidas:', response.data?.length || 0);
+      const data = Array.isArray(response.data) ? response.data : [];
+      setFaturas(data);
     } catch (error) {
-      toast.error('Erro ao carregar faturas');
-      console.error(error);
+      console.error('Erro ao carregar faturas:', error);
+      if (error.response?.status === 401) {
+        toast.error('Sessão expirada. Faça login novamente.');
+      } else if (error.response?.status >= 500) {
+        toast.error('Servidor indisponível. Tente novamente em alguns instantes.');
+      } else {
+        toast.error('Erro ao carregar faturas');
+      }
+      setFaturas([]);
     } finally {
       setLoading(false);
     }

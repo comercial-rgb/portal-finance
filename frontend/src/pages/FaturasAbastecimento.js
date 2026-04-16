@@ -159,7 +159,11 @@ function FaturasAbastecimento() {
       valorBruto += valor;
       valorDesconto += desc;
 
-      if (aplicarRetencao && impostos) {
+      // Buscar dados do fornecedor para verificar naoOptanteSimples
+      const fornecedorData = ab.fornecedor || {};
+      const isNaoOptante = fornecedorData.naoOptanteSimples === true;
+
+      if (aplicarRetencao && impostos && isNaoOptante) {
         tipoImposto.forEach(tipo => {
           let tabela = null;
           if (tipo === 'municipais') tabela = impostos.combustivelMunicipais;
@@ -224,6 +228,20 @@ function FaturasAbastecimento() {
     hoje.setDate(hoje.getDate() + prazoRecebimentoDias);
     setDataVencimento(hoje.toISOString().split('T')[0]);
     setShowFaturaModal(true);
+  };
+
+  const handleGerarFaturaDirecta = () => {
+    if (selectedIds.length === 0) {
+      toast.warning('Selecione pelo menos um abastecimento');
+      return;
+    }
+    if (!window.confirm(`Deseja gerar a fatura com ${selectedIds.length} abastecimento(s) selecionado(s)?`)) {
+      return;
+    }
+    const hoje = new Date();
+    hoje.setDate(hoje.getDate() + prazoRecebimentoDias);
+    setDataVencimento(hoje.toISOString().split('T')[0]);
+    handleGerarFatura();
   };
 
   const handleGerarFatura = async () => {
@@ -394,9 +412,14 @@ function FaturasAbastecimento() {
                       ? 'Desmarcar Todos' : 'Selecionar Todos'}
                   </button>
                   {!isFornecedor && (
-                    <button className="btn-primary" onClick={handleVisualizarFatura} disabled={selectedIds.length === 0}>
-                      ⛽ Gerar Fatura ({selectedIds.length})
-                    </button>
+                    <>
+                      <button className="btn-secondary" onClick={handleVisualizarFatura} disabled={selectedIds.length === 0}>
+                        Visualizar Prévia ({selectedIds.length})
+                      </button>
+                      <button className="btn-primary" onClick={handleGerarFaturaDirecta} disabled={selectedIds.length === 0}>
+                        Gerar Fatura ({selectedIds.length})
+                      </button>
+                    </>
                   )}
                 </div>
               </div>

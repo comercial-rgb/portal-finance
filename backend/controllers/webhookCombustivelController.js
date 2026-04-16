@@ -2,6 +2,14 @@ const Abastecimento = require('../models/Abastecimento');
 const Cliente = require('../models/Cliente');
 const Fornecedor = require('../models/Fornecedor');
 
+// Formatar CNPJ digits para formato brasileiro XX.XXX.XXX/XXXX-XX
+const formatCnpjBr = (digits) => {
+  const d = (digits || '').replace(/\D/g, '');
+  if (d.length === 14) return `${d.substr(0,2)}.${d.substr(2,3)}.${d.substr(5,3)}/${d.substr(8,4)}-${d.substr(12,2)}`;
+  if (d.length === 11) return `${d.substr(0,3)}.${d.substr(3,3)}.${d.substr(6,3)}-${d.substr(9,2)}`;
+  return digits;
+};
+
 // Função para normalizar nomes de empresas para comparação
 const normalizarNomeEmpresa = (nome) => {
   if (!nome) return '';
@@ -43,6 +51,23 @@ const calcularSimilaridade = (nome1, nome2) => {
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
+ * Buscar por CNPJ: tenta formato brasileiro E digits-only para compatibilidade
+ */
+const buscarPorCnpj = async (Model, cnpjRaw) => {
+  const digits = (cnpjRaw || '').replace(/\D/g, '');
+  if (!digits || digits.length < 11) return null;
+  const formatted = formatCnpjBr(digits);
+  // Try formatted first (new standard), then digits-only (legacy)
+  let doc = await Model.findOne({ cnpjCpf: formatted });
+  if (doc) return doc;
+  doc = await Model.findOne({ cnpjCpf: digits });
+  if (doc) return doc;
+  // Fallback regex (partial match)
+  doc = await Model.findOne({ cnpjCpf: { $regex: new RegExp(escapeRegex(digits)) } });
+  return doc;
+};
+
+/**
  * Buscar entidade (Cliente ou Fornecedor) por nome fantasia com fallback progressivo
  */
 const buscarEntidadePorNome = async (Model, nomeBusca, tipo) => {
@@ -74,9 +99,7 @@ const buscarEntidadePorNome = async (Model, nomeBusca, tipo) => {
   // 4. Busca por CNPJ (se parecer um CNPJ)
   const cnpjLimpo = nomeTrimmed.replace(/\D/g, '');
   if (cnpjLimpo.length >= 11) {
-    doc = await Model.findOne({
-      cnpjCpf: { $regex: new RegExp(escapeRegex(cnpjLimpo)) }
-    });
+    doc = await buscarPorCnpj(Model, cnpjLimpo);
     if (doc) {
       return { doc, divergencia: `⚠️ ${tipo} encontrado via CNPJ="${cnpjLimpo}"` };
     }
@@ -174,7 +197,7 @@ exports.receberAbastecimento = async (req, res) => {
     let cliente = null;
     if (clienteCnpj) {
       const cnpjLimpo = clienteCnpj.replace(/\D/g, '');
-      cliente = await Cliente.findOne({ cnpjCpf: { $regex: new RegExp(escapeRegex(cnpjLimpo)) } });
+      cliente = await buscarPorCnpj(Cliente, cnpjLimpo);
     }
     if (!cliente && clienteNomeFantasia) {
       const resultado = await buscarEntidadePorNome(Cliente, clienteNomeFantasia, 'Cliente');
@@ -194,7 +217,7 @@ exports.receberAbastecimento = async (req, res) => {
     let fornecedor = null;
     if (fornecedorCnpj) {
       const cnpjLimpo = fornecedorCnpj.replace(/\D/g, '');
-      fornecedor = await Fornecedor.findOne({ cnpjCpf: { $regex: new RegExp(escapeRegex(cnpjLimpo)) } });
+      fornecedor = await buscarPorCnpj(Fornecedor, cnpjLimpo);
     }
     if (!fornecedor && fornecedorNomeFantasia) {
       const resultado = await buscarEntidadePorNome(Fornecedor, fornecedorNomeFantasia, 'Fornecedor');
@@ -210,7 +233,7 @@ exports.receberAbastecimento = async (req, res) => {
           fornecedor = await Fornecedor.create({
             razaoSocial: fornecedorNomeFantasia || `Posto ${cnpjLimpo}`,
             nomeFantasia: fornecedorNomeFantasia || `Posto ${cnpjLimpo}`,
-            cnpjCpf: cnpjLimpo,
+            cnpjCpf: formatCnpjBr(cnpjLimpo),
             endereco: 'Cadastrado automaticamente via webhook',
             bairro: 'N/A',
             cidade: 'N/A',
@@ -229,7 +252,7 @@ exports.receberAbastecimento = async (req, res) => {
         } catch (autoCreateErr) {
           // Possibly duplicate email — retry search
           if (autoCreateErr.code === 11000) {
-            fornecedor = await Fornecedor.findOne({ cnpjCpf: { $regex: new RegExp(escapeRegex(cnpjLimpo)) } });
+            fornecedor = await buscarPorCnpj(Fornecedor, cnpjLimpo);
           }
           if (!fornecedor) {
             console.error('Auto-create fornecedor error:', autoCreateErr.message);
@@ -380,7 +403,7 @@ exports.receberLote = async (req, res) => {
         let cliente = null;
         if (item.clienteCnpj) {
           const cnpjLimpo = item.clienteCnpj.replace(/\D/g, '');
-          cliente = await Cliente.findOne({ cnpjCpf: { $regex: new RegExp(escapeRegex(cnpjLimpo)) } });
+          cliente = await buscarPorCnpj(Cliente, cnpjLimpo);
         }
         if (!cliente && item.clienteNomeFantasia) {
           const res = await buscarEntidadePorNome(Cliente, item.clienteNomeFantasia, 'Cliente');
@@ -391,7 +414,7 @@ exports.receberLote = async (req, res) => {
         let fornecedor = null;
         if (item.fornecedorCnpj) {
           const cnpjLimpo = item.fornecedorCnpj.replace(/\D/g, '');
-          fornecedor = await Fornecedor.findOne({ cnpjCpf: { $regex: new RegExp(escapeRegex(cnpjLimpo)) } });
+          fornecedor = await buscarPorCnpj(Fornecedor, cnpjLimpo);
         }
         if (!fornecedor && item.fornecedorNomeFantasia) {
           const res = await buscarEntidadePorNome(Fornecedor, item.fornecedorNomeFantasia, 'Fornecedor');
@@ -406,7 +429,7 @@ exports.receberLote = async (req, res) => {
               fornecedor = await Fornecedor.create({
                 razaoSocial: item.fornecedorNomeFantasia || `Posto ${cnpjLimpo}`,
                 nomeFantasia: item.fornecedorNomeFantasia || `Posto ${cnpjLimpo}`,
-                cnpjCpf: cnpjLimpo,
+                cnpjCpf: formatCnpjBr(cnpjLimpo),
                 endereco: 'Cadastrado automaticamente via webhook lote',
                 bairro: 'N/A', cidade: 'N/A', estado: 'N/A',
                 email: `auto_${cnpjLimpo}@webhook.instasolutions.com.br`,
@@ -417,7 +440,7 @@ exports.receberLote = async (req, res) => {
               });
             } catch (autoErr) {
               if (autoErr.code === 11000) {
-                fornecedor = await Fornecedor.findOne({ cnpjCpf: { $regex: new RegExp(escapeRegex(cnpjLimpo)) } });
+                fornecedor = await buscarPorCnpj(Fornecedor, cnpjLimpo);
               }
             }
           }
@@ -522,9 +545,7 @@ exports.buscarFornecedorPorCnpj = async (req, res) => {
       return res.status(400).json({ success: false, message: 'CNPJ inválido' });
     }
 
-    const fornecedor = await Fornecedor.findOne({
-      cnpjCpf: { $regex: new RegExp(escapeRegex(cnpjLimpo)) }
-    }).select('_id razaoSocial nomeFantasia cnpjCpf email cidade estado');
+    const fornecedor = await buscarPorCnpj(Fornecedor, cnpjLimpo);
 
     if (!fornecedor) {
       return res.status(404).json({ success: false, found: false, message: 'Fornecedor não encontrado' });
@@ -551,9 +572,7 @@ exports.registrarFornecedor = async (req, res) => {
     }
 
     // Check if already exists
-    const existing = await Fornecedor.findOne({
-      cnpjCpf: { $regex: new RegExp(escapeRegex(cnpjLimpo)) }
-    });
+    const existing = await buscarPorCnpj(Fornecedor, cnpjLimpo);
 
     if (existing) {
       return res.json({
@@ -567,7 +586,7 @@ exports.registrarFornecedor = async (req, res) => {
     const fornecedor = await Fornecedor.create({
       razaoSocial: razaoSocial || nomeFantasia || `Posto ${cnpjLimpo}`,
       nomeFantasia: nomeFantasia || razaoSocial || `Posto ${cnpjLimpo}`,
-      cnpjCpf: cnpjLimpo,
+      cnpjCpf: formatCnpjBr(cnpjLimpo),
       inscricaoEstadual: inscricaoEstadual || '',
       endereco: endereco || 'Não informado',
       bairro: bairro || 'N/A',
@@ -598,7 +617,7 @@ exports.registrarFornecedor = async (req, res) => {
   } catch (error) {
     // Handle duplicate key errors
     if (error.code === 11000) {
-      const existing = await Fornecedor.findOne({ cnpjCpf: { $regex: new RegExp(escapeRegex((req.body.cnpjCpf || '').replace(/\D/g, ''))) } });
+      const existing = await buscarPorCnpj(Fornecedor, (req.body.cnpjCpf || '').replace(/\D/g, ''));
       if (existing) {
         return res.json({
           success: true,

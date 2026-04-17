@@ -17,7 +17,11 @@ class FinsystemService {
   }
 
   isConfigured() {
-    return this.baseUrl && this.baseUrl !== 'http://localhost:4567' && this.email && this.senha;
+    const configured = this.baseUrl && this.baseUrl !== 'http://localhost:4567' && this.email && this.senha;
+    if (!configured) {
+      console.log(`ℹ️ FinSystem config: URL=${this.baseUrl ? 'SET' : 'MISSING'}, EMAIL=${this.email ? 'SET' : 'MISSING'}, SENHA=${this.senha ? 'SET(' + this.senha.length + ' chars)' : 'MISSING'}`);
+    }
+    return configured;
   }
 
   /**
@@ -39,40 +43,43 @@ class FinsystemService {
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           timeout: this.timeout,
           maxRedirects: 0,
-          validateStatus: (status) => status >= 200 && status < 400
+          validateStatus: () => true // Aceitar qualquer status
         }
       );
 
+      console.log(`🔑 FinSystem: Login respondeu HTTP ${response.status}`);
+
+      // Extrair cookie de qualquer resposta (200, 302, 303)
       const setCookie = response.headers['set-cookie'];
       if (setCookie && setCookie.length > 0) {
-        // Extrair o cookie rack.session
         this.sessionCookie = setCookie
           .map(c => c.split(';')[0])
           .join('; ');
         this.sessionExpiry = Date.now() + 20 * 60 * 1000; // 20 min
-        console.log(`✅ FinSystem: Sessão autenticada com sucesso`);
+        console.log(`✅ FinSystem: Sessão autenticada com sucesso (HTTP ${response.status})`);
         return true;
       }
 
-      // Se retornou 200 sem redirect, provavelmente falhou (ficou na página de login)
+      // Se retornou 200 sem cookie, verificar se é página de login com erro
       const dataStr = typeof response.data === 'string' ? response.data : '';
       if (dataStr.includes('inválidos') || dataStr.includes('incorret')) {
         console.error('❌ FinSystem: Email ou senha inválidos');
         return false;
       }
 
-      console.error('❌ FinSystem: Login não retornou cookie de sessão');
+      console.error(`❌ FinSystem: Login HTTP ${response.status} sem cookie de sessão. Headers:`, JSON.stringify(response.headers));
       return false;
     } catch (error) {
-      // 303 redirect com cookie = sucesso
-      if (error.response?.status === 303 || error.response?.status === 302) {
+      // Axios pode lançar erro em redirects — extrair cookie da resposta de erro
+      if (error.response) {
+        console.log(`🔑 FinSystem: Login erro/redirect HTTP ${error.response.status}`);
         const setCookie = error.response.headers['set-cookie'];
         if (setCookie && setCookie.length > 0) {
           this.sessionCookie = setCookie
             .map(c => c.split(';')[0])
             .join('; ');
           this.sessionExpiry = Date.now() + 20 * 60 * 1000;
-          console.log(`✅ FinSystem: Sessão autenticada com sucesso (via redirect)`);
+          console.log(`✅ FinSystem: Sessão autenticada com sucesso (via catch, HTTP ${error.response.status})`);
           return true;
         }
       }

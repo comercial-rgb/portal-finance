@@ -36,6 +36,7 @@ const importacaoRoutes = require('./routes/importacaoRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const ordemPagamentoRoutes = require('./routes/ordemPagamentoRoutes');
 const relatorioGerencialRoutes = require('./routes/relatorioGerencialRoutes');
+const abastecimentoRoutes = require('./routes/abastecimentoRoutes');
 
 const app = express();
 
@@ -120,6 +121,8 @@ app.use('/api/importacao', importacaoRoutes);
 app.use('/api/admin', adminRoutes);
 // Relatório gerencial (admin e gerente)
 app.use('/api/relatorio-gerencial', relatorioGerencialRoutes);
+// Abastecimentos (combustível)
+app.use('/api/abastecimentos', abastecimentoRoutes);
 
 // Rota de teste e health check
 app.get('/api/health', (req, res) => {

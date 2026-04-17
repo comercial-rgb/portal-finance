@@ -32,6 +32,8 @@ import RelatorioGerencial from './pages/RelatorioGerencial';
 import ValoresPendentes from './pages/ValoresPendentes';
 import Pagamentos from './pages/Pagamentos';
 import NotasFiscaisClientes from './pages/NotasFiscaisClientes';
+import Abastecimentos from './pages/Abastecimentos';
+import FaturasAbastecimento from './pages/FaturasAbastecimento';
 import SsoCallback from './pages/SsoCallback';
 import PrivateRoute from './components/PrivateRoute';
 
@@ -289,6 +291,22 @@ function App() {
           element={
             <PrivateRoute allowedRoles={['super_admin', 'admin', 'gerente', 'fornecedor', 'cliente']}>
               <Pagamentos />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/abastecimentos"
+          element={
+            <PrivateRoute allowedRoles={['super_admin', 'admin', 'gerente', 'funcionario', 'fornecedor', 'cliente']}>
+              <Abastecimentos />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/faturas-abastecimento"
+          element={
+            <PrivateRoute allowedRoles={['super_admin', 'admin', 'gerente', 'funcionario', 'fornecedor']}>
+              <FaturasAbastecimento />
             </PrivateRoute>
           }
         />

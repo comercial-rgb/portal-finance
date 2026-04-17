@@ -21,7 +21,9 @@ services:
         value: https://portal.frotainstasolutions.com.br
       - key: FINSYSTEM_API_URL
         sync: false
-      - key: FINSYSTEM_API_KEY
+      - key: FINSYSTEM_EMAIL
+        sync: false
+      - key: FINSYSTEM_SENHA
         sync: false
       - key: FINSYSTEM_EMPRESA_ID
         value: "1"

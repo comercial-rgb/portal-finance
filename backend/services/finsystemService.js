@@ -73,6 +73,18 @@ class FinsystemService {
         }
       );
 
+      // Detectar resposta HTML (URL incorreta ou redirecionamento para login)
+      const contentType = response.headers?.['content-type'] || '';
+      const dataStr = typeof response.data === 'string' ? response.data : '';
+      if (contentType.includes('text/html') || dataStr.includes('<!DOCTYPE') || dataStr.includes('<html')) {
+        console.error(`❌ FinSystem retornou HTML ao invés de JSON. A FINSYSTEM_API_URL (${this.baseUrl}) provavelmente está apontando para o frontend web ao invés da API.`);
+        return {
+          success: false,
+          finsystemId: null,
+          error: 'FinSystem retornou página HTML (login). Verifique se FINSYSTEM_API_URL aponta para a API e não para o frontend web. URL atual: ' + this.baseUrl
+        };
+      }
+
       console.log(`📡 FinSystem resposta (${response.status}) para ordem ${ordem.codigo}:`, JSON.stringify(response.data));
 
       // Extrair ID da resposta - suportar múltiplos formatos de resposta

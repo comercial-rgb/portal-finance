@@ -1297,3 +1297,146 @@
     gap: 1rem;
   }
 }
+
+/* === Status Sub-tabs === */
+.status-subtabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.status-subtab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 2px solid var(--border, #e2e8f0);
+  border-radius: var(--radius, 8px);
+  background: var(--surface, #fff);
+  color: var(--text-secondary, #64748b);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.status-subtab:hover {
+  border-color: var(--primary, #667eea);
+  color: var(--primary, #667eea);
+  background: #667eea08;
+}
+
+.status-subtab.active {
+  color: #fff;
+  border-color: transparent;
+}
+
+.status-subtab.active.subtab-pendente {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.status-subtab.active.subtab-paga {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.status-subtab.active.subtab-todas {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.subtab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(255,255,255,0.25);
+}
+
+.status-subtab:not(.active) .subtab-count {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.filtro-count {
+  font-size: 13px;
+  color: var(--text-secondary, #64748b);
+  white-space: nowrap;
+  font-weight: 600;
+  padding: 10px 0;
+}
+
+/* === Paginação === */
+.paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px;
+  border-top: 1px solid var(--border, #e2e8f0);
+  flex-wrap: wrap;
+}
+
+.pag-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius, 8px);
+  background: var(--surface, #fff);
+  color: var(--text-primary, #2d3748);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pag-btn:hover:not(:disabled) {
+  border-color: var(--primary, #667eea);
+  color: var(--primary, #667eea);
+  background: #667eea08;
+}
+
+.pag-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pag-btn.pag-ativo {
+  background: var(--primary, #667eea);
+  color: #fff;
+  border-color: var(--primary, #667eea);
+}
+
+.pag-dots {
+  padding: 0 4px;
+  color: var(--text-secondary, #64748b);
+}
+
+.pag-info {
+  font-size: 13px;
+  color: var(--text-secondary, #64748b);
+  margin-left: 12px;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .status-subtabs {
+    flex-direction: column;
+  }
+  .paginacao {
+    gap: 4px;
+  }
+  .pag-btn {
+    min-width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+}

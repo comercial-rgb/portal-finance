@@ -20,7 +20,9 @@ function Pagamentos() {
     antecipacoes: { total: 0, pendentes: 0, aprovadas: 0, pagas: 0, valorTotal: 0 }
   });
   const [abaAtiva, setAbaAtiva] = useState('ordens-pagamento');
-  const [filtros, setFiltros] = useState({ busca: '', statusOrdem: '' });
+  const [filtros, setFiltros] = useState({ busca: '', statusOrdem: 'Pendente' });
+  const [paginaAtualOrdens, setPaginaAtualOrdens] = useState(1);
+  const itensPorPaginaOrdens = 15;
 
   // Modal de Comprovante (aba pagamentos)
   const [showModalComprovante, setShowModalComprovante] = useState(false);
@@ -358,6 +360,13 @@ function Pagamentos() {
     return matchBusca && matchStatus;
   });
 
+  // Paginação ordens
+  const totalPaginasOrdens = Math.ceil(ordensFiltradas.length / itensPorPaginaOrdens);
+  const ordensPaginadas = ordensFiltradas.slice(
+    (paginaAtualOrdens - 1) * itensPorPaginaOrdens,
+    paginaAtualOrdens * itensPorPaginaOrdens
+  );
+
   return (
     <div className="page-container">
       <Header user={user} />
@@ -566,20 +575,41 @@ function Pagamentos() {
                       </div>
                     )}
 
+                    {/* Sub-abas de status */}
+                    <div className="status-subtabs">
+                      <button
+                        className={`status-subtab ${filtros.statusOrdem === 'Pendente' ? 'active subtab-pendente' : ''}`}
+                        onClick={() => { setFiltros(prev => ({ ...prev, statusOrdem: 'Pendente' })); setPaginaAtualOrdens(1); }}
+                      >
+                        ⏳ Pendentes
+                        <span className="subtab-count">{ordens.filter(o => o.status === 'Pendente').length}</span>
+                      </button>
+                      <button
+                        className={`status-subtab ${filtros.statusOrdem === 'Paga' ? 'active subtab-paga' : ''}`}
+                        onClick={() => { setFiltros(prev => ({ ...prev, statusOrdem: 'Paga' })); setPaginaAtualOrdens(1); }}
+                      >
+                        ✅ Pagas
+                        <span className="subtab-count">{ordens.filter(o => o.status === 'Paga').length}</span>
+                      </button>
+                      <button
+                        className={`status-subtab ${filtros.statusOrdem === '' ? 'active subtab-todas' : ''}`}
+                        onClick={() => { setFiltros(prev => ({ ...prev, statusOrdem: '' })); setPaginaAtualOrdens(1); }}
+                      >
+                        📋 Todas
+                        <span className="subtab-count">{ordens.length}</span>
+                      </button>
+                    </div>
+
                     {/* Filtros ordens */}
                     <div className="filtros-card">
-                      <input type="text" name="busca" value={filtros.busca} onChange={handleFiltroChange} placeholder="Buscar por nº ordem, fornecedor, CNPJ, cliente, fatura..." className="filtro-input" />
-                      <select value={filtros.statusOrdem} onChange={(e) => setFiltros(prev => ({ ...prev, statusOrdem: e.target.value }))} className="filtro-select">
-                        <option value="">Todos os status</option>
-                        <option value="Pendente">Pendente</option>
-                        <option value="Paga">Paga</option>
-                      </select>
+                      <input type="text" name="busca" value={filtros.busca} onChange={(e) => { handleFiltroChange(e); setPaginaAtualOrdens(1); }} placeholder="Buscar por nº ordem, fornecedor, CNPJ, cliente, fatura..." className="filtro-input" />
+                      <span className="filtro-count">{ordensFiltradas.length} registro{ordensFiltradas.length !== 1 ? 's' : ''}</span>
                     </div>
 
                     {/* Tabela ordens */}
                     <div className="section-card">
                       <div className="section-header">
-                        <h2>📋 Ordens de Pagamento</h2>
+                        <h2>📋 Ordens de Pagamento {filtros.statusOrdem === 'Pendente' ? '- Pendentes' : filtros.statusOrdem === 'Paga' ? '- Pagas' : ''}</h2>
                         <span className="badge">{ordensFiltradas.length} registros</span>
                       </div>
                       {ordensFiltradas.length === 0 ? (
@@ -610,7 +640,7 @@ function Pagamentos() {
                               </tr>
                             </thead>
                             <tbody>
-                              {ordensFiltradas.map(ordem => (
+                              {ordensPaginadas.map(ordem => (
                                 <tr key={ordem._id}>
                                   <td><strong>{ordem.codigo}</strong></td>
                                   <td>{ordem.cliente?.razaoSocial || '-'}</td>
@@ -686,6 +716,31 @@ function Pagamentos() {
                               ))}
                             </tbody>
                           </table>
+                        </div>
+                      )}
+
+                      {/* Paginação */}
+                      {totalPaginasOrdens > 1 && (
+                        <div className="paginacao">
+                          <button className="pag-btn" disabled={paginaAtualOrdens === 1} onClick={() => setPaginaAtualOrdens(1)} title="Primeira">«</button>
+                          <button className="pag-btn" disabled={paginaAtualOrdens === 1} onClick={() => setPaginaAtualOrdens(prev => prev - 1)} title="Anterior">‹</button>
+                          {Array.from({ length: totalPaginasOrdens }, (_, i) => i + 1)
+                            .filter(p => p === 1 || p === totalPaginasOrdens || Math.abs(p - paginaAtualOrdens) <= 2)
+                            .reduce((acc, p, i, arr) => {
+                              if (i > 0 && p - arr[i - 1] > 1) acc.push('...');
+                              acc.push(p);
+                              return acc;
+                            }, [])
+                            .map((item, i) =>
+                              item === '...' ? (
+                                <span key={`dots-${i}`} className="pag-dots">...</span>
+                              ) : (
+                                <button key={item} className={`pag-btn ${paginaAtualOrdens === item ? 'pag-ativo' : ''}`} onClick={() => setPaginaAtualOrdens(item)}>{item}</button>
+                              )
+                            )}
+                          <button className="pag-btn" disabled={paginaAtualOrdens === totalPaginasOrdens} onClick={() => setPaginaAtualOrdens(prev => prev + 1)} title="Próxima">›</button>
+                          <button className="pag-btn" disabled={paginaAtualOrdens === totalPaginasOrdens} onClick={() => setPaginaAtualOrdens(totalPaginasOrdens)} title="Última">»</button>
+                          <span className="pag-info">Página {paginaAtualOrdens} de {totalPaginasOrdens}</span>
                         </div>
                       )}
                     </div>

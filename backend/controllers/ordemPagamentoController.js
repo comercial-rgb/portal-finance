@@ -19,7 +19,7 @@ exports.listar = async (req, res) => {
 
     const ordens = await OrdemPagamento.find(query)
       .populate('cliente', 'razaoSocial nomeFantasia cnpjCpf')
-      .populate('fornecedor', 'razaoSocial nomeFantasia cnpjCpf dadosBancarios')
+      .populate('fornecedor', 'razaoSocial nomeFantasia cnpjCpf banco tipoConta agencia conta chavePix tipoChavePix')
       .populate('fatura', 'numeroFatura valorDevido statusFatura')
       .populate('criadoPor', 'name email')
       .sort({ createdAt: -1 });
@@ -322,13 +322,23 @@ exports.vincularFatura = async (req, res) => {
 exports.resincronizar = async (req, res) => {
   try {
     const ordem = await OrdemPagamento.findOne({ _id: req.params.id, ativo: true })
-      .populate('fornecedor', 'razaoSocial nomeFantasia')
-      .populate('cliente', 'razaoSocial nomeFantasia');
+      .populate('fornecedor', 'razaoSocial nomeFantasia cnpjCpf')
+      .populate('cliente', 'razaoSocial nomeFantasia cnpjCpf')
+      .populate('fatura', 'numeroFatura');
 
     if (!ordem) return res.status(404).json({ message: 'Ordem não encontrada' });
 
     if (ordem.finsystemSincronizado) {
       return res.json({ success: true, message: 'Ordem já está sincronizada', finsystemId: ordem.finsystemId });
+    }
+
+    // Verificar se FinSystem está configurado
+    if (!finsystemService.isConfigured()) {
+      await OrdemPagamento.findByIdAndUpdate(ordem._id, {
+        finsystemSincronizado: false,
+        finsystemErro: 'FinSystem não configurado'
+      });
+      return res.status(400).json({ success: false, message: 'FinSystem não está configurado. Configure as variáveis FINSYSTEM_API_URL e FINSYSTEM_API_KEY.' });
     }
 
     const resultado = await finsystemService.criarRepasseFornecedor(ordem, ordem.fornecedor, ordem.cliente);
@@ -342,7 +352,7 @@ exports.resincronizar = async (req, res) => {
     if (resultado.success) {
       res.json({ success: true, message: 'Sincronizado com sucesso!', finsystemId: resultado.finsystemId });
     } else {
-      res.status(502).json({ success: false, message: `Falha: ${resultado.error}` });
+      res.status(502).json({ success: false, message: resultado.error });
     }
   } catch (error) {
     console.error('Erro ao resincronizar:', error);

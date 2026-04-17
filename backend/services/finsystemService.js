@@ -20,8 +20,22 @@ class FinsystemService {
    * @param {Object} cliente - Dados do cliente (populado)
    * @returns {Object} { success, finsystemId, error }
    */
+  isConfigured() {
+    return this.baseUrl && this.baseUrl !== 'http://localhost:4567' && this.apiKey && this.apiKey !== 'finsystem_dev_api_key_2026';
+  }
+
   async criarRepasseFornecedor(ordem, fornecedor, cliente) {
     try {
+      // Se FinSystem não está configurado, retornar sem erro
+      if (!this.isConfigured()) {
+        console.log(`ℹ️ FinSystem não configurado. Ordem ${ordem.codigo} criada apenas localmente.`);
+        return {
+          success: false,
+          finsystemId: null,
+          error: 'FinSystem não configurado (variáveis de ambiente FINSYSTEM_API_URL e FINSYSTEM_API_KEY não definidas)'
+        };
+      }
+
       const fornecedorNome = fornecedor?.razaoSocial || fornecedor?.nomeFantasia || 'Fornecedor';
       const clienteNome = cliente?.razaoSocial || cliente?.nomeFantasia || 'Cliente';
       const faturaRef = ordem.faturaNumeroManual || ordem.fatura?.numeroFatura || 'Sem fatura';
@@ -74,7 +88,16 @@ class FinsystemService {
         error: response.data?.error || 'Resposta inesperada do FinSystem'
       };
     } catch (error) {
-      const mensagem = error.response?.data?.error || error.message || 'Erro de conexão com FinSystem';
+      let mensagem;
+      if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND' || error.code === 'ETIMEDOUT') {
+        mensagem = `FinSystem indisponível (${error.code}). Verifique se o serviço está online em ${this.baseUrl}`;
+      } else if (error.response?.status === 401 || error.response?.status === 403) {
+        mensagem = 'Chave de API do FinSystem inválida ou sem permissão';
+      } else if (error.response?.status >= 500) {
+        mensagem = `Erro interno do FinSystem (HTTP ${error.response.status}): ${error.response?.data?.error || error.response?.data?.message || 'Erro desconhecido'}`;
+      } else {
+        mensagem = error.response?.data?.error || error.message || 'Erro de conexão com FinSystem';
+      }
       console.error(`❌ FinSystem: Erro ao criar movimentação para ordem ${ordem.codigo}:`, mensagem);
       return {
         success: false,

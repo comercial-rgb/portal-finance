@@ -73,19 +73,36 @@ class FinsystemService {
         }
       );
 
-      if (response.data?.success) {
-        console.log(`✅ FinSystem: Movimentação criada com ID ${response.data.data.id} para ordem ${ordem.codigo}`);
+      console.log(`📡 FinSystem resposta (${response.status}) para ordem ${ordem.codigo}:`, JSON.stringify(response.data));
+
+      // Extrair ID da resposta - suportar múltiplos formatos de resposta
+      const data = response.data;
+      const finsystemId = data?.data?.id || data?.id || data?.movimentacao?.id || data?.movimentacao_id || null;
+
+      // Considerar sucesso se: status 2xx E (flag success OU presença de ID OU status 201)
+      const isSuccess = data?.success === true || 
+                        finsystemId != null || 
+                        response.status === 201 ||
+                        data?.status === 'ok' ||
+                        data?.status === 'created' ||
+                        data?.message?.toLowerCase()?.includes('sucesso') ||
+                        data?.message?.toLowerCase()?.includes('criado');
+
+      if (isSuccess) {
+        console.log(`✅ FinSystem: Movimentação criada${finsystemId ? ` com ID ${finsystemId}` : ''} para ordem ${ordem.codigo}`);
         return {
           success: true,
-          finsystemId: response.data.data.id,
+          finsystemId: finsystemId || `sync-${Date.now()}`,
           error: null
         };
       }
 
+      // Se chegou aqui, a API retornou 2xx mas sem indicação de sucesso
+      const errorMsg = data?.error || data?.message || data?.erro || `Resposta inesperada do FinSystem (HTTP ${response.status}): ${JSON.stringify(data).substring(0, 200)}`;
       return {
         success: false,
         finsystemId: null,
-        error: response.data?.error || 'Resposta inesperada do FinSystem'
+        error: errorMsg
       };
     } catch (error) {
       let mensagem;

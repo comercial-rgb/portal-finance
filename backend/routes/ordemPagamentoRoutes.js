@@ -9,7 +9,6 @@ router.use(protect);
 // Rotas de consulta (antes das rotas com :id)
 router.get('/resumo', ordemPagamentoCtrl.resumo);
 router.get('/finsystem-status', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.finsystemStatus);
-router.post('/sincronizar-lote', authorize('super_admin', 'admin'), ordemPagamentoCtrl.sincronizarLote);
 router.get('/faturas-fornecedor/:fornecedorId', ordemPagamentoCtrl.faturasFornecedor);
 
 // CRUD
@@ -17,11 +16,8 @@ router.get('/', ordemPagamentoCtrl.listar);
 router.post('/', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.criar);
 
 // Ações sobre uma ordem específica
-router.put('/:id', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.editar);
 router.put('/:id/pagar', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.pagar);
 router.put('/:id/vincular-fatura', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.vincularFatura);
-router.put('/:id/nota-comissao', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.notaComissao);
 router.post('/:id/resincronizar', authorize('super_admin', 'admin'), ordemPagamentoCtrl.resincronizar);
-router.post('/:id/ignorar-sync', authorize('super_admin', 'admin'), ordemPagamentoCtrl.ignorarSync);
 
 module.exports = router;

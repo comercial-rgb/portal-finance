@@ -19,7 +19,7 @@ exports.listar = async (req, res) => {
 
     const ordens = await OrdemPagamento.find(query)
       .populate('cliente', 'razaoSocial nomeFantasia cnpjCpf')
-      .populate('fornecedor', 'razaoSocial nomeFantasia cnpjCpf banco tipoConta agencia conta chavePix tipoChavePix')
+      .populate('fornecedor', 'razaoSocial nomeFantasia cnpjCpf dadosBancarios')
       .populate('fatura', 'numeroFatura valorDevido statusFatura')
       .populate('criadoPor', 'name email')
       .sort({ createdAt: -1 });
@@ -106,7 +106,7 @@ exports.criar = async (req, res) => {
     if (!clienteDoc) return res.status(404).json({ message: 'Cliente não encontrado' });
     if (!fornecedorDoc) return res.status(404).json({ message: 'Fornecedor não encontrado' });
 
-    // Criar ordem de pagamento
+    // Criar ordem
     const ordem = new OrdemPagamento({
       cliente,
       fornecedor,
@@ -161,19 +161,6 @@ exports.criar = async (req, res) => {
     });
   } catch (error) {
     console.error('Erro ao criar ordem de pagamento:', error);
-    
-    // Mensagens específicas para erros comuns
-    if (error.code === 11000) {
-      return res.status(409).json({ message: 'Conflito ao gerar código da ordem. Tente novamente.' });
-    }
-    if (error.name === 'ValidationError') {
-      const msgs = Object.values(error.errors).map(e => e.message).join(', ');
-      return res.status(400).json({ message: `Dados inválidos: ${msgs}` });
-    }
-    if (error.name === 'CastError') {
-      return res.status(400).json({ message: `Referência inválida: ${error.path} não é um ID válido` });
-    }
-    
     res.status(500).json({ message: 'Erro ao criar ordem de pagamento', error: error.message });
   }
 };
@@ -336,8 +323,7 @@ exports.resincronizar = async (req, res) => {
   try {
     const ordem = await OrdemPagamento.findOne({ _id: req.params.id, ativo: true })
       .populate('fornecedor', 'razaoSocial nomeFantasia')
-      .populate('cliente', 'razaoSocial nomeFantasia')
-      .populate('fatura', 'numeroFatura');
+      .populate('cliente', 'razaoSocial nomeFantasia');
 
     if (!ordem) return res.status(404).json({ message: 'Ordem não encontrada' });
 
@@ -364,63 +350,6 @@ exports.resincronizar = async (req, res) => {
   }
 };
 
-// @desc    Sincronizar em lote todas as ordens não sincronizadas com FinSystem
-// @route   POST /api/ordens-pagamento/sincronizar-lote
-exports.sincronizarLote = async (req, res) => {
-  try {
-    const dataMinima = new Date('2026-04-09T00:00:00.000Z');
-    const ordensNaoSincronizadas = await OrdemPagamento.find({
-      ativo: true,
-      finsystemSincronizado: { $ne: true },
-      finsystemIgnorado: { $ne: true },
-      createdAt: { $gte: dataMinima }
-    })
-      .populate('fornecedor', 'razaoSocial nomeFantasia')
-      .populate('cliente', 'razaoSocial nomeFantasia')
-      .populate('fatura', 'numeroFatura');
-
-    if (ordensNaoSincronizadas.length === 0) {
-      return res.json({ success: true, message: 'Todas as ordens já estão sincronizadas', resultados: { total: 0, sucesso: 0, falha: 0, detalhes: [] } });
-    }
-
-    const resultados = { total: ordensNaoSincronizadas.length, sucesso: 0, falha: 0, detalhes: [] };
-
-    for (const ordem of ordensNaoSincronizadas) {
-      try {
-        const resultado = await finsystemService.criarRepasseFornecedor(ordem, ordem.fornecedor, ordem.cliente);
-
-        await OrdemPagamento.findByIdAndUpdate(ordem._id, {
-          finsystemSincronizado: resultado.success,
-          finsystemId: resultado.finsystemId,
-          finsystemErro: resultado.error
-        });
-
-        if (resultado.success) {
-          resultados.sucesso++;
-          resultados.detalhes.push({ codigo: ordem.codigo, status: 'sucesso', finsystemId: resultado.finsystemId });
-        } else {
-          resultados.falha++;
-          resultados.detalhes.push({ codigo: ordem.codigo, status: 'falha', erro: resultado.error });
-        }
-      } catch (err) {
-        resultados.falha++;
-        resultados.detalhes.push({ codigo: ordem.codigo, status: 'falha', erro: err.message });
-        await OrdemPagamento.findByIdAndUpdate(ordem._id, {
-          finsystemSincronizado: false,
-          finsystemErro: err.message
-        });
-      }
-    }
-
-    const mensagem = `Sincronização concluída: ${resultados.sucesso}/${resultados.total} com sucesso`;
-    console.log(`📊 ${mensagem}`);
-    res.json({ success: true, message: mensagem, resultados });
-  } catch (error) {
-    console.error('Erro na sincronização em lote:', error);
-    res.status(500).json({ message: 'Erro na sincronização em lote', error: error.message });
-  }
-};
-
 // @desc    Health check do FinSystem
 // @route   GET /api/ordens-pagamento/finsystem-status
 exports.finsystemStatus = async (req, res) => {
@@ -429,66 +358,5 @@ exports.finsystemStatus = async (req, res) => {
     res.json({ success: true, finsystem: status });
   } catch (error) {
     res.status(500).json({ success: false, finsystem: { online: false } });
-  }
-};
-
-// @desc    Ignorar sincronização FinSystem para uma ordem
-// @route   POST /api/ordens-pagamento/:id/ignorar-sync
-exports.ignorarSync = async (req, res) => {
-  try {
-    const ordem = await OrdemPagamento.findByIdAndUpdate(
-      req.params.id,
-      { finsystemIgnorado: true, finsystemSincronizado: true, finsystemErro: null },
-      { new: true }
-    );
-    if (!ordem) return res.status(404).json({ message: 'Ordem não encontrada' });
-    res.json({ success: true, message: 'Sincronização ignorada com sucesso' });
-  } catch (error) {
-    console.error('Erro ao ignorar sync:', error);
-    res.status(500).json({ message: 'Erro ao ignorar sincronização', error: error.message });
-  }
-};
-
-// @desc    Anexar/atualizar nota de comissão PDF
-// @route   PUT /api/ordens-pagamento/:id/nota-comissao
-exports.notaComissao = async (req, res) => {
-  try {
-    const { notaComissao } = req.body;
-    if (!notaComissao) return res.status(400).json({ message: 'Arquivo da nota de comissão é obrigatório' });
-
-    const ordem = await OrdemPagamento.findOneAndUpdate(
-      { _id: req.params.id, ativo: true },
-      { notaComissao },
-      { new: true }
-    );
-    if (!ordem) return res.status(404).json({ message: 'Ordem não encontrada' });
-    res.json({ success: true, message: 'Nota de comissão anexada com sucesso' });
-  } catch (error) {
-    console.error('Erro ao anexar nota de comissão:', error);
-    res.status(500).json({ message: 'Erro ao anexar nota de comissão', error: error.message });
-  }
-};
-
-// @desc    Editar ordem de pagamento
-// @route   PUT /api/ordens-pagamento/:id
-exports.editar = async (req, res) => {
-  try {
-    const { valor, dataGeracao, observacoes, faturaNumeroManual } = req.body;
-    const updateData = {};
-    if (valor !== undefined) updateData.valor = valor;
-    if (dataGeracao !== undefined) updateData.dataGeracao = dataGeracao;
-    if (observacoes !== undefined) updateData.observacoes = observacoes;
-    if (faturaNumeroManual !== undefined) updateData.faturaNumeroManual = faturaNumeroManual;
-
-    const ordem = await OrdemPagamento.findOneAndUpdate(
-      { _id: req.params.id, ativo: true },
-      updateData,
-      { new: true }
-    );
-    if (!ordem) return res.status(404).json({ message: 'Ordem não encontrada' });
-    res.json({ success: true, message: 'Ordem atualizada com sucesso', data: ordem });
-  } catch (error) {
-    console.error('Erro ao editar ordem:', error);
-    res.status(500).json({ message: 'Erro ao editar ordem', error: error.message });
   }
 };

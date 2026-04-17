@@ -32,11 +32,10 @@ const antecipacaoRoutes = require('./routes/antecipacaoRoutes');
 const pagamentoRoutes = require('./routes/pagamentoRoutes');
 const notaFiscalClienteRoutes = require('./routes/notaFiscalClienteRoutes');
 const webhookFrotaRoutes = require('./routes/webhookFrotaRoutes');
-const webhookCombustivelRoutes = require('./routes/webhookCombustivelRoutes');
 const importacaoRoutes = require('./routes/importacaoRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const ordemPagamentoRoutes = require('./routes/ordemPagamentoRoutes');
-const abastecimentoRoutes = require('./routes/abastecimentoRoutes');
+const relatorioGerencialRoutes = require('./routes/relatorioGerencialRoutes');
 
 const app = express();
 
@@ -93,8 +92,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api', rateLimit(1000, 60 * 1000)); // 1000 req/min geral
 
 // Rotas com rate limiting específico e cache
-// Auth sem rate limiting restritivo - controle feito por IP apenas
-app.use('/api/auth', rateLimit(200, 60 * 1000), authRoutes); // 200 req/min
+// Auth com limite mais alto para evitar bloqueios durante testes
+app.use('/api/auth', rateLimit(30, 5 * 60 * 1000), authRoutes); // 30 req / 5 min
 app.use('/api', invalidateCache('fornecedores'), fornecedorRoutes);
 // Clientes SEM cache para garantir dados sempre atualizados
 app.use('/api/clientes', clienteRoutes);
@@ -115,14 +114,12 @@ app.use('/api/ordens-pagamento', ordemPagamentoRoutes);
 app.use('/api/notas-fiscais-clientes', notaFiscalClienteRoutes);
 // Webhook de integração com sistema de frotas (protegido por token)
 app.use('/api/webhook/frota', webhookFrotaRoutes);
-// Webhook de integração com sistema de combustível (protegido por token)
-app.use('/api/webhook/combustivel', webhookCombustivelRoutes);
-// Abastecimentos
-app.use('/api/abastecimentos', abastecimentoRoutes);
 // Importação em lote de OS (apenas admin)
 app.use('/api/importacao', importacaoRoutes);
 // Rotas administrativas (apenas super_admin)
 app.use('/api/admin', adminRoutes);
+// Relatório gerencial (admin e gerente)
+app.use('/api/relatorio-gerencial', relatorioGerencialRoutes);
 
 // Rota de teste e health check
 app.get('/api/health', (req, res) => {
@@ -131,8 +128,7 @@ app.get('/api/health', (req, res) => {
     status: 'OK',
     uptime: `${Math.floor(uptime / 60)} minutos`,
     timestamp: new Date().toISOString(),
-    mongodb: mongoose.connection.readyState === 1 ? 'Conectado' : 'Desconectado',
-    version: 'd26fe29'
+    mongodb: mongoose.connection.readyState === 1 ? 'Conectado' : 'Desconectado'
   });
 });
 
@@ -148,25 +144,34 @@ app.get('/', (req, res) => {
       fornecedores: '/api/fornecedores',
       clientes: '/api/clientes',
       ordensServico: '/api/ordens-servico',
-      abastecimentos: '/api/abastecimentos',
-      faturas: '/api/faturas',
-      webhookCombustivel: '/api/webhook/combustivel'
+      faturas: '/api/faturas'
     }
   });
 });
 
-// Rota para resetar rate limiting (protegida por header)
+// Rota para resetar rate limiting (apenas desenvolvimento)
 app.post('/api/dev/reset-rate-limit', (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ message: 'Não disponível em produção' });
+  }
+  
   const { rateLimiter } = require('./middleware/rateLimit');
   const { cacheManager } = require('./middleware/cache');
   
   // Resetar rate limiter e cache
-  rateLimiter.requests.clear();
+  const statsRateLimit = rateLimiter.getStats();
+  const statsCache = { size: cacheManager.size() };
+  
+  // Limpar tudo
+  rateLimiter.reset = function() {
+    this.requests.clear();
+  };
   cacheManager.clearAll();
   
   res.json({ 
     message: 'Rate limiting e cache resetados',
-    stats: rateLimiter.getStats()
+    before: { rateLimit: statsRateLimit, cache: statsCache },
+    after: { rateLimit: rateLimiter.getStats(), cache: { size: cacheManager.size() } }
   });
 });
 
@@ -180,29 +185,9 @@ mongoose.connect(MONGODB_URI, {
   ...mongooseOptimizations,
   family: 4 // Força IPv4
 })
-  .then(async () => {
+  .then(() => {
     console.log('✅ Conectado ao MongoDB com otimizações');
     console.log(`📊 Pool de conexões: ${mongooseOptimizations.maxPoolSize} máx, ${mongooseOptimizations.minPoolSize} mín`);
-    
-    // Sincronizar counter de OrdemPagamento com o maior código real
-    try {
-      const counters = mongoose.connection.collection('counters');
-      const OrdemPagamento = require('./models/OrdemPagamento');
-      const todas = await OrdemPagamento.find({ codigo: { $regex: /^OP-\d+$/ } }).select('codigo').lean();
-      let maiorNum = 0;
-      for (const doc of todas) {
-        const num = parseInt(doc.codigo.replace('OP-', ''));
-        if (!isNaN(num) && num > maiorNum) maiorNum = num;
-      }
-      await counters.updateOne(
-        { _id: 'ordemPagamento' },
-        { $set: { seq: maiorNum } },
-        { upsert: true }
-      );
-      console.log(`📊 Counter OP sincronizado: seq=${maiorNum} (${todas.length} ordens)`);
-    } catch (err) {
-      console.warn('⚠️ Erro ao sincronizar counter OP:', err.message);
-    }
     
     const server = app.listen(PORT, () => {
       console.log(`🚀 Servidor rodando na porta ${PORT}`);

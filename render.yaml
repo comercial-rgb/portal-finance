@@ -25,6 +25,8 @@ services:
         sync: false
       - key: FINSYSTEM_SENHA
         sync: false
+      - key: FINSYSTEM_API_KEY
+        sync: false
       - key: FINSYSTEM_EMPRESA_ID
         value: "1"
       - key: FINSYSTEM_CONTA_BANCARIA_ID

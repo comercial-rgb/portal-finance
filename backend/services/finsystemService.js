@@ -9,6 +9,7 @@ class FinsystemService {
     this.baseUrl = process.env.FINSYSTEM_API_URL || 'http://localhost:4567';
     this.email = process.env.FINSYSTEM_EMAIL;
     this.senha = process.env.FINSYSTEM_SENHA;
+    this.apiKey = process.env.FINSYSTEM_API_KEY || '';
     this.empresaId = process.env.FINSYSTEM_EMPRESA_ID || '1';
     this.contaBancariaId = process.env.FINSYSTEM_CONTA_BANCARIA_ID || '1';
     this.timeout = 15000;
@@ -97,27 +98,35 @@ class FinsystemService {
       throw new Error('Falha na autenticação com FinSystem. Verifique FINSYSTEM_EMAIL e FINSYSTEM_SENHA.');
     }
 
+    const headers = {
+      'Cookie': this.sessionCookie,
+      'Content-Type': 'application/json'
+    };
+    // FinSystem exige API Key além da sessão para rotas /api/*
+    if (this.apiKey) {
+      headers['X-API-KEY'] = this.apiKey;
+    }
+
     const config = {
       method,
       url: `${this.baseUrl}${path}`,
-      headers: {
-        'Cookie': this.sessionCookie,
-        'Content-Type': 'application/json'
-      },
+      headers,
       timeout: this.timeout,
       maxRedirects: 0,
-      validateStatus: (status) => status >= 200 && status < 400
+      validateStatus: () => true // Aceitar qualquer status para log
     };
 
     if (data) config.data = data;
 
     try {
-      return await axios(config);
-    } catch (error) {
-      // Se recebeu 302/303 para login, sessão expirou — reautenticar
-      if ((error.response?.status === 302 || error.response?.status === 303) && 
-          error.response?.headers?.location?.includes('/')) {
-        console.log('🔄 FinSystem: Sessão expirada, reautenticando...');
+      const response = await axios(config);
+      
+      // Log detalhado para debug
+      console.log(`📡 FinSystem request ${method} ${path}: HTTP ${response.status}, Content-Type: ${response.headers?.['content-type'] || 'unknown'}`);
+      
+      // Se recebeu redirect, sessão expirou
+      if (response.status === 302 || response.status === 303) {
+        console.log('🔄 FinSystem: Sessão expirada (redirect), reautenticando...');
         this.sessionCookie = null;
         this.sessionExpiry = null;
         const reauth = await this.autenticar();
@@ -125,6 +134,19 @@ class FinsystemService {
         config.headers.Cookie = this.sessionCookie;
         return await axios(config);
       }
+      
+      // Se 401/403, logar o body para debug
+      if (response.status === 401 || response.status === 403) {
+        const errBody = typeof response.data === 'string' ? response.data.substring(0, 300) : JSON.stringify(response.data);
+        console.error(`❌ FinSystem ${response.status}: ${errBody}`);
+        const err = new Error(`FinSystem: ${response.data?.error || 'Sem permissão'}`);
+        err.response = response;
+        throw err;
+      }
+      
+      return response;
+    } catch (error) {
+      if (error.response) throw error;
       throw error;
     }
   }

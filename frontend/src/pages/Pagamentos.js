@@ -358,6 +358,8 @@ function Pagamentos() {
       setFormData({ cliente: '', fornecedor: '', fatura: '', faturaNumeroManual: '', valor: '', dataGeracao: new Date().toISOString().split('T')[0], observacoes: '' });
       setUsarFaturaManual(false);
       setFaturasAbertasFornecedor([]);
+      setBuscaCliente('');
+      setBuscaFornecedor('');
       setShowForm(false);
       loadData();
     } catch (error) {
@@ -646,54 +648,64 @@ function Pagamentos() {
                         </div>
                         <form onSubmit={handleCriarOrdem} className="form-grid">
                           <div className="form-group">
-                            <label htmlFor="cliente">Cliente *</label>
+                            <label htmlFor="cliente-input">Cliente *</label>
                             <input
+                              id="cliente-input"
                               type="text"
-                              placeholder="🔍 Digite para filtrar cliente..."
+                              list="lista-clientes"
+                              placeholder="🔍 Digite para buscar ou selecione..."
                               value={buscaCliente}
-                              onChange={(e) => setBuscaCliente(e.target.value)}
+                              onChange={(e) => {
+                                const texto = e.target.value;
+                                setBuscaCliente(texto);
+                                const arr = Array.isArray(clientes) ? clientes : [];
+                                const match = arr.find(c => {
+                                  const label = `${c.razaoSocial || ''}${c.cnpj ? ` (${c.cnpj})` : ''}`;
+                                  return label === texto;
+                                });
+                                setFormData(prev => ({ ...prev, cliente: match ? match._id : '' }));
+                              }}
+                              required
                               className="form-input"
-                              style={{ marginBottom: '6px' }}
+                              autoComplete="off"
                             />
-                            <select id="cliente" name="cliente" value={formData.cliente} onChange={handleFormChange} required className="form-input">
-                              <option value="">Selecione o cliente...</option>
-                              {(Array.isArray(clientes) ? clientes : [])
-                                .filter(c => {
-                                  const q = buscaCliente.trim().toLowerCase();
-                                  if (!q) return true;
-                                  return (c.razaoSocial || '').toLowerCase().includes(q)
-                                      || (c.cnpj || '').toLowerCase().includes(q)
-                                      || (c.nomeFantasia || '').toLowerCase().includes(q);
-                                })
-                                .map(c => (
-                                  <option key={c._id} value={c._id}>{c.razaoSocial} {c.cnpj ? `(${c.cnpj})` : ''}</option>
-                                ))}
-                            </select>
+                            <datalist id="lista-clientes">
+                              {(Array.isArray(clientes) ? clientes : []).map(c => (
+                                <option key={c._id} value={`${c.razaoSocial || ''}${c.cnpj ? ` (${c.cnpj})` : ''}`}>
+                                  {c.nomeFantasia || c.razaoSocial}
+                                </option>
+                              ))}
+                            </datalist>
                           </div>
                           <div className="form-group">
-                            <label htmlFor="fornecedor">Fornecedor *</label>
+                            <label htmlFor="fornecedor-input">Fornecedor *</label>
                             <input
+                              id="fornecedor-input"
                               type="text"
-                              placeholder="🔍 Digite para filtrar fornecedor..."
+                              list="lista-fornecedores"
+                              placeholder="🔍 Digite para buscar ou selecione..."
                               value={buscaFornecedor}
-                              onChange={(e) => setBuscaFornecedor(e.target.value)}
+                              onChange={(e) => {
+                                const texto = e.target.value;
+                                setBuscaFornecedor(texto);
+                                const arr = Array.isArray(fornecedoresLista) ? fornecedoresLista : [];
+                                const match = arr.find(f => {
+                                  const label = `${f.razaoSocial || ''}${f.cnpjCpf ? ` (${f.cnpjCpf})` : ''}`;
+                                  return label === texto;
+                                });
+                                setFormData(prev => ({ ...prev, fornecedor: match ? match._id : '', fatura: '', faturaNumeroManual: '' }));
+                              }}
+                              required
                               className="form-input"
-                              style={{ marginBottom: '6px' }}
+                              autoComplete="off"
                             />
-                            <select id="fornecedor" name="fornecedor" value={formData.fornecedor} onChange={handleFormChange} required className="form-input">
-                              <option value="">Selecione o fornecedor...</option>
-                              {(Array.isArray(fornecedoresLista) ? fornecedoresLista : [])
-                                .filter(f => {
-                                  const q = buscaFornecedor.trim().toLowerCase();
-                                  if (!q) return true;
-                                  return (f.razaoSocial || '').toLowerCase().includes(q)
-                                      || (f.cnpjCpf || '').toLowerCase().includes(q)
-                                      || (f.nomeFantasia || '').toLowerCase().includes(q);
-                                })
-                                .map(f => (
-                                  <option key={f._id} value={f._id}>{f.razaoSocial} ({f.cnpjCpf})</option>
-                                ))}
-                            </select>
+                            <datalist id="lista-fornecedores">
+                              {(Array.isArray(fornecedoresLista) ? fornecedoresLista : []).map(f => (
+                                <option key={f._id} value={`${f.razaoSocial || ''}${f.cnpjCpf ? ` (${f.cnpjCpf})` : ''}`}>
+                                  {f.nomeFantasia || f.razaoSocial}
+                                </option>
+                              ))}
+                            </datalist>
                           </div>
                           <div className="form-group">
                             <label>Fatura</label>

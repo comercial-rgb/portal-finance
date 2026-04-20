@@ -248,6 +248,11 @@ function FaturasAbastecimento() {
 
     const selecionados = abastecimentos.filter(ab => selectedIds.includes(ab._id));
 
+    if (selecionados.length === 0) {
+      toast.error('Nenhum abastecimento encontrado para os IDs selecionados. Recarregue a página.');
+      return;
+    }
+
     const fornecedorUnico = new Set(selecionados.map(ab => ab.fornecedor?._id || ab.fornecedor));
     const clienteUnico = new Set(selecionados.map(ab => ab.cliente?._id || ab.cliente));
 
@@ -258,6 +263,11 @@ function FaturasAbastecimento() {
 
     const fornecedorId = selecionados[0]?.fornecedor?._id || selecionados[0]?.fornecedor;
     const clienteId = selecionados[0]?.cliente?._id || selecionados[0]?.cliente;
+
+    if (!fornecedorId || !clienteId) {
+      toast.error('Não foi possível identificar cliente/fornecedor dos abastecimentos. Recarregue a página.');
+      return;
+    }
 
     const datas = selecionados
       .map(ab => ab.createdAt)
@@ -285,9 +295,12 @@ function FaturasAbastecimento() {
       observacoes: observacoes || undefined
     };
 
+    console.log('[FaturaAbastecimento] Enviando POST /faturas/abastecimento', payload);
+
     try {
       setGerandoFatura(true);
-      const response = await api.post('/faturas/abastecimento', payload);
+      const response = await api.post('/faturas/abastecimento', payload, { timeout: 60000 });
+      console.log('[FaturaAbastecimento] Resposta:', response.status, response.data);
       toast.success(`Fatura ${response.data.numeroFatura} gerada com sucesso!`);
       setShowFaturaModal(false);
       setSelectedIds([]);
@@ -296,8 +309,17 @@ function FaturasAbastecimento() {
       setSerieNF('');
       await loadData();
     } catch (error) {
-      console.error('Erro ao gerar fatura:', error);
-      toast.error(error.response?.data?.message || 'Erro ao gerar fatura');
+      console.error('[FaturaAbastecimento] Erro ao gerar fatura:', error);
+      let msg = 'Erro ao gerar fatura';
+      if (error.code === 'ECONNABORTED') {
+        msg = 'Tempo limite esgotado. A fatura pode ter sido criada — verifique em "Faturas Abastecimento" antes de tentar novamente.';
+      } else if (error.response?.data?.message) {
+        msg = error.response.data.message;
+        if (error.response.data.error) msg += `: ${error.response.data.error}`;
+      } else if (error.message) {
+        msg = error.message;
+      }
+      toast.error(msg, { autoClose: 8000 });
     } finally {
       setGerandoFatura(false);
     }
@@ -690,10 +712,15 @@ function FaturasAbastecimento() {
                   </div>
 
                   <div className="modal-footer">
-                    <button className="btn-secondary" onClick={() => setShowFaturaModal(false)} disabled={gerandoFatura}>
+                    <button type="button" className="btn-secondary" onClick={() => setShowFaturaModal(false)} disabled={gerandoFatura}>
                       Cancelar
                     </button>
-                    <button className="btn-primary btn-confirmar" onClick={handleGerarFatura} disabled={gerandoFatura}>
+                    <button
+                      type="button"
+                      className="btn-primary btn-confirmar"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleGerarFatura(); }}
+                      disabled={gerandoFatura || selectedIds.length === 0}
+                    >
                       {gerandoFatura ? 'Gerando fatura...' : '✓ Confirmar e Gerar Fatura'}
                     </button>
                   </div>

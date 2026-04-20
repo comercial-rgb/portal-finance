@@ -622,7 +622,9 @@ exports.desativar = async (req, res) => {
 
 // Criar fatura a partir de abastecimentos selecionados
 exports.criarFaturaAbastecimento = async (req, res) => {
+  const diagId = `fatura-abast-${Date.now()}`;
   try {
+    console.log(`[${diagId}] ▶️ Início criarFaturaAbastecimento. Usuário: ${req.user?._id} (${req.user?.role})`);
     const {
       tipo,
       fornecedor,
@@ -634,6 +636,7 @@ exports.criarFaturaAbastecimento = async (req, res) => {
       tipoPagamento,
       aplicarRetencao = true
     } = req.body;
+    console.log(`[${diagId}] Payload: tipo=${tipo} fornecedor=${fornecedor} cliente=${cliente} abastecimentos=${abastecimentoIds?.length || 0}`);
 
     if (!tipo || !abastecimentoIds || abastecimentoIds.length === 0) {
       return res.status(400).json({ message: 'Tipo e abastecimentos são obrigatórios' });
@@ -697,20 +700,26 @@ exports.criarFaturaAbastecimento = async (req, res) => {
       });
     }
 
-    // Gerar número da fatura
+    // Gerar número da fatura (uma única consulta + contador local, muito mais rápido que 100 findOne)
     const prefixo = tipo === 'Cliente' ? 'C' : 'F';
     let numeroFatura;
+    const existentesPrefixo = await Fatura.find(
+      { numeroFatura: { $regex: `^${prefixo}\\d+$` } },
+      { numeroFatura: 1 }
+    ).lean();
+    const usados = new Set(existentesPrefixo.map(f => f.numeroFatura));
     let tentativas = 0;
     do {
       const numeroAleatorio = Math.floor(1000 + Math.random() * 9000);
       numeroFatura = `${prefixo}${numeroAleatorio}`;
-      const existe = await Fatura.findOne({ numeroFatura }).lean();
-      if (!existe) break;
+      if (!usados.has(numeroFatura)) break;
       tentativas++;
-      if (tentativas >= 100) {
+      if (tentativas >= 500) {
+        console.error(`[${diagId}] ❌ Não foi possível gerar número único após 500 tentativas`);
         return res.status(500).json({ message: 'Não foi possível gerar número único para a fatura.' });
       }
     } while (true);
+    console.log(`[${diagId}] Número gerado: ${numeroFatura} (tentativas: ${tentativas})`);
 
     // Calcular valores usando motor fiscal de combustível
     let valorTotal = 0;
@@ -803,6 +812,7 @@ exports.criarFaturaAbastecimento = async (req, res) => {
     });
 
     await novaFatura.save();
+    console.log(`[${diagId}] ✅ Fatura ${numeroFatura} salva (id: ${novaFatura._id})`);
 
     // Atualizar status dos abastecimentos
     await Promise.all(abastecimentos.map(async (ab) => {
@@ -838,16 +848,40 @@ exports.criarFaturaAbastecimento = async (req, res) => {
 
       await Abastecimento.updateOne({ _id: ab._id }, { $set: atualizacao });
     }));
+    console.log(`[${diagId}] ✅ ${abastecimentos.length} abastecimentos atualizados`);
 
-    const faturaCompleta = await Fatura.findById(novaFatura._id)
-      .populate('fornecedor')
-      .populate('cliente')
-      .populate('abastecimentosVinculados.abastecimento')
-      .populate('impostos');
+    // Resposta enxuta (sem populate do array de abastecimentos, que pode ser enorme)
+    const faturaResposta = {
+      _id: novaFatura._id,
+      numeroFatura: novaFatura.numeroFatura,
+      tipo: novaFatura.tipo,
+      fornecedor: novaFatura.fornecedor,
+      cliente: novaFatura.cliente,
+      origem: novaFatura.origem,
+      periodoInicio: novaFatura.periodoInicio,
+      periodoFim: novaFatura.periodoFim,
+      valorTotal: novaFatura.valorTotal,
+      valorDesconto: novaFatura.valorDesconto,
+      valorComDesconto: novaFatura.valorComDesconto,
+      valorImpostos: novaFatura.valorImpostos,
+      valorTaxasOperacao: novaFatura.valorTaxasOperacao,
+      valorDevido: novaFatura.valorDevido,
+      valorPago: novaFatura.valorPago,
+      valorRestante: novaFatura.valorRestante,
+      statusFatura: novaFatura.statusFatura,
+      totalAbastecimentos: abastecimentos.length
+    };
 
-    res.status(201).json(faturaCompleta);
+    console.log(`[${diagId}] 🏁 Concluído com sucesso em ${Date.now() - parseInt(diagId.split('-').pop())}ms`);
+    res.status(201).json(faturaResposta);
   } catch (error) {
-    console.error('Erro ao criar fatura de abastecimento:', error);
+    console.error(`[${diagId}] ❌ ERRO ao criar fatura de abastecimento:`, error);
+    if (error?.name === 'ValidationError') {
+      return res.status(400).json({ message: 'Dados inválidos para criar fatura', error: error.message });
+    }
+    if (error?.code === 11000) {
+      return res.status(409).json({ message: 'Conflito ao gerar número da fatura. Tente novamente.', error: error.message });
+    }
     res.status(500).json({ message: 'Erro ao criar fatura de abastecimento', error: error.message });
   }
 };

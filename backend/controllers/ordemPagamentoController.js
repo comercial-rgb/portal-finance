@@ -141,6 +141,7 @@ exports.criar = async (req, res) => {
       } catch (err) {
         const erroDuplicadoCodigo = err?.code === 11000 && err?.keyPattern?.codigo;
         if (erroDuplicadoCodigo && tentativa < 3) {
+          console.warn(`⚠️ Código duplicado ao criar OP (tentativa ${tentativa}). Regenerando...`);
           ordem.codigo = undefined;
           ultimaFalha = err;
           continue;
@@ -193,6 +194,16 @@ exports.criar = async (req, res) => {
     });
   } catch (error) {
     console.error('Erro ao criar ordem de pagamento:', error);
+    if (error?.code === 11000) {
+      return res.status(409).json({
+        message: 'Conflito ao gerar código da ordem. Tente novamente.',
+        error: error.message,
+        keyPattern: error.keyPattern
+      });
+    }
+    if (error?.name === 'ValidationError') {
+      return res.status(400).json({ message: 'Dados inválidos', error: error.message });
+    }
     res.status(500).json({ message: 'Erro ao criar ordem de pagamento', error: error.message });
   }
 };

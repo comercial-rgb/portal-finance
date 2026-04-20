@@ -2,9 +2,12 @@ const mongoose = require('mongoose');
 
 const ordemPagamentoSchema = new mongoose.Schema({
   // Código sequencial auto-gerado (OP-0001)
+  // sparse=true evita colisão com documentos legados que por ventura
+  // tenham sido gravados sem código (null) e bloqueiem novos inserts.
   codigo: {
     type: String,
-    unique: true
+    unique: true,
+    sparse: true
   },
 
   // Relacionamentos
@@ -94,7 +97,8 @@ const ordemPagamentoSchema = new mongoose.Schema({
 
 // Auto-gerar código sequencial OP-XXXX
 ordemPagamentoSchema.pre('save', async function (next) {
-  if (!this.codigo) {
+  if (this.codigo) return next();
+  try {
     const [ultima] = await this.constructor.aggregate([
       { $match: { codigo: { $regex: '^OP-[0-9]+$' } } },
       {
@@ -106,14 +110,27 @@ ordemPagamentoSchema.pre('save', async function (next) {
       { $sort: { numeroCodigo: -1 } },
       { $limit: 1 }
     ]);
+
     let proximo = 1;
     if (ultima && ultima.codigo) {
-      const num = parseInt(ultima.codigo.replace('OP-', ''));
+      const num = parseInt(ultima.codigo.replace('OP-', ''), 10);
       if (!isNaN(num)) proximo = num + 1;
+    } else {
+      // Fallback: se aggregate não retornou nada mas já existem documentos,
+      // usa contagem como base para não reiniciar o sequencial.
+      const total = await this.constructor.countDocuments({});
+      if (total > 0) proximo = total + 1;
     }
+
     this.codigo = `OP-${String(proximo).padStart(4, '0')}`;
+    next();
+  } catch (err) {
+    // Último fallback: timestamp para não deixar o save com código null
+    // (que seria bloqueado pelo unique index).
+    this.codigo = `OP-${Date.now().toString().slice(-8)}`;
+    console.error('⚠️ Falha ao gerar código sequencial de OP, usando fallback:', err.message);
+    next();
   }
-  next();
 });
 
 // Índices

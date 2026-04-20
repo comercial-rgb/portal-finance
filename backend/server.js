@@ -191,7 +191,19 @@ mongoose.connect(MONGODB_URI, {
   .then(() => {
     console.log('✅ Conectado ao MongoDB com otimizações');
     console.log(`📊 Pool de conexões: ${mongooseOptimizations.maxPoolSize} máx, ${mongooseOptimizations.minPoolSize} mín`);
-    
+
+    // Sincroniza índices críticos (ex.: codigo unique+sparse em OrdemPagamento)
+    // para evitar E11000 causado por índices legados não-sparse.
+    (async () => {
+      try {
+        const OrdemPagamento = require('./models/OrdemPagamento');
+        await OrdemPagamento.syncIndexes();
+        console.log('🔧 Índices de OrdemPagamento sincronizados');
+      } catch (e) {
+        console.warn('⚠️ Não foi possível sincronizar índices de OrdemPagamento:', e.message);
+      }
+    })();
+
     const server = app.listen(PORT, () => {
       console.log(`🚀 Servidor rodando na porta ${PORT}`);
       console.log('⚡ Performance otimizada para alto volume');

@@ -153,10 +153,21 @@ function Pagamentos() {
         api.get('/clientes?limit=1000'),
         api.get('/fornecedores?limit=1000')
       ]);
-      setClientes(clientesRes.data.data || clientesRes.data || []);
-      setFornecedoresLista(fornecedoresRes.data.data || fornecedoresRes.data || []);
+      const extrairArray = (resp) => {
+        const d = resp?.data;
+        if (Array.isArray(d)) return d;
+        if (Array.isArray(d?.data)) return d.data;
+        if (Array.isArray(d?.clientes)) return d.clientes;
+        if (Array.isArray(d?.fornecedores)) return d.fornecedores;
+        if (Array.isArray(d?.results)) return d.results;
+        return [];
+      };
+      setClientes(extrairArray(clientesRes));
+      setFornecedoresLista(extrairArray(fornecedoresRes));
     } catch (error) {
       console.error('Erro ao carregar clientes/fornecedores:', error);
+      setClientes([]);
+      setFornecedoresLista([]);
     }
   }, []);
 
@@ -634,7 +645,7 @@ function Pagamentos() {
                             <label htmlFor="cliente">Cliente *</label>
                             <select id="cliente" name="cliente" value={formData.cliente} onChange={handleFormChange} required className="form-input">
                               <option value="">Selecione o cliente...</option>
-                              {clientes.map(c => (
+                              {(Array.isArray(clientes) ? clientes : []).map(c => (
                                 <option key={c._id} value={c._id}>{c.razaoSocial} {c.cnpj ? `(${c.cnpj})` : ''}</option>
                               ))}
                             </select>
@@ -643,7 +654,7 @@ function Pagamentos() {
                             <label htmlFor="fornecedor">Fornecedor *</label>
                             <select id="fornecedor" name="fornecedor" value={formData.fornecedor} onChange={handleFormChange} required className="form-input">
                               <option value="">Selecione o fornecedor...</option>
-                              {fornecedoresLista.map(f => (
+                              {(Array.isArray(fornecedoresLista) ? fornecedoresLista : []).map(f => (
                                 <option key={f._id} value={f._id}>{f.razaoSocial} ({f.cnpjCpf})</option>
                               ))}
                             </select>
@@ -663,7 +674,7 @@ function Pagamentos() {
                                 <option value="">
                                   {!formData.fornecedor ? 'Selecione um fornecedor primeiro...' : loadingFaturas ? 'Carregando faturas...' : faturasAbertasFornecedor.length === 0 ? 'Nenhuma fatura em aberto' : 'Selecione a fatura...'}
                                 </option>
-                                {faturasAbertasFornecedor.map(f => (
+                                {(Array.isArray(faturasAbertasFornecedor) ? faturasAbertasFornecedor : []).map(f => (
                                   <option key={f._id} value={f._id}>{f.numeroFatura} - {formatarValor(f.valorRestante || f.valorDevido)} ({f.statusFatura})</option>
                                 ))}
                               </select>
@@ -1143,7 +1154,7 @@ function Pagamentos() {
                 ) : (
                   <select value={faturaVinculadaSelecionada} onChange={(e) => setFaturaVinculadaSelecionada(e.target.value)} className="form-input">
                     <option value="">Selecione a fatura...</option>
-                    {faturasVincular.map(f => (
+                    {(Array.isArray(faturasVincular) ? faturasVincular : []).map(f => (
                       <option key={f._id} value={f._id}>{f.numeroFatura} - {formatarValor(f.valorRestante || f.valorDevido)} ({f.statusFatura})</option>
                     ))}
                   </select>

@@ -105,15 +105,22 @@ const reconciliar = async () => {
         }
 
         const mudou = osIdsAtualizadas.length > 0;
+        // Também reconcilia status da fatura quando há divergência
+        // (ex.: OPs cobrem valorDevido mas statusFatura ainda é Aguardando).
+        const statusEsperado = totalPagoOPs >= valorDevido
+          ? 'Paga'
+          : (totalPagoOPs > 0 ? 'Parcialmente paga' : fatura.statusFatura);
+        const statusDivergente = statusEsperado !== fatura.statusFatura;
+        const precisaSalvar = mudou || statusDivergente;
 
         console.log(
           `  • Fatura ${fatura.numeroFatura || fatura._id}: ` +
           `valorDevido=${valorDevido.toFixed(2)}, pagoOPs=${totalPagoOPs.toFixed(2)}, ` +
           `OS atualizadas=${osIdsAtualizadas.length}, ` +
-          `status: ${statusOriginal} → (será recalculado no save)`
+          `status: ${statusOriginal}${statusDivergente ? ` → ${statusEsperado}` : ' (ok)'}`
         );
 
-        if (aplicar && mudou) {
+        if (aplicar && precisaSalvar) {
           await fatura.save(); // pre-save recalcula statusFatura, valorPago, valorRestante
           if (osIdsAtualizadas.length > 0) {
             await OrdemServico.updateMany(
@@ -123,7 +130,7 @@ const reconciliar = async () => {
           }
           resumo.faturasAtualizadas++;
           resumo.osAtualizadas += osIdsAtualizadas.length;
-        } else if (mudou) {
+        } else if (precisaSalvar) {
           resumo.faturasAtualizadas++;
           resumo.osAtualizadas += osIdsAtualizadas.length;
         }

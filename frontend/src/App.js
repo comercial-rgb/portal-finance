@@ -36,6 +36,7 @@ import Abastecimentos from './pages/Abastecimentos';
 import FaturasAbastecimento from './pages/FaturasAbastecimento';
 import SsoCallback from './pages/SsoCallback';
 import PrivateRoute from './components/PrivateRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   return (
@@ -52,6 +53,7 @@ function App() {
         pauseOnHover
         theme="colored"
       />
+      <ErrorBoundary>
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/sso-callback" element={<SsoCallback />} />
@@ -312,6 +314,7 @@ function App() {
         />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
+      </ErrorBoundary>
     </Router>
   );
 }

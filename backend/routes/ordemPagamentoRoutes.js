@@ -10,6 +10,7 @@ router.use(protect);
 router.get('/resumo', ordemPagamentoCtrl.resumo);
 router.get('/finsystem-status', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.finsystemStatus);
 router.get('/faturas-fornecedor/:fornecedorId', ordemPagamentoCtrl.faturasFornecedor);
+router.get('/:id/comprovante', ordemPagamentoCtrl.obterComprovante);
 
 // CRUD
 router.get('/', ordemPagamentoCtrl.listar);

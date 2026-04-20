@@ -76,30 +76,55 @@ function Pagamentos() {
   const isFornecedor = user?.role === 'fornecedor';
 
   // === LOAD DATA ===
-  const loadData = useCallback(async () => {
+  // Carrega APENAS o necessário para a aba inicial (Ordens de Pagamento).
+  // Pagamentos / Antecipações são buscados sob demanda para reduzir tempo de entrada na tela.
+  const [abasCarregadas, setAbasCarregadas] = useState({ ordens: false, pagamentos: false, antecipacoes: false });
+
+  const loadOrdens = useCallback(async () => {
     try {
-      setLoading(true);
-      const promises = [
-        api.get('/pagamentos'),
-        api.get('/pagamentos/antecipacoes'),
-        api.get('/pagamentos/resumo'),
+      const [ordensRes, resumoOrdensRes] = await Promise.all([
         api.get('/ordens-pagamento'),
         api.get('/ordens-pagamento/resumo')
-      ];
-      const [pagamentosRes, antecipacoesRes, resumoRes, ordensRes, resumoOrdensRes] = await Promise.all(promises);
-
-      setPagamentos(pagamentosRes.data);
-      setAntecipacoes(antecipacoesRes.data);
-      setResumo(resumoRes.data);
+      ]);
       setOrdens(ordensRes.data.data || []);
       setResumoOrdens(resumoOrdensRes.data.data || { totalOrdens: 0, pendentes: 0, pagas: 0, valorTotalPendente: 0, valorTotalPago: 0 });
+      setAbasCarregadas(prev => ({ ...prev, ordens: true }));
     } catch (error) {
-      toast.error('Erro ao carregar dados');
-      console.error(error);
-    } finally {
-      setLoading(false);
+      console.error('Erro ao carregar ordens:', error);
+      toast.error('Erro ao carregar ordens de pagamento');
     }
   }, []);
+
+  const loadPagamentos = useCallback(async () => {
+    try {
+      const [pagamentosRes, resumoRes] = await Promise.all([
+        api.get('/pagamentos'),
+        api.get('/pagamentos/resumo')
+      ]);
+      setPagamentos(pagamentosRes.data || []);
+      setResumo(resumoRes.data || {});
+      setAbasCarregadas(prev => ({ ...prev, pagamentos: true }));
+    } catch (error) {
+      console.error('Erro ao carregar pagamentos:', error);
+      toast.error('Erro ao carregar pagamentos');
+    }
+  }, []);
+
+  const loadAntecipacoes = useCallback(async () => {
+    try {
+      const res = await api.get('/pagamentos/antecipacoes');
+      setAntecipacoes(res.data || []);
+      setAbasCarregadas(prev => ({ ...prev, antecipacoes: true }));
+    } catch (error) {
+      console.error('Erro ao carregar antecipações:', error);
+    }
+  }, []);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    await loadOrdens();
+    setLoading(false);
+  }, [loadOrdens]);
 
   const loadClientesFornecedores = useCallback(async () => {
     try {
@@ -119,6 +144,12 @@ function Pagamentos() {
     setUser(currentUser);
     loadData();
   }, [loadData]);
+
+  // Lazy load das abas secundárias: só busca quando o usuário abrir a aba
+  useEffect(() => {
+    if (abaAtiva === 'pagamentos' && !abasCarregadas.pagamentos) loadPagamentos();
+    if (abaAtiva === 'antecipacoes' && !abasCarregadas.antecipacoes) loadAntecipacoes();
+  }, [abaAtiva, abasCarregadas.pagamentos, abasCarregadas.antecipacoes, loadPagamentos, loadAntecipacoes]);
 
   useEffect(() => {
     if (isAdminGerente && showForm) {
@@ -358,7 +389,27 @@ function Pagamentos() {
     }
   };
 
-  const handleVerOrdemComprovante = (ordem) => { setOrdemComprovanteView(ordem); setShowModalOrdemComprovante(true); };
+  const handleVerOrdemComprovante = async (ordem) => {
+    try {
+      // O backend não envia o comprovante na listagem (evita trafegar base64 pesado).
+      // Busca sob demanda quando o usuário clica em "Comprovante".
+      if (!ordem.comprovante) {
+        const res = await api.get(`/ordens-pagamento/${ordem._id}/comprovante`);
+        const comprovante = res.data?.data?.comprovante;
+        if (!comprovante) {
+          toast.info('Esta ordem não possui comprovante anexado');
+          return;
+        }
+        setOrdemComprovanteView({ ...ordem, comprovante });
+      } else {
+        setOrdemComprovanteView(ordem);
+      }
+      setShowModalOrdemComprovante(true);
+    } catch (error) {
+      console.error('Erro ao carregar comprovante:', error);
+      toast.error('Erro ao carregar comprovante');
+    }
+  };
 
   // Resincronizar com FinSystem
   const handleResincronizar = async (ordemId) => {
@@ -796,7 +847,7 @@ function Pagamentos() {
                                     {isAdminGerente && ordem.status === 'Pendente' && (
                                       <button className="btn-pagar" title="Registrar Pagamento" onClick={() => handleAbrirPagar(ordem)}>💰 Pagar</button>
                                     )}
-                                    {ordem.status === 'Paga' && ordem.comprovante && (
+                                    {ordem.status === 'Paga' && (ordem.temComprovante || ordem.comprovante) && (
                                       <button className="btn-link" title="Ver Comprovante" onClick={() => handleVerOrdemComprovante(ordem)}>📎 Comprovante</button>
                                     )}
                                     {isAdminGerente && ordem.status === 'Paga' && !ordem.faturaVinculada && (

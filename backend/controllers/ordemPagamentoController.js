@@ -18,11 +18,23 @@ exports.listar = async (req, res) => {
     }
 
     const ordens = await OrdemPagamento.find(query)
+      .select('-comprovante') // base64 pode ser MUITO grande; carregado sob demanda
       .populate('cliente', 'razaoSocial nomeFantasia cnpjCpf')
       .populate('fornecedor', 'razaoSocial nomeFantasia cnpjCpf banco tipoConta agencia conta chavePix tipoChavePix')
       .populate('fatura', 'numeroFatura valorDevido statusFatura')
-      .populate('criadoPor', 'name email')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Adiciona flag booleana indicando se a OP possui comprovante armazenado.
+    // Para isso fazemos uma única query rápida (projection apenas do _id) nas OPs com comprovante.
+    const idsComComprovante = await OrdemPagamento.find(
+      { ...query, comprovante: { $exists: true, $ne: null, $ne: '' } },
+      { _id: 1 }
+    ).lean();
+    const setComComprovante = new Set(idsComComprovante.map(o => String(o._id)));
+    for (const ordem of ordens) {
+      ordem.temComprovante = setComComprovante.has(String(ordem._id));
+    }
 
     res.json({ success: true, data: ordens });
   } catch (error) {
@@ -36,30 +48,66 @@ exports.listar = async (req, res) => {
 exports.resumo = async (req, res) => {
   try {
     const user = req.user;
-    const query = { ativo: true };
+    const match = { ativo: true };
 
     if (user.role === 'fornecedor' && user.fornecedorId) {
-      query.fornecedor = user.fornecedorId;
+      match.fornecedor = new (require('mongoose').Types.ObjectId)(user.fornecedorId);
     }
 
-    const ordens = await OrdemPagamento.find(query);
+    // Aggregate ao invés de buscar todos os documentos e iterar em memória.
+    const agg = await OrdemPagamento.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+          valor: { $sum: { $ifNull: ['$valor', 0] } }
+        }
+      }
+    ]);
 
-    const pendentes = ordens.filter(o => o.status === 'Pendente');
-    const pagas = ordens.filter(o => o.status === 'Paga');
+    let totalOrdens = 0;
+    let pendentes = 0;
+    let pagas = 0;
+    let valorTotalPendente = 0;
+    let valorTotalPago = 0;
+
+    for (const g of agg) {
+      totalOrdens += g.count;
+      if (g._id === 'Pendente') {
+        pendentes = g.count;
+        valorTotalPendente = g.valor;
+      } else if (g._id === 'Paga') {
+        pagas = g.count;
+        valorTotalPago = g.valor;
+      }
+    }
 
     res.json({
       success: true,
-      data: {
-        totalOrdens: ordens.length,
-        pendentes: pendentes.length,
-        pagas: pagas.length,
-        valorTotalPendente: pendentes.reduce((acc, o) => acc + (o.valor || 0), 0),
-        valorTotalPago: pagas.reduce((acc, o) => acc + (o.valor || 0), 0)
-      }
+      data: { totalOrdens, pendentes, pagas, valorTotalPendente, valorTotalPago }
     });
   } catch (error) {
     console.error('Erro ao gerar resumo:', error);
     res.status(500).json({ message: 'Erro ao gerar resumo', error: error.message });
+  }
+};
+
+// @desc    Obter comprovante de uma OP sob demanda (evita trafegar base64 na listagem)
+// @route   GET /api/ordens-pagamento/:id/comprovante
+exports.obterComprovante = async (req, res) => {
+  try {
+    const user = req.user;
+    const query = { _id: req.params.id, ativo: true };
+    if (user.role === 'fornecedor' && user.fornecedorId) {
+      query.fornecedor = user.fornecedorId;
+    }
+    const ordem = await OrdemPagamento.findOne(query).select('comprovante codigo').lean();
+    if (!ordem) return res.status(404).json({ message: 'Ordem não encontrada' });
+    res.json({ success: true, data: { comprovante: ordem.comprovante || null, codigo: ordem.codigo } });
+  } catch (error) {
+    console.error('Erro ao obter comprovante:', error);
+    res.status(500).json({ message: 'Erro ao obter comprovante', error: error.message });
   }
 };
 

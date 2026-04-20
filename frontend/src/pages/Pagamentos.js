@@ -71,6 +71,10 @@ function Pagamentos() {
   // Bank info popup
   const [bankInfoId, setBankInfoId] = useState(null);
 
+  // Busca nos selects do form
+  const [buscaCliente, setBuscaCliente] = useState('');
+  const [buscaFornecedor, setBuscaFornecedor] = useState('');
+
   const isAdmin = ['super_admin', 'admin'].includes(user?.role);
   const isAdminGerente = ['super_admin', 'admin', 'gerente'].includes(user?.role);
   const isFornecedor = user?.role === 'fornecedor';
@@ -643,20 +647,52 @@ function Pagamentos() {
                         <form onSubmit={handleCriarOrdem} className="form-grid">
                           <div className="form-group">
                             <label htmlFor="cliente">Cliente *</label>
+                            <input
+                              type="text"
+                              placeholder="🔍 Digite para filtrar cliente..."
+                              value={buscaCliente}
+                              onChange={(e) => setBuscaCliente(e.target.value)}
+                              className="form-input"
+                              style={{ marginBottom: '6px' }}
+                            />
                             <select id="cliente" name="cliente" value={formData.cliente} onChange={handleFormChange} required className="form-input">
                               <option value="">Selecione o cliente...</option>
-                              {(Array.isArray(clientes) ? clientes : []).map(c => (
-                                <option key={c._id} value={c._id}>{c.razaoSocial} {c.cnpj ? `(${c.cnpj})` : ''}</option>
-                              ))}
+                              {(Array.isArray(clientes) ? clientes : [])
+                                .filter(c => {
+                                  const q = buscaCliente.trim().toLowerCase();
+                                  if (!q) return true;
+                                  return (c.razaoSocial || '').toLowerCase().includes(q)
+                                      || (c.cnpj || '').toLowerCase().includes(q)
+                                      || (c.nomeFantasia || '').toLowerCase().includes(q);
+                                })
+                                .map(c => (
+                                  <option key={c._id} value={c._id}>{c.razaoSocial} {c.cnpj ? `(${c.cnpj})` : ''}</option>
+                                ))}
                             </select>
                           </div>
                           <div className="form-group">
                             <label htmlFor="fornecedor">Fornecedor *</label>
+                            <input
+                              type="text"
+                              placeholder="🔍 Digite para filtrar fornecedor..."
+                              value={buscaFornecedor}
+                              onChange={(e) => setBuscaFornecedor(e.target.value)}
+                              className="form-input"
+                              style={{ marginBottom: '6px' }}
+                            />
                             <select id="fornecedor" name="fornecedor" value={formData.fornecedor} onChange={handleFormChange} required className="form-input">
                               <option value="">Selecione o fornecedor...</option>
-                              {(Array.isArray(fornecedoresLista) ? fornecedoresLista : []).map(f => (
-                                <option key={f._id} value={f._id}>{f.razaoSocial} ({f.cnpjCpf})</option>
-                              ))}
+                              {(Array.isArray(fornecedoresLista) ? fornecedoresLista : [])
+                                .filter(f => {
+                                  const q = buscaFornecedor.trim().toLowerCase();
+                                  if (!q) return true;
+                                  return (f.razaoSocial || '').toLowerCase().includes(q)
+                                      || (f.cnpjCpf || '').toLowerCase().includes(q)
+                                      || (f.nomeFantasia || '').toLowerCase().includes(q);
+                                })
+                                .map(f => (
+                                  <option key={f._id} value={f._id}>{f.razaoSocial} ({f.cnpjCpf})</option>
+                                ))}
                             </select>
                           </div>
                           <div className="form-group">

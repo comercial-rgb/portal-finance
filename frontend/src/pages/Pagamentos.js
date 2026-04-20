@@ -86,12 +86,22 @@ function Pagamentos() {
         api.get('/ordens-pagamento'),
         api.get('/ordens-pagamento/resumo')
       ]);
-      setOrdens(ordensRes.data.data || []);
-      setResumoOrdens(resumoOrdensRes.data.data || { totalOrdens: 0, pendentes: 0, pagas: 0, valorTotalPendente: 0, valorTotalPago: 0 });
+      const ordensRaw = ordensRes?.data?.data ?? ordensRes?.data ?? [];
+      const ordensArr = Array.isArray(ordensRaw) ? ordensRaw : [];
+      setOrdens(ordensArr);
+      const resumoRaw = resumoOrdensRes?.data?.data ?? resumoOrdensRes?.data ?? {};
+      setResumoOrdens({
+        totalOrdens: resumoRaw.totalOrdens || 0,
+        pendentes: resumoRaw.pendentes || 0,
+        pagas: resumoRaw.pagas || 0,
+        valorTotalPendente: resumoRaw.valorTotalPendente || 0,
+        valorTotalPago: resumoRaw.valorTotalPago || 0
+      });
       setAbasCarregadas(prev => ({ ...prev, ordens: true }));
     } catch (error) {
       console.error('Erro ao carregar ordens:', error);
       toast.error('Erro ao carregar ordens de pagamento');
+      setOrdens([]);
     }
   }, []);
 
@@ -101,22 +111,33 @@ function Pagamentos() {
         api.get('/pagamentos'),
         api.get('/pagamentos/resumo')
       ]);
-      setPagamentos(pagamentosRes.data || []);
-      setResumo(resumoRes.data || {});
+      const pagRaw = pagamentosRes?.data?.data ?? pagamentosRes?.data ?? [];
+      setPagamentos(Array.isArray(pagRaw) ? pagRaw : []);
+      const resumoRaw = resumoRes?.data ?? {};
+      setResumo({
+        totalRecebido: resumoRaw.totalRecebido || 0,
+        totalPendente: resumoRaw.totalPendente || 0,
+        osPagas: resumoRaw.osPagas || 0,
+        osPendentes: resumoRaw.osPendentes || 0,
+        antecipacoes: resumoRaw.antecipacoes || { total: 0, pendentes: 0, aprovadas: 0, pagas: 0, valorTotal: 0 }
+      });
       setAbasCarregadas(prev => ({ ...prev, pagamentos: true }));
     } catch (error) {
       console.error('Erro ao carregar pagamentos:', error);
       toast.error('Erro ao carregar pagamentos');
+      setPagamentos([]);
     }
   }, []);
 
   const loadAntecipacoes = useCallback(async () => {
     try {
       const res = await api.get('/pagamentos/antecipacoes');
-      setAntecipacoes(res.data || []);
+      const raw = res?.data?.data ?? res?.data ?? [];
+      setAntecipacoes(Array.isArray(raw) ? raw : []);
       setAbasCarregadas(prev => ({ ...prev, antecipacoes: true }));
     } catch (error) {
       console.error('Erro ao carregar antecipações:', error);
+      setAntecipacoes([]);
     }
   }, []);
 
@@ -196,7 +217,7 @@ function Pagamentos() {
     setPaginaAtualOrdens(1);
   };
 
-  const pagamentosFiltrados = pagamentos.filter(p => {
+  const pagamentosFiltrados = (Array.isArray(pagamentos) ? pagamentos : []).filter(p => {
     const busca = normalizarTexto(filtrosPagamentos.busca);
     const matchBusca = !busca ||
       normalizarTexto(p.numeroFatura).includes(busca) ||
@@ -204,7 +225,7 @@ function Pagamentos() {
     return matchBusca;
   });
 
-  const antecipacoesFiltradas = antecipacoes.filter(a => {
+  const antecipacoesFiltradas = (Array.isArray(antecipacoes) ? antecipacoes : []).filter(a => {
     const busca = normalizarTexto(filtrosAntecipacoes.busca);
     const matchBusca = !busca ||
       normalizarTexto(a.fornecedor?.razaoSocial).includes(busca);
@@ -423,7 +444,7 @@ function Pagamentos() {
   };
 
   // Filtros ordens
-  const ordensFiltradas = ordens.filter(o => {
+  const ordensFiltradas = (Array.isArray(ordens) ? ordens : []).filter(o => {
     const clienteFiltro = normalizarTexto(filtrosOrdens.cliente);
     const fornecedorFiltro = normalizarTexto(filtrosOrdens.fornecedor);
 

@@ -44,9 +44,10 @@ const Header = ({ user, onSearch, showBackButton = false }) => {
     setLoadingNotifications(true);
     try {
       const data = await notificacaoService.listar();
-      setNotifications(data);
+      setNotifications(Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []));
     } catch (error) {
       console.error('Erro ao carregar lista de notificações:', error);
+      setNotifications([]);
     } finally {
       setLoadingNotifications(false);
     }

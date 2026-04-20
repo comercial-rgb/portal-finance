@@ -26,9 +26,9 @@ exports.listar = async (req, res) => {
       .lean();
 
     // Adiciona flag booleana indicando se a OP possui comprovante armazenado.
-    // Para isso fazemos uma única query rápida (projection apenas do _id) nas OPs com comprovante.
+    // Query separada só com _id (bem mais leve que trazer o base64).
     const idsComComprovante = await OrdemPagamento.find(
-      { ...query, comprovante: { $exists: true, $ne: null, $ne: '' } },
+      { ...query, $and: [{ comprovante: { $exists: true } }, { comprovante: { $ne: null } }, { comprovante: { $ne: '' } }] },
       { _id: 1 }
     ).lean();
     const setComComprovante = new Set(idsComComprovante.map(o => String(o._id)));

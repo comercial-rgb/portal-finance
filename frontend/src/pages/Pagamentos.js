@@ -693,7 +693,14 @@ function Pagamentos() {
                                   const label = `${f.razaoSocial || ''}${f.cnpjCpf ? ` (${f.cnpjCpf})` : ''}`;
                                   return label === texto;
                                 });
-                                setFormData(prev => ({ ...prev, fornecedor: match ? match._id : '', fatura: '', faturaNumeroManual: '' }));
+                                const novoFornecedorId = match ? match._id : '';
+                                setFormData(prev => ({ ...prev, fornecedor: novoFornecedorId, fatura: '', faturaNumeroManual: '' }));
+                                setUsarFaturaManual(false);
+                                if (novoFornecedorId) {
+                                  carregarFaturasFornecedor(novoFornecedorId);
+                                } else {
+                                  setFaturasAbertasFornecedor([]);
+                                }
                               }}
                               required
                               className="form-input"

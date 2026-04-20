@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
@@ -22,7 +21,6 @@ const TIPOS_COMBUSTIVEL = {
 };
 
 function FaturasAbastecimento() {
-  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [abastecimentos, setAbastecimentos] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -38,6 +36,7 @@ function FaturasAbastecimento() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [showFaturaModal, setShowFaturaModal] = useState(false);
   const [aplicarRetencao, setAplicarRetencao] = useState(true);
+  const [gerandoFatura, setGerandoFatura] = useState(false);
 
   // Campos da fatura
   const [prazoRecebimentoDias, setPrazoRecebimentoDias] = useState(30);
@@ -245,9 +244,18 @@ function FaturasAbastecimento() {
   };
 
   const handleGerarFatura = async () => {
-    if (selectedIds.length === 0) return;
+    if (selectedIds.length === 0 || gerandoFatura) return;
 
     const selecionados = abastecimentos.filter(ab => selectedIds.includes(ab._id));
+
+    const fornecedorUnico = new Set(selecionados.map(ab => ab.fornecedor?._id || ab.fornecedor));
+    const clienteUnico = new Set(selecionados.map(ab => ab.cliente?._id || ab.cliente));
+
+    if (fornecedorUnico.size !== 1 || clienteUnico.size !== 1) {
+      toast.warning('Selecione abastecimentos de um único cliente e fornecedor para gerar a fatura.');
+      return;
+    }
+
     const fornecedorId = selecionados[0]?.fornecedor?._id || selecionados[0]?.fornecedor;
     const clienteId = selecionados[0]?.cliente?._id || selecionados[0]?.cliente;
 
@@ -271,10 +279,14 @@ function FaturasAbastecimento() {
       periodoInicio,
       periodoFim,
       aplicarRetencao,
+      dataVencimento: dataVencimento || undefined,
+      numeroNF: numeroNF || undefined,
+      serieNF: serieNF || undefined,
       observacoes: observacoes || undefined
     };
 
     try {
+      setGerandoFatura(true);
       const response = await api.post('/faturas/abastecimento', payload);
       toast.success(`Fatura ${response.data.numeroFatura} gerada com sucesso!`);
       setShowFaturaModal(false);
@@ -283,10 +295,11 @@ function FaturasAbastecimento() {
       setNumeroNF('');
       setSerieNF('');
       await loadData();
-      navigate(`/faturados/editar/${response.data._id}`);
     } catch (error) {
       console.error('Erro ao gerar fatura:', error);
       toast.error(error.response?.data?.message || 'Erro ao gerar fatura');
+    } finally {
+      setGerandoFatura(false);
     }
   };
 
@@ -677,11 +690,11 @@ function FaturasAbastecimento() {
                   </div>
 
                   <div className="modal-footer">
-                    <button className="btn-secondary" onClick={() => setShowFaturaModal(false)}>
+                    <button className="btn-secondary" onClick={() => setShowFaturaModal(false)} disabled={gerandoFatura}>
                       Cancelar
                     </button>
-                    <button className="btn-primary btn-confirmar" onClick={handleGerarFatura}>
-                      ✓ Confirmar e Gerar Fatura
+                    <button className="btn-primary btn-confirmar" onClick={handleGerarFatura} disabled={gerandoFatura}>
+                      {gerandoFatura ? 'Gerando fatura...' : '✓ Confirmar e Gerar Fatura'}
                     </button>
                   </div>
                 </div>

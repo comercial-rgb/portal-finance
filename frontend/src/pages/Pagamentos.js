@@ -20,7 +20,15 @@ function Pagamentos() {
     antecipacoes: { total: 0, pendentes: 0, aprovadas: 0, pagas: 0, valorTotal: 0 }
   });
   const [abaAtiva, setAbaAtiva] = useState('ordens-pagamento');
-  const [filtros, setFiltros] = useState({ busca: '', statusOrdem: 'Pendente' });
+  const [filtrosPagamentos, setFiltrosPagamentos] = useState({ busca: '' });
+  const [filtrosAntecipacoes, setFiltrosAntecipacoes] = useState({ busca: '' });
+  const [filtrosOrdens, setFiltrosOrdens] = useState({
+    cliente: '',
+    fornecedor: '',
+    periodoInicio: '',
+    periodoFim: '',
+    statusOrdem: 'Pendente'
+  });
   const [paginaAtualOrdens, setPaginaAtualOrdens] = useState(1);
   const itensPorPaginaOrdens = 15;
 
@@ -138,21 +146,37 @@ function Pagamentos() {
     return new Date(data).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
   };
 
+  const normalizarTexto = (valor) => (valor || '').toString().toLowerCase().trim();
+
   // === PAGAMENTOS (aba existente) ===
-  const handleFiltroChange = (e) => {
-    setFiltros(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleFiltroPagamentosChange = (e) => {
+    const { name, value } = e.target;
+    setFiltrosPagamentos(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFiltroAntecipacoesChange = (e) => {
+    const { name, value } = e.target;
+    setFiltrosAntecipacoes(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFiltroOrdensChange = (e) => {
+    const { name, value } = e.target;
+    setFiltrosOrdens(prev => ({ ...prev, [name]: value }));
+    setPaginaAtualOrdens(1);
   };
 
   const pagamentosFiltrados = pagamentos.filter(p => {
-    const matchBusca = !filtros.busca ||
-      p.numeroFatura?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
-      p.ordemServico?.numeroOrdemServico?.toLowerCase().includes(filtros.busca.toLowerCase());
+    const busca = normalizarTexto(filtrosPagamentos.busca);
+    const matchBusca = !busca ||
+      normalizarTexto(p.numeroFatura).includes(busca) ||
+      normalizarTexto(p.ordemServico?.numeroOrdemServico).includes(busca);
     return matchBusca;
   });
 
   const antecipacoesFiltradas = antecipacoes.filter(a => {
-    const matchBusca = !filtros.busca ||
-      a.fornecedor?.razaoSocial?.toLowerCase().includes(filtros.busca.toLowerCase());
+    const busca = normalizarTexto(filtrosAntecipacoes.busca);
+    const matchBusca = !busca ||
+      normalizarTexto(a.fornecedor?.razaoSocial).includes(busca);
     return matchBusca;
   });
 
@@ -349,15 +373,33 @@ function Pagamentos() {
 
   // Filtros ordens
   const ordensFiltradas = ordens.filter(o => {
-    const matchBusca = !filtros.busca ||
-      o.codigo?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
-      o.fornecedor?.razaoSocial?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
-      o.fornecedor?.cnpjCpf?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
-      o.cliente?.razaoSocial?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
-      o.fatura?.numeroFatura?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
-      o.faturaNumeroManual?.toLowerCase().includes(filtros.busca.toLowerCase());
-    const matchStatus = !filtros.statusOrdem || o.status === filtros.statusOrdem;
-    return matchBusca && matchStatus;
+    const clienteFiltro = normalizarTexto(filtrosOrdens.cliente);
+    const fornecedorFiltro = normalizarTexto(filtrosOrdens.fornecedor);
+
+    const clienteTexto = normalizarTexto(o.cliente?.razaoSocial || o.cliente?.nomeFantasia);
+    const fornecedorTexto = normalizarTexto(o.fornecedor?.razaoSocial || o.fornecedor?.nomeFantasia);
+    const fornecedorDocumento = normalizarTexto(o.fornecedor?.cnpjCpf);
+
+    const matchCliente = !clienteFiltro || clienteTexto.includes(clienteFiltro);
+    const matchFornecedor = !fornecedorFiltro ||
+      fornecedorTexto.includes(fornecedorFiltro) ||
+      fornecedorDocumento.includes(fornecedorFiltro);
+
+    const dataGeracao = o.dataGeracao ? new Date(o.dataGeracao) : null;
+    const dataValida = dataGeracao && !Number.isNaN(dataGeracao.getTime());
+
+    let matchPeriodo = true;
+    if (filtrosOrdens.periodoInicio) {
+      const inicio = new Date(`${filtrosOrdens.periodoInicio}T00:00:00`);
+      matchPeriodo = matchPeriodo && dataValida && dataGeracao >= inicio;
+    }
+    if (filtrosOrdens.periodoFim) {
+      const fim = new Date(`${filtrosOrdens.periodoFim}T23:59:59`);
+      matchPeriodo = matchPeriodo && dataValida && dataGeracao <= fim;
+    }
+
+    const matchStatus = !filtrosOrdens.statusOrdem || o.status === filtrosOrdens.statusOrdem;
+    return matchCliente && matchFornecedor && matchPeriodo && matchStatus;
   });
 
   // Paginação ordens
@@ -578,22 +620,22 @@ function Pagamentos() {
                     {/* Sub-abas de status */}
                     <div className="status-subtabs">
                       <button
-                        className={`status-subtab ${filtros.statusOrdem === 'Pendente' ? 'active subtab-pendente' : ''}`}
-                        onClick={() => { setFiltros(prev => ({ ...prev, statusOrdem: 'Pendente' })); setPaginaAtualOrdens(1); }}
+                        className={`status-subtab ${filtrosOrdens.statusOrdem === 'Pendente' ? 'active subtab-pendente' : ''}`}
+                        onClick={() => { setFiltrosOrdens(prev => ({ ...prev, statusOrdem: 'Pendente' })); setPaginaAtualOrdens(1); }}
                       >
                         ⏳ Pendentes
                         <span className="subtab-count">{ordens.filter(o => o.status === 'Pendente').length}</span>
                       </button>
                       <button
-                        className={`status-subtab ${filtros.statusOrdem === 'Paga' ? 'active subtab-paga' : ''}`}
-                        onClick={() => { setFiltros(prev => ({ ...prev, statusOrdem: 'Paga' })); setPaginaAtualOrdens(1); }}
+                        className={`status-subtab ${filtrosOrdens.statusOrdem === 'Paga' ? 'active subtab-paga' : ''}`}
+                        onClick={() => { setFiltrosOrdens(prev => ({ ...prev, statusOrdem: 'Paga' })); setPaginaAtualOrdens(1); }}
                       >
                         ✅ Pagas
                         <span className="subtab-count">{ordens.filter(o => o.status === 'Paga').length}</span>
                       </button>
                       <button
-                        className={`status-subtab ${filtros.statusOrdem === '' ? 'active subtab-todas' : ''}`}
-                        onClick={() => { setFiltros(prev => ({ ...prev, statusOrdem: '' })); setPaginaAtualOrdens(1); }}
+                        className={`status-subtab ${filtrosOrdens.statusOrdem === '' ? 'active subtab-todas' : ''}`}
+                        onClick={() => { setFiltrosOrdens(prev => ({ ...prev, statusOrdem: '' })); setPaginaAtualOrdens(1); }}
                       >
                         📋 Todas
                         <span className="subtab-count">{ordens.length}</span>
@@ -602,14 +644,63 @@ function Pagamentos() {
 
                     {/* Filtros ordens */}
                     <div className="filtros-card">
-                      <input type="text" name="busca" value={filtros.busca} onChange={(e) => { handleFiltroChange(e); setPaginaAtualOrdens(1); }} placeholder="Buscar por nº ordem, fornecedor, CNPJ, cliente, fatura..." className="filtro-input" />
+                      <div className="ordens-filtros-grid">
+                        <input
+                          type="text"
+                          name="cliente"
+                          value={filtrosOrdens.cliente}
+                          onChange={handleFiltroOrdensChange}
+                          placeholder="Pesquisar cliente"
+                          className="filtro-input"
+                        />
+                        <input
+                          type="text"
+                          name="fornecedor"
+                          value={filtrosOrdens.fornecedor}
+                          onChange={handleFiltroOrdensChange}
+                          placeholder="Pesquisar fornecedor ou CNPJ"
+                          className="filtro-input"
+                        />
+                        <input
+                          type="date"
+                          name="periodoInicio"
+                          value={filtrosOrdens.periodoInicio}
+                          onChange={handleFiltroOrdensChange}
+                          className="filtro-input filtro-date"
+                        />
+                        <input
+                          type="date"
+                          name="periodoFim"
+                          value={filtrosOrdens.periodoFim}
+                          onChange={handleFiltroOrdensChange}
+                          className="filtro-input filtro-date"
+                        />
+                      </div>
+                      <div className="ordens-filtro-actions">
+                        <button
+                          type="button"
+                          className="btn-limpar-filtros"
+                          onClick={() => {
+                            setFiltrosOrdens(prev => ({
+                              ...prev,
+                              cliente: '',
+                              fornecedor: '',
+                              periodoInicio: '',
+                              periodoFim: ''
+                            }));
+                            setPaginaAtualOrdens(1);
+                          }}
+                        >
+                          Limpar Filtros
+                        </button>
+                      </div>
                       <span className="filtro-count">{ordensFiltradas.length} registro{ordensFiltradas.length !== 1 ? 's' : ''}</span>
                     </div>
 
                     {/* Tabela ordens */}
                     <div className="section-card">
                       <div className="section-header">
-                        <h2>📋 Ordens de Pagamento {filtros.statusOrdem === 'Pendente' ? '- Pendentes' : filtros.statusOrdem === 'Paga' ? '- Pagas' : ''}</h2>
+                        <h2>📋 Ordens de Pagamento {filtrosOrdens.statusOrdem === 'Pendente' ? '- Pendentes' : filtrosOrdens.statusOrdem === 'Paga' ? '- Pagas' : ''}</h2>
                         <span className="badge">{ordensFiltradas.length} registros</span>
                       </div>
                       {ordensFiltradas.length === 0 ? (
@@ -751,7 +842,7 @@ function Pagamentos() {
                 {abaAtiva === 'pagamentos' && (
                   <>
                     <div className="filtros-card">
-                      <input type="text" name="busca" value={filtros.busca} onChange={handleFiltroChange} placeholder="Buscar por nº fatura ou OS..." className="filtro-input" />
+                      <input type="text" name="busca" value={filtrosPagamentos.busca} onChange={handleFiltroPagamentosChange} placeholder="Buscar por nº fatura ou OS..." className="filtro-input" />
                     </div>
                     <div className="section-card">
                       <div className="section-header">
@@ -811,7 +902,7 @@ function Pagamentos() {
                 {abaAtiva === 'antecipacoes' && isFornecedor && (
                   <>
                     <div className="filtros-card">
-                      <input type="text" name="busca" value={filtros.busca} onChange={handleFiltroChange} placeholder="Buscar por fornecedor..." className="filtro-input" />
+                      <input type="text" name="busca" value={filtrosAntecipacoes.busca} onChange={handleFiltroAntecipacoesChange} placeholder="Buscar por fornecedor..." className="filtro-input" />
                     </div>
                     <div className="section-card">
                       <div className="section-header">

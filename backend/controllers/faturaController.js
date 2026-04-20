@@ -623,7 +623,17 @@ exports.desativar = async (req, res) => {
 // Criar fatura a partir de abastecimentos selecionados
 exports.criarFaturaAbastecimento = async (req, res) => {
   try {
-    const { tipo, fornecedor, cliente, abastecimentoIds, periodoInicio, periodoFim, impostosId, tipoPagamento } = req.body;
+    const {
+      tipo,
+      fornecedor,
+      cliente,
+      abastecimentoIds,
+      periodoInicio,
+      periodoFim,
+      impostosId,
+      tipoPagamento,
+      aplicarRetencao = true
+    } = req.body;
 
     if (!tipo || !abastecimentoIds || abastecimentoIds.length === 0) {
       return res.status(400).json({ message: 'Tipo e abastecimentos são obrigatórios' });
@@ -657,6 +667,19 @@ exports.criarFaturaAbastecimento = async (req, res) => {
     if (abastecimentos.length !== abastecimentoIds.length) {
       return res.status(400).json({
         message: 'Alguns abastecimentos não estão disponíveis ou já foram faturados'
+      });
+    }
+
+    const fornecedoresSelecionados = new Set(
+      abastecimentos.map((ab) => String(ab.fornecedor?._id || ab.fornecedor || ''))
+    );
+    const clientesSelecionados = new Set(
+      abastecimentos.map((ab) => String(ab.cliente?._id || ab.cliente || ''))
+    );
+
+    if (fornecedoresSelecionados.size !== 1 || clientesSelecionados.size !== 1) {
+      return res.status(400).json({
+        message: 'Selecione abastecimentos de um único cliente e fornecedor para gerar a fatura.'
       });
     }
 
@@ -714,7 +737,7 @@ exports.criarFaturaAbastecimento = async (req, res) => {
         ? clienteAb.tipoImpostoCombustivel
         : clienteAb?.tipoImposto;
 
-      if (fornecedorAb?.naoOptanteSimples && impostosCombustivel && Array.isArray(impostosCombustivel)) {
+      if (aplicarRetencao && fornecedorAb?.naoOptanteSimples && impostosCombustivel && Array.isArray(impostosCombustivel)) {
         impostosCombustivel.forEach(tipoImposto => {
           if (tipoImposto === 'municipais' && impostos.combustivelMunicipais) {
             const t = impostos.combustivelMunicipais;
@@ -761,7 +784,7 @@ exports.criarFaturaAbastecimento = async (req, res) => {
       numeroFatura,
       tipo,
       fornecedor: tipo === 'Fornecedor' ? fornecedor : undefined,
-      cliente: tipo === 'Cliente' ? cliente : undefined,
+      cliente: cliente || undefined,
       ordensServico: [], // Vazio pois é fatura de abastecimento
       abastecimentosVinculados: abastecimentosComValores,
       origem: 'abastecimento',
@@ -775,53 +798,46 @@ exports.criarFaturaAbastecimento = async (req, res) => {
       valorDevido,
       valorPago: 0,
       valorRestante: valorDevido,
-      impostos: impostosId,
+      impostos: impostos?._id,
       statusFatura: 'Aguardando pagamento'
     });
 
     await novaFatura.save();
 
     // Atualizar status dos abastecimentos
-    for (const abId of abastecimentoIds) {
-      const ab = await Abastecimento.findById(abId).populate('cliente', 'tipoTaxa taxaOperacao taxasAntecipacao');
-      if (ab) {
-        if (tipo === 'Fornecedor') {
-          ab.faturadoFornecedor = true;
-        } else if (tipo === 'Cliente') {
-          ab.faturadoCliente = true;
-        }
+    await Promise.all(abastecimentos.map(async (ab) => {
+      const atualizacao = {
+        status: tipo === 'Fornecedor' && tipoPagamento === 'aVista' ? 'Paga' : 'Aguardando pagamento'
+      };
 
-        if (tipo === 'Fornecedor' && tipoPagamento === 'aVista') {
-          ab.status = 'Paga';
-        } else {
-          ab.status = 'Aguardando pagamento';
-        }
-
-        if (!ab.tipoFatura) {
-          ab.tipoFatura = tipo;
-        }
-
-        if (tipo === 'Fornecedor') {
-          ab.tipoPagamento = tipoPagamento;
-          let taxaAplicada = 0;
-          if (ab.cliente?.tipoTaxa === 'operacao') {
-            taxaAplicada = ab.cliente.taxaOperacao || 15;
-          } else if (ab.cliente?.tipoTaxa === 'antecipacao_variavel' && tipoPagamento) {
-            switch (tipoPagamento) {
-              case 'aVista': taxaAplicada = ab.cliente.taxasAntecipacao?.aVista || 15; break;
-              case 'aposFechamento': taxaAplicada = ab.cliente.taxasAntecipacao?.aposFechamento || 13; break;
-              case 'dias30': taxaAplicada = ab.cliente.taxasAntecipacao?.dias30 || 10; break;
-              case 'dias40': taxaAplicada = ab.cliente.taxasAntecipacao?.dias40 || 8; break;
-              case 'dias50': taxaAplicada = ab.cliente.taxasAntecipacao?.dias50 || 6; break;
-              case 'dias60': taxaAplicada = ab.cliente.taxasAntecipacao?.dias60 || 0; break;
-            }
-          }
-          ab.taxaAplicada = taxaAplicada;
-        }
-
-        await ab.save();
+      if (!ab.tipoFatura) {
+        atualizacao.tipoFatura = tipo;
       }
-    }
+
+      if (tipo === 'Fornecedor') {
+        atualizacao.faturadoFornecedor = true;
+        atualizacao.tipoPagamento = tipoPagamento;
+
+        let taxaAplicada = 0;
+        if (ab.cliente?.tipoTaxa === 'operacao') {
+          taxaAplicada = ab.cliente.taxaOperacao || 15;
+        } else if (ab.cliente?.tipoTaxa === 'antecipacao_variavel' && tipoPagamento) {
+          switch (tipoPagamento) {
+            case 'aVista': taxaAplicada = ab.cliente.taxasAntecipacao?.aVista || 15; break;
+            case 'aposFechamento': taxaAplicada = ab.cliente.taxasAntecipacao?.aposFechamento || 13; break;
+            case 'dias30': taxaAplicada = ab.cliente.taxasAntecipacao?.dias30 || 10; break;
+            case 'dias40': taxaAplicada = ab.cliente.taxasAntecipacao?.dias40 || 8; break;
+            case 'dias50': taxaAplicada = ab.cliente.taxasAntecipacao?.dias50 || 6; break;
+            case 'dias60': taxaAplicada = ab.cliente.taxasAntecipacao?.dias60 || 0; break;
+          }
+        }
+        atualizacao.taxaAplicada = taxaAplicada;
+      } else if (tipo === 'Cliente') {
+        atualizacao.faturadoCliente = true;
+      }
+
+      await Abastecimento.updateOne({ _id: ab._id }, { $set: atualizacao });
+    }));
 
     const faturaCompleta = await Fatura.findById(novaFatura._id)
       .populate('fornecedor')

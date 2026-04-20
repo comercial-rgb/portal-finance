@@ -106,6 +106,19 @@ exports.criar = async (req, res) => {
     if (!clienteDoc) return res.status(404).json({ message: 'Cliente não encontrado' });
     if (!fornecedorDoc) return res.status(404).json({ message: 'Fornecedor não encontrado' });
 
+    if (fatura) {
+      const faturaDoc = await Fatura.findOne({
+        _id: fatura,
+        ativo: true,
+        fornecedor,
+        tipo: 'Fornecedor'
+      }).select('_id');
+
+      if (!faturaDoc) {
+        return res.status(400).json({ message: 'Fatura inválida para o fornecedor informado' });
+      }
+    }
+
     // Criar ordem
     const ordem = new OrdemPagamento({
       cliente,
@@ -119,7 +132,26 @@ exports.criar = async (req, res) => {
       status: 'Pendente'
     });
 
-    await ordem.save();
+    let ultimaFalha = null;
+    for (let tentativa = 1; tentativa <= 3; tentativa++) {
+      try {
+        await ordem.save();
+        ultimaFalha = null;
+        break;
+      } catch (err) {
+        const erroDuplicadoCodigo = err?.code === 11000 && err?.keyPattern?.codigo;
+        if (erroDuplicadoCodigo && tentativa < 3) {
+          ordem.codigo = undefined;
+          ultimaFalha = err;
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    if (ultimaFalha) {
+      throw ultimaFalha;
+    }
 
     // === INTEGRAÇÃO COM FINSYSTEM ===
     // Enviar movimentação como repasse a fornecedor (assíncrono - não bloqueia)

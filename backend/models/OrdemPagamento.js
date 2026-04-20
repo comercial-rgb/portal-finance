@@ -95,7 +95,17 @@ const ordemPagamentoSchema = new mongoose.Schema({
 // Auto-gerar código sequencial OP-XXXX
 ordemPagamentoSchema.pre('save', async function (next) {
   if (!this.codigo) {
-    const ultima = await this.constructor.findOne({}, {}, { sort: { createdAt: -1 } });
+    const [ultima] = await this.constructor.aggregate([
+      { $match: { codigo: { $regex: '^OP-[0-9]+$' } } },
+      {
+        $project: {
+          codigo: 1,
+          numeroCodigo: { $toInt: { $arrayElemAt: [{ $split: ['$codigo', '-'] }, 1] } }
+        }
+      },
+      { $sort: { numeroCodigo: -1 } },
+      { $limit: 1 }
+    ]);
     let proximo = 1;
     if (ultima && ultima.codigo) {
       const num = parseInt(ultima.codigo.replace('OP-', ''));

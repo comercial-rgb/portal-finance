@@ -68,6 +68,17 @@ function Pagamentos() {
   const [showModalOrdemComprovante, setShowModalOrdemComprovante] = useState(false);
   const [ordemComprovanteView, setOrdemComprovanteView] = useState(null);
 
+  // Modal nota de comissão
+  const [showModalNotaComissao, setShowModalNotaComissao] = useState(false);
+  const [ordemNotaComissao, setOrdemNotaComissao] = useState(null);
+  const [uploadingNotaComissao, setUploadingNotaComissao] = useState(false);
+
+  // Editar ordem
+  const [showModalEditar, setShowModalEditar] = useState(false);
+  const [ordemEditar, setOrdemEditar] = useState(null);
+  const [editFormData, setEditFormData] = useState({ valor: '', dataGeracao: '', observacoes: '', faturaNumeroManual: '' });
+  const [editLoading, setEditLoading] = useState(false);
+
   // Bank info popup
   const [bankInfoId, setBankInfoId] = useState(null);
 
@@ -449,6 +460,67 @@ function Pagamentos() {
     }
   };
 
+  // Nota de comissão
+  const handleAbrirNotaComissao = (ordem) => { setOrdemNotaComissao(ordem); setShowModalNotaComissao(true); };
+
+  const handleUploadNotaComissao = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error('Arquivo muito grande. Máximo 5MB.'); return; }
+    const tiposPermitidos = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+    if (!tiposPermitidos.includes(file.type)) { toast.error('Tipo de arquivo não permitido. Use PDF, JPG ou PNG.'); return; }
+    setUploadingNotaComissao(true);
+    const reader = new FileReader();
+    reader.onerror = () => { toast.error('Erro ao ler o arquivo'); setUploadingNotaComissao(false); };
+    reader.onload = async () => {
+      try {
+        await api.put(`/ordens-pagamento/${ordemNotaComissao._id}/nota-comissao`, { notaComissao: reader.result });
+        toast.success('Nota de comissão anexada com sucesso!');
+        setShowModalNotaComissao(false);
+        setOrdemNotaComissao(null);
+        loadData();
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Erro ao anexar nota de comissão');
+      } finally {
+        setUploadingNotaComissao(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Editar ordem de pagamento
+  const handleAbrirEditar = (ordem) => {
+    setOrdemEditar(ordem);
+    setEditFormData({
+      valor: ordem.valor || '',
+      dataGeracao: ordem.dataGeracao ? new Date(ordem.dataGeracao).toISOString().split('T')[0] : '',
+      observacoes: ordem.observacoes || '',
+      faturaNumeroManual: ordem.faturaNumeroManual || ''
+    });
+    setShowModalEditar(true);
+  };
+
+  const handleSalvarEditar = async (e) => {
+    e.preventDefault();
+    try {
+      setEditLoading(true);
+      await api.put(`/ordens-pagamento/${ordemEditar._id}`, {
+        valor: parseFloat(editFormData.valor),
+        dataGeracao: editFormData.dataGeracao,
+        observacoes: editFormData.observacoes,
+        faturaNumeroManual: editFormData.faturaNumeroManual || null
+      });
+      toast.success('Ordem atualizada com sucesso!');
+      setShowModalEditar(false);
+      setOrdemEditar(null);
+      loadData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Erro ao atualizar ordem');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
   // Resincronizar com FinSystem
   const handleResincronizar = async (ordemId) => {
     try {
@@ -474,17 +546,21 @@ function Pagamentos() {
       fornecedorTexto.includes(fornecedorFiltro) ||
       fornecedorDocumento.includes(fornecedorFiltro);
 
-    const dataGeracao = o.dataGeracao ? new Date(o.dataGeracao) : null;
-    const dataValida = dataGeracao && !Number.isNaN(dataGeracao.getTime());
+    // Em "Pagas" filtrar pela data de pagamento; em "Pendentes"/"Todas" pela data gerada
+    const dataReferenciaRaw = filtrosOrdens.statusOrdem === 'Paga'
+      ? o.dataPagamento
+      : o.dataGeracao;
+    const dataReferencia = dataReferenciaRaw ? new Date(dataReferenciaRaw) : null;
+    const dataValida = dataReferencia && !Number.isNaN(dataReferencia.getTime());
 
     let matchPeriodo = true;
     if (filtrosOrdens.periodoInicio) {
       const inicio = new Date(`${filtrosOrdens.periodoInicio}T00:00:00`);
-      matchPeriodo = matchPeriodo && dataValida && dataGeracao >= inicio;
+      matchPeriodo = matchPeriodo && dataValida && dataReferencia >= inicio;
     }
     if (filtrosOrdens.periodoFim) {
       const fim = new Date(`${filtrosOrdens.periodoFim}T23:59:59`);
-      matchPeriodo = matchPeriodo && dataValida && dataGeracao <= fim;
+      matchPeriodo = matchPeriodo && dataValida && dataReferencia <= fim;
     }
 
     const matchStatus = !filtrosOrdens.statusOrdem || o.status === filtrosOrdens.statusOrdem;
@@ -805,6 +881,7 @@ function Pagamentos() {
                           value={filtrosOrdens.periodoInicio}
                           onChange={handleFiltroOrdensChange}
                           className="filtro-input filtro-date"
+                          title={filtrosOrdens.statusOrdem === 'Paga' ? 'Data de pagamento - início' : 'Data gerada - início'}
                         />
                         <input
                           type="date"
@@ -812,6 +889,7 @@ function Pagamentos() {
                           value={filtrosOrdens.periodoFim}
                           onChange={handleFiltroOrdensChange}
                           className="filtro-input filtro-date"
+                          title={filtrosOrdens.statusOrdem === 'Paga' ? 'Data de pagamento - fim' : 'Data gerada - fim'}
                         />
                       </div>
                       <div className="ordens-filtro-actions">
@@ -917,7 +995,7 @@ function Pagamentos() {
                                   <td>{formatarData(ordem.dataGeracao)}</td>
                                   <td>{formatarData(ordem.dataPagamento)}</td>
                                   <td><span className={`status-badge ${ordem.status === 'Paga' ? 'status-paga' : 'status-pendente'}`}>{ordem.status}</span></td>
-                                  <td>{ordem.faturaVinculada ? <span className="fatura-vinculada">{ordem.faturaVinculada.numeroFatura}</span> : <span className="text-muted">-</span>}</td>
+                                  <td>{ordem.fatura ? <span className="fatura-vinculada">{ordem.fatura.numeroFatura}</span> : <span className="text-muted">-</span>}</td>
                                   <td>
                                     {ordem.finsystemSincronizado ? (
                                       <span className="status-badge status-paga" title={`ID: ${ordem.finsystemId}`}>✓ Sincronizado</span>
@@ -932,12 +1010,20 @@ function Pagamentos() {
                                   </td>
                                   <td className="acoes-cell">
                                     {isAdminGerente && ordem.status === 'Pendente' && (
-                                      <button className="btn-pagar" title="Registrar Pagamento" onClick={() => handleAbrirPagar(ordem)}>💰 Pagar</button>
+                                      <>
+                                        <button className="btn-pagar" title="Registrar Pagamento" onClick={() => handleAbrirPagar(ordem)}>💰 Pagar</button>
+                                        <button className="btn-editar" title="Editar Ordem" onClick={() => handleAbrirEditar(ordem)}>✏️ Editar</button>
+                                      </>
                                     )}
                                     {ordem.status === 'Paga' && (ordem.temComprovante || ordem.comprovante) && (
                                       <button className="btn-link" title="Ver Comprovante" onClick={() => handleVerOrdemComprovante(ordem)}>📎 Comprovante</button>
                                     )}
-                                    {isAdminGerente && ordem.status === 'Paga' && !ordem.faturaVinculada && (
+                                    {isAdminGerente && ordem.status === 'Paga' && (
+                                      <button className="btn-nota-comissao" title={ordem.notaComissao ? 'Ver Nota de Comissão' : 'Anexar Nota de Comissão'} onClick={() => handleAbrirNotaComissao(ordem)}>
+                                        {ordem.notaComissao ? '📄 Nota' : '📄 + Nota'}
+                                      </button>
+                                    )}
+                                    {isAdminGerente && ordem.status === 'Paga' && !ordem.fatura && (
                                       <button className="btn-vincular" title="Vincular a Fatura" onClick={() => handleAbrirVincular(ordem)}>🔗 Vincular</button>
                                     )}
                                   </td>
@@ -1219,6 +1305,115 @@ function Pagamentos() {
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setShowModalVincular(false)} disabled={loadingVincular}>Cancelar</button>
               <button className="btn-primary" onClick={handleVincularFatura} disabled={loadingVincular || !faturaVinculadaSelecionada}>{loadingVincular ? 'Vinculando...' : '✓ Vincular Fatura'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Nota de Comissão */}
+      {showModalNotaComissao && ordemNotaComissao && (
+        <div className="modal-overlay" onClick={() => !uploadingNotaComissao && setShowModalNotaComissao(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>📄 Nota de Comissão</h2>
+              <button className="btn-close" onClick={() => !uploadingNotaComissao && setShowModalNotaComissao(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="comprovante-info">
+                <p><strong>Ordem:</strong> {ordemNotaComissao.codigo}</p>
+                <p><strong>Fornecedor:</strong> {ordemNotaComissao.fornecedor?.razaoSocial}</p>
+                <p><strong>Valor:</strong> {formatarValor(ordemNotaComissao.valor)}</p>
+              </div>
+              {ordemNotaComissao.notaComissao ? (
+                <div className="comprovante-preview">
+                  {ordemNotaComissao.notaComissao.startsWith('data:image') ? (
+                    <img src={ordemNotaComissao.notaComissao} alt="Nota de Comissão" />
+                  ) : ordemNotaComissao.notaComissao.startsWith('data:application/pdf') ? (
+                    <div className="pdf-preview">
+                      <a href={ordemNotaComissao.notaComissao} download={`nota-comissao-${ordemNotaComissao.codigo}.pdf`} className="btn-secondary">📥 Baixar Nota de Comissão PDF</a>
+                    </div>
+                  ) : (
+                    <a href={ordemNotaComissao.notaComissao} target="_blank" rel="noopener noreferrer" className="btn-secondary">📥 Baixar Nota de Comissão</a>
+                  )}
+                  {isAdminGerente && (
+                    <div style={{ marginTop: '1rem' }}>
+                      <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.5rem' }}>Substituir nota de comissão:</p>
+                      <div className="upload-area">
+                        <input type="file" id="nota-comissao-replace" accept="application/pdf,image/*" onChange={handleUploadNotaComissao} disabled={uploadingNotaComissao} />
+                        <label htmlFor="nota-comissao-replace" className="upload-label">
+                          {uploadingNotaComissao ? 'Enviando...' : <span>Clique para substituir</span>}
+                        </label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : isAdminGerente ? (
+                <div className="upload-area">
+                  <input type="file" id="nota-comissao-upload" accept="application/pdf,image/*" onChange={handleUploadNotaComissao} disabled={uploadingNotaComissao} />
+                  <label htmlFor="nota-comissao-upload" className="upload-label">
+                    {uploadingNotaComissao ? 'Enviando...' : (
+                      <>
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                          <polyline points="17 8 12 3 7 8"/>
+                          <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        <span>Clique para anexar nota de comissão</span>
+                        <small>PDF, JPG ou PNG até 5MB</small>
+                      </>
+                    )}
+                  </label>
+                </div>
+              ) : (
+                <div className="empty-state"><p>Nota de comissão não anexada</p></div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setShowModalNotaComissao(false)} disabled={uploadingNotaComissao}>Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Editar Ordem */}
+      {showModalEditar && ordemEditar && (
+        <div className="modal-overlay" onClick={() => !editLoading && setShowModalEditar(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>✏️ Editar Ordem de Pagamento</h2>
+              <button className="btn-close" onClick={() => !editLoading && setShowModalEditar(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleSalvarEditar} className="form-grid">
+                <div className="form-group">
+                  <label>Código</label>
+                  <input type="text" value={ordemEditar.codigo} disabled className="form-input" />
+                </div>
+                <div className="form-group">
+                  <label>Fornecedor</label>
+                  <input type="text" value={ordemEditar.fornecedor?.razaoSocial || ''} disabled className="form-input" />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="edit-valor">Valor *</label>
+                  <input type="number" id="edit-valor" value={editFormData.valor} onChange={e => setEditFormData(prev => ({ ...prev, valor: e.target.value }))} step="0.01" min="0.01" required className="form-input" />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="edit-data">Data Gerada *</label>
+                  <input type="date" id="edit-data" value={editFormData.dataGeracao} onChange={e => setEditFormData(prev => ({ ...prev, dataGeracao: e.target.value }))} required className="form-input" />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="edit-fatura-manual">Fatura Manual</label>
+                  <input type="text" id="edit-fatura-manual" value={editFormData.faturaNumeroManual} onChange={e => setEditFormData(prev => ({ ...prev, faturaNumeroManual: e.target.value }))} placeholder="Número da fatura manual..." className="form-input" />
+                </div>
+                <div className="form-group form-group-full">
+                  <label htmlFor="edit-obs">Observações</label>
+                  <textarea id="edit-obs" value={editFormData.observacoes} onChange={e => setEditFormData(prev => ({ ...prev, observacoes: e.target.value }))} className="form-input form-textarea" rows="2" />
+                </div>
+                <div className="form-actions">
+                  <button type="button" className="btn-secondary" onClick={() => setShowModalEditar(false)} disabled={editLoading}>Cancelar</button>
+                  <button type="submit" className="btn-primary" disabled={editLoading}>{editLoading ? 'Salvando...' : '✓ Salvar Alterações'}</button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

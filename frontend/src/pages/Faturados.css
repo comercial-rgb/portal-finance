@@ -100,6 +100,44 @@
   margin-bottom: 2rem;
 }
 
+.filtros-section {
+  background: var(--branco);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.filtros-section .filtros-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.filtros-section .filtros-grid input,
+.filtros-section .filtros-grid select {
+  padding: 0.75rem;
+  border: 1px solid var(--cinza-medio);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.filtros-section .filtros-grid input:focus,
+.filtros-section .filtros-grid select:focus {
+  outline: none;
+  border-color: var(--azul-tech);
+  box-shadow: 0 0 0 3px rgba(0, 91, 237, 0.1);
+}
+
+.filtros-section .filtros-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
 .filtros-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;

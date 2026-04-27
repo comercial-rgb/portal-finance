@@ -19,6 +19,8 @@ router.post('/', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtr
 // Ações sobre uma ordem específica
 router.put('/:id/pagar', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.pagar);
 router.put('/:id/vincular-fatura', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.vincularFatura);
+router.put('/:id/nota-comissao', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.notaComissao);
+router.put('/:id', authorize('super_admin', 'admin', 'gerente'), ordemPagamentoCtrl.editar);
 router.post('/:id/resincronizar', authorize('super_admin', 'admin'), ordemPagamentoCtrl.resincronizar);
 
 module.exports = router;

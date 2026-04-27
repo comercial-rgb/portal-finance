@@ -24,6 +24,9 @@ function RelatorioGerencial() {
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
 
+  // Texto livre que será inserido no documento exportado
+  const [observacoesRelatorio, setObservacoesRelatorio] = useState('');
+
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
     if (!currentUser) {
@@ -157,6 +160,7 @@ function RelatorioGerencial() {
       [`Período: ${periodoLabel}`],
       [`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`],
       [],
+      ...(observacoesRelatorio.trim() ? [['Observações:'], [observacoesRelatorio], []] : []),
       ['Indicador', 'Quantidade', 'Valor'],
       ...reportData
     ];
@@ -195,9 +199,24 @@ function RelatorioGerencial() {
     doc.text(`Período: ${periodoLabel}`, 14, 32);
     doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, 14, 39);
 
+    let startY = 48;
+
+    // Observações do relatório (se preenchidas)
+    if (observacoesRelatorio.trim()) {
+      doc.setFontSize(10);
+      doc.setTextColor(60, 60, 60);
+      doc.setFont(undefined, 'bold');
+      doc.text('Observações:', 14, startY);
+      doc.setFont(undefined, 'normal');
+      startY += 6;
+      const linhas = doc.splitTextToSize(observacoesRelatorio, 180);
+      doc.text(linhas, 14, startY);
+      startY += linhas.length * 5 + 8;
+    }
+
     // Fornecedores
     doc.autoTable({
-      startY: 48,
+      startY,
       head: [['Fornecedores', 'Quantidade']],
       body: [
         ['Total de Fornecedores Ativos', dados.fornecedores.totalAtivos],
@@ -319,26 +338,22 @@ function RelatorioGerencial() {
                   </select>
                 </div>
 
-                {periodo === 'personalizado' && (
-                  <>
-                    <div className="form-group">
-                      <label>Data Início</label>
-                      <input
-                        type="date"
-                        value={dataInicio}
-                        onChange={(e) => setDataInicio(e.target.value)}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Data Fim</label>
-                      <input
-                        type="date"
-                        value={dataFim}
-                        onChange={(e) => setDataFim(e.target.value)}
-                      />
-                    </div>
-                  </>
-                )}
+                <div className="form-group">
+                  <label>Data Início</label>
+                  <input
+                    type="date"
+                    value={dataInicio}
+                    onChange={(e) => { setDataInicio(e.target.value); if (e.target.value || dataFim) setPeriodo('personalizado'); }}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Data Fim</label>
+                  <input
+                    type="date"
+                    value={dataFim}
+                    onChange={(e) => { setDataFim(e.target.value); if (e.target.value || dataInicio) setPeriodo('personalizado'); }}
+                  />
+                </div>
 
                 <div className="form-group filtro-action">
                   <label>&nbsp;</label>
@@ -346,6 +361,18 @@ function RelatorioGerencial() {
                     {loading ? 'Gerando...' : '🔍 Gerar Relatório'}
                   </button>
                 </div>
+              </div>
+
+              {/* Campo de observações/notas para constar no documento */}
+              <div className="form-group" style={{ marginTop: '1rem' }}>
+                <label>Observações / Notas do Relatório</label>
+                <textarea
+                  value={observacoesRelatorio}
+                  onChange={(e) => setObservacoesRelatorio(e.target.value)}
+                  placeholder="Digite aqui textos ou notas que irão constar no documento exportado (PDF/Excel)..."
+                  rows="4"
+                  style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--cinza-medio)', borderRadius: '8px', fontFamily: 'DM Sans, sans-serif', fontSize: '0.95rem', resize: 'vertical' }}
+                />
               </div>
             </div>
 

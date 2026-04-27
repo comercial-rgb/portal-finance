@@ -3,6 +3,7 @@ const Fornecedor = require('../models/Fornecedor');
 const Cliente = require('../models/Cliente');
 const Fatura = require('../models/Fatura');
 const OrdemServico = require('../models/OrdemServico');
+const Abastecimento = require('../models/Abastecimento');
 const finsystemService = require('../services/finsystemService');
 
 // @desc    Listar ordens de pagamento
@@ -289,6 +290,8 @@ exports.pagar = async (req, res) => {
         const valorDevido = fatura.valorDevido || 0;
 
         const osIds = [];
+        const abastecimentoIds = [];
+
         if (totalPagoOPs >= valorDevido) {
           // Pagamento cobre toda a fatura - marcar todas as OS como pagas
           fatura.ordensServico.forEach(os => {
@@ -299,8 +302,17 @@ exports.pagar = async (req, res) => {
               osIds.push(os.ordemServico);
             }
           });
+          // Marcar todos os abastecimentos vinculados como pagos
+          (fatura.abastecimentosVinculados || []).forEach(ab => {
+            if (ab.statusPagamento !== 'Paga') {
+              ab.statusPagamento = 'Paga';
+              ab.dataPagamento = ordem.dataPagamento;
+              ab.comprovante = ordem.comprovante || null;
+              abastecimentoIds.push(ab.abastecimento);
+            }
+          });
         } else {
-          // Pagamento parcial - marcar OS proporcionalmente até cobrir o valor pago
+          // Pagamento parcial - marcar OS/abastecimentos proporcionalmente
           let restante = totalPagoOPs;
           for (const os of fatura.ordensServico) {
             if (os.statusPagamento !== 'Paga' && restante > 0) {
@@ -315,6 +327,19 @@ exports.pagar = async (req, res) => {
               }
             }
           }
+          for (const ab of (fatura.abastecimentosVinculados || [])) {
+            if (ab.statusPagamento !== 'Paga' && restante > 0) {
+              if (restante >= (ab.valorAbastecimento || 0)) {
+                ab.statusPagamento = 'Paga';
+                ab.dataPagamento = ordem.dataPagamento;
+                ab.comprovante = ordem.comprovante || null;
+                abastecimentoIds.push(ab.abastecimento);
+                restante -= (ab.valorAbastecimento || 0);
+              } else {
+                break;
+              }
+            }
+          }
         }
 
         await fatura.save(); // pre-save recalcula statusFatura, valorPago, valorRestante
@@ -323,6 +348,14 @@ exports.pagar = async (req, res) => {
         if (osIds.length > 0) {
           await OrdemServico.updateMany(
             { _id: { $in: osIds } },
+            { $set: { status: 'Paga' } }
+          );
+        }
+
+        // Atualizar status dos Abastecimentos
+        if (abastecimentoIds.length > 0) {
+          await Abastecimento.updateMany(
+            { _id: { $in: abastecimentoIds } },
             { $set: { status: 'Paga' } }
           );
         }
@@ -365,6 +398,8 @@ exports.vincularFatura = async (req, res) => {
       const valorDevido = faturaDoc.valorDevido || 0;
 
       const osIds = [];
+      const abastecimentoIds = [];
+
       if (totalPagoOPs >= valorDevido) {
         faturaDoc.ordensServico.forEach(os => {
           if (os.statusPagamento !== 'Paga') {
@@ -372,6 +407,14 @@ exports.vincularFatura = async (req, res) => {
             os.dataPagamento = ordem.dataPagamento || new Date();
             os.comprovante = ordem.comprovante || null;
             osIds.push(os.ordemServico);
+          }
+        });
+        (faturaDoc.abastecimentosVinculados || []).forEach(ab => {
+          if (ab.statusPagamento !== 'Paga') {
+            ab.statusPagamento = 'Paga';
+            ab.dataPagamento = ordem.dataPagamento || new Date();
+            ab.comprovante = ordem.comprovante || null;
+            abastecimentoIds.push(ab.abastecimento);
           }
         });
       } else {
@@ -389,6 +432,19 @@ exports.vincularFatura = async (req, res) => {
             }
           }
         }
+        for (const ab of (faturaDoc.abastecimentosVinculados || [])) {
+          if (ab.statusPagamento !== 'Paga' && restante > 0) {
+            if (restante >= (ab.valorAbastecimento || 0)) {
+              ab.statusPagamento = 'Paga';
+              ab.dataPagamento = ordem.dataPagamento || new Date();
+              ab.comprovante = ordem.comprovante || null;
+              abastecimentoIds.push(ab.abastecimento);
+              restante -= (ab.valorAbastecimento || 0);
+            } else {
+              break;
+            }
+          }
+        }
       }
 
       await faturaDoc.save();
@@ -396,6 +452,13 @@ exports.vincularFatura = async (req, res) => {
       if (osIds.length > 0) {
         await OrdemServico.updateMany(
           { _id: { $in: osIds } },
+          { $set: { status: 'Paga' } }
+        );
+      }
+
+      if (abastecimentoIds.length > 0) {
+        await Abastecimento.updateMany(
+          { _id: { $in: abastecimentoIds } },
           { $set: { status: 'Paga' } }
         );
       }
@@ -448,6 +511,54 @@ exports.resincronizar = async (req, res) => {
   } catch (error) {
     console.error('Erro ao resincronizar:', error);
     res.status(500).json({ message: 'Erro ao resincronizar', error: error.message });
+  }
+};
+
+// @desc    Editar ordem de pagamento (apenas Pendente)
+// @route   PUT /api/ordens-pagamento/:id
+exports.editar = async (req, res) => {
+  try {
+    const { valor, dataGeracao, observacoes, faturaNumeroManual } = req.body;
+    const updateData = {};
+    if (valor !== undefined) updateData.valor = parseFloat(valor);
+    if (dataGeracao !== undefined) updateData.dataGeracao = dataGeracao;
+    if (observacoes !== undefined) updateData.observacoes = observacoes;
+    if (faturaNumeroManual !== undefined) updateData.faturaNumeroManual = faturaNumeroManual;
+
+    const ordem = await OrdemPagamento.findOneAndUpdate(
+      { _id: req.params.id, ativo: true },
+      updateData,
+      { new: true, runValidators: true }
+    )
+      .populate('cliente', 'razaoSocial nomeFantasia')
+      .populate('fornecedor', 'razaoSocial nomeFantasia cnpjCpf')
+      .populate('fatura', 'numeroFatura');
+
+    if (!ordem) return res.status(404).json({ message: 'Ordem não encontrada' });
+    res.json({ success: true, message: 'Ordem atualizada com sucesso', data: ordem });
+  } catch (error) {
+    console.error('Erro ao editar ordem:', error);
+    res.status(500).json({ message: 'Erro ao editar ordem', error: error.message });
+  }
+};
+
+// @desc    Anexar/atualizar nota de comissão
+// @route   PUT /api/ordens-pagamento/:id/nota-comissao
+exports.notaComissao = async (req, res) => {
+  try {
+    const { notaComissao } = req.body;
+    if (!notaComissao) return res.status(400).json({ message: 'Arquivo da nota de comissão é obrigatório' });
+
+    const ordem = await OrdemPagamento.findOneAndUpdate(
+      { _id: req.params.id, ativo: true },
+      { notaComissao },
+      { new: true }
+    );
+    if (!ordem) return res.status(404).json({ message: 'Ordem não encontrada' });
+    res.json({ success: true, message: 'Nota de comissão anexada com sucesso' });
+  } catch (error) {
+    console.error('Erro ao anexar nota de comissão:', error);
+    res.status(500).json({ message: 'Erro ao anexar nota de comissão', error: error.message });
   }
 };
 

@@ -51,6 +51,14 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.filtros-section {
+  background: var(--branco);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
 .filtros-card h3 {
   font-size: 1.2rem;
   color: var(--azul-corporativo);
@@ -60,7 +68,7 @@
 
 .filtros-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
   margin-bottom: 1rem;
 }

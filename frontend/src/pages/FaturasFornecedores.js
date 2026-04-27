@@ -21,6 +21,9 @@ function FaturasFornecedores() {
   const [impostos, setImpostos] = useState(null);
   const [tipoPagamento, setTipoPagamento] = useState('');
   const [clienteTaxaInfo, setClienteTaxaInfo] = useState(null);
+  const [periodoModalInicio, setPeriodoModalInicio] = useState('');
+  const [periodoModalFim, setPeriodoModalFim] = useState('');
+  const [referenciaFatura, setReferenciaFatura] = useState('');
   
   const [filtros, setFiltros] = useState({
     codigo: '',
@@ -255,27 +258,19 @@ function FaturasFornecedores() {
       return;
     }
     
-    // Calcular período com base nas datas das ordens
-    const datas = ordensParaFatura
-      .map(o => o.dataAutorizacao || o.createdAt)
-      .filter(d => d)
-      .map(d => new Date(d));
-    
-    const periodoInicio = datas.length > 0 
-      ? new Date(Math.min(...datas)).toISOString().split('T')[0]
-      : new Date().toISOString().split('T')[0];
-    
-    const periodoFim = datas.length > 0 
-      ? new Date(Math.max(...datas)).toISOString().split('T')[0]
-      : new Date().toISOString().split('T')[0];
-    
+    // Usar período definido pelo usuário no modal (com fallback para auto-cálculo)
+    const hoje = new Date().toISOString().split('T')[0];
+    const periodoInicio = periodoModalInicio || hoje;
+    const periodoFim = periodoModalFim || hoje;
+
     const payload = {
       tipo: 'Fornecedor',
       fornecedor: fornecedorId,
       ordensServicoIds: selectedOrdens,
       periodoInicio,
       periodoFim,
-      tipoPagamento: tipoPagamento || undefined
+      tipoPagamento: tipoPagamento || undefined,
+      referenciaFatura: referenciaFatura || undefined
     };
 
     try {
@@ -295,6 +290,9 @@ function FaturasFornecedores() {
       setSelectedOrdens([]);
       setTipoPagamento('');
       setClienteTaxaInfo(null);
+      setReferenciaFatura('');
+      setPeriodoModalInicio('');
+      setPeriodoModalFim('');
       
       // Redirecionar para a página de detalhes da fatura
       navigate(`/faturados/editar/${response.data._id}`);
@@ -313,6 +311,21 @@ function FaturasFornecedores() {
       toast.warning('Selecione pelo menos uma ordem de serviço');
       return;
     }
+    // Pré-popular período com base nas datas das ordens selecionadas
+    const ordensParaModal = ordensServico.filter(o => selectedOrdens.includes(o._id));
+    const datas = ordensParaModal
+      .map(o => o.dataAutorizacao || o.createdAt)
+      .filter(d => d)
+      .map(d => new Date(d));
+    if (datas.length > 0) {
+      setPeriodoModalInicio(new Date(Math.min(...datas)).toISOString().split('T')[0]);
+      setPeriodoModalFim(new Date(Math.max(...datas)).toISOString().split('T')[0]);
+    } else {
+      const hoje = new Date().toISOString().split('T')[0];
+      setPeriodoModalInicio(hoje);
+      setPeriodoModalFim(hoje);
+    }
+    setReferenciaFatura('');
     setShowFaturaModal(true);
   };
 
@@ -991,6 +1004,53 @@ function FaturasFornecedores() {
       {showFaturaModal && (
         <div className="fatura-modal" onClick={() => setShowFaturaModal(false)}>
           <div className="fatura-modal-content" onClick={(e) => e.stopPropagation()}>
+
+            {/* Painel de configuração - não imprime */}
+            <div className="fatura-config-panel no-print" style={{ padding: '16px 20px', background: '#f0f7ff', borderBottom: '1px solid #d0e3fa', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-end' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: '600', color: '#333' }}>Período Apurado - Início</label>
+                <input
+                  type="date"
+                  value={periodoModalInicio}
+                  onChange={e => setPeriodoModalInicio(e.target.value)}
+                  style={{ padding: '6px 10px', border: '1px solid #ccc', borderRadius: '6px', fontSize: '0.9rem' }}
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: '600', color: '#333' }}>Período Apurado - Fim</label>
+                <input
+                  type="date"
+                  value={periodoModalFim}
+                  onChange={e => setPeriodoModalFim(e.target.value)}
+                  style={{ padding: '6px 10px', border: '1px solid #ccc', borderRadius: '6px', fontSize: '0.9rem' }}
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: '200px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: '600', color: '#333' }}>Referência do Mês</label>
+                <input
+                  type="text"
+                  list="lista-referencias"
+                  value={referenciaFatura}
+                  onChange={e => setReferenciaFatura(e.target.value)}
+                  placeholder="Ex: 1ª Quinzena - Abril/2026"
+                  style={{ padding: '6px 10px', border: '1px solid #ccc', borderRadius: '6px', fontSize: '0.9rem' }}
+                />
+                <datalist id="lista-referencias">
+                  {(() => {
+                    const base = periodoModalInicio ? new Date(periodoModalInicio + 'T00:00:00Z') : new Date();
+                    const mes = base.toLocaleString('pt-BR', { month: 'long', timeZone: 'UTC' });
+                    const mesNum = String(base.getUTCMonth() + 1).padStart(2, '0');
+                    const ano = base.getUTCFullYear();
+                    return [
+                      `1ª Quinzena - ${mes.charAt(0).toUpperCase() + mes.slice(1)}/${ano}`,
+                      `2ª Quinzena - ${mes.charAt(0).toUpperCase() + mes.slice(1)}/${ano}`,
+                      `Mês ${mesNum}/${ano} Completo`,
+                    ].map(opt => <option key={opt} value={opt} />);
+                  })()}
+                </datalist>
+              </div>
+            </div>
+
             <div className="fatura-document" id="fatura-print">
               
               {/* Cabeçalho da Empresa */}
@@ -1007,6 +1067,15 @@ function FaturasFornecedores() {
                 <div className="fatura-numero-data">
                   <p><strong>Fatura Nº:</strong> {numeroPrevia} <span style={{ fontSize: '0.75rem', color: '#999', fontStyle: 'italic' }}>(prévia - número definitivo ao gerar)</span></p>
                   <p><strong>Data:</strong> {new Date().toLocaleDateString('pt-BR')}</p>
+                  {referenciaFatura && (
+                    <p><strong>Referência:</strong> {referenciaFatura}</p>
+                  )}
+                  <p>
+                    <strong>Período Apurado:</strong>{' '}
+                    {periodoModalInicio ? new Date(periodoModalInicio + 'T00:00:00Z').toLocaleDateString('pt-BR') : '-'}
+                    {' a '}
+                    {periodoModalFim ? new Date(periodoModalFim + 'T00:00:00Z').toLocaleDateString('pt-BR') : '-'}
+                  </p>
                 </div>
               </div>
 

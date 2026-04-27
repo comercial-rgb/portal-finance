@@ -362,62 +362,46 @@ function Fornecedores() {
               </button>
             </div>
 
-            <div className="filtros-card">
-              <h3>Filtros</h3>
+            <div className="filtros-section">
               <div className="filtros-grid">
-                <div className="form-group">
-                  <label>Razão Social</label>
-                  <input
-                    type="text"
-                    name="razaoSocial"
-                    value={filtros.razaoSocial}
-                    onChange={handleFiltroChange}
-                    placeholder="Buscar por razão social"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Nome Fantasia</label>
-                  <input
-                    type="text"
-                    name="nomeFantasia"
-                    value={filtros.nomeFantasia}
-                    onChange={handleFiltroChange}
-                    placeholder="Buscar por nome fantasia"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>CNPJ/CPF</label>
-                  <input
-                    type="text"
-                    name="cnpjCpf"
-                    value={filtros.cnpjCpf}
-                    onChange={handleFiltroChange}
-                    placeholder="Buscar por CNPJ/CPF"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Cidade</label>
-                  <input
-                    type="text"
-                    name="cidade"
-                    value={filtros.cidade}
-                    onChange={handleFiltroChange}
-                    placeholder="Buscar por cidade"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Estado</label>
-                  <select
-                    name="estado"
-                    value={filtros.estado}
-                    onChange={handleFiltroChange}
-                  >
-                    <option value="">Todos</option>
-                    {estados.map(estado => (
-                      <option key={estado} value={estado}>{estado}</option>
-                    ))}
-                  </select>
-                </div>
+                <input
+                  type="text"
+                  name="razaoSocial"
+                  value={filtros.razaoSocial}
+                  onChange={handleFiltroChange}
+                  placeholder="Razão Social"
+                />
+                <input
+                  type="text"
+                  name="nomeFantasia"
+                  value={filtros.nomeFantasia}
+                  onChange={handleFiltroChange}
+                  placeholder="Nome Fantasia"
+                />
+                <input
+                  type="text"
+                  name="cnpjCpf"
+                  value={filtros.cnpjCpf}
+                  onChange={handleFiltroChange}
+                  placeholder="CNPJ/CPF"
+                />
+                <input
+                  type="text"
+                  name="cidade"
+                  value={filtros.cidade}
+                  onChange={handleFiltroChange}
+                  placeholder="Cidade"
+                />
+                <select
+                  name="estado"
+                  value={filtros.estado}
+                  onChange={handleFiltroChange}
+                >
+                  <option value="">Todos os Estados</option>
+                  {estados.map(estado => (
+                    <option key={estado} value={estado}>{estado}</option>
+                  ))}
+                </select>
               </div>
               <div className="filtros-actions">
                 <button className="btn-secondary" onClick={handleLimpar}>

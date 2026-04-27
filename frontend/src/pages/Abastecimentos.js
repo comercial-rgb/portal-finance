@@ -155,63 +155,49 @@ function Abastecimentos() {
               </div>
             </div>
 
-            <div className="filtros-card">
-              <h3>Filtros</h3>
+            <div className="filtros-section">
               <div className="filtros-grid">
-                <div className="form-group">
-                  <label>Código / Placa</label>
-                  <input
-                    type="text"
-                    name="codigo"
-                    value={filtros.codigo}
-                    onChange={handleFiltroChange}
-                    placeholder="Ex: AB-0001 ou ABC1234"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Status</label>
-                  <select
-                    name="status"
-                    value={filtros.status}
-                    onChange={handleFiltroChange}
-                  >
-                    <option value="">Todos</option>
-                    <option value="Autorizada">Autorizada</option>
-                    <option value="Aguardando pagamento">Aguardando pagamento</option>
-                    <option value="Paga">Paga</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Combustível</label>
-                  <select
-                    name="tipoCombustivel"
-                    value={filtros.tipoCombustivel}
-                    onChange={handleFiltroChange}
-                  >
-                    <option value="">Todos</option>
-                    {Object.entries(TIPOS_COMBUSTIVEL).map(([key, label]) => (
-                      <option key={key} value={key}>{label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Data Início</label>
-                  <input
-                    type="date"
-                    name="dataInicio"
-                    value={filtros.dataInicio}
-                    onChange={handleFiltroChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Data Fim</label>
-                  <input
-                    type="date"
-                    name="dataFim"
-                    value={filtros.dataFim}
-                    onChange={handleFiltroChange}
-                  />
-                </div>
+                <input
+                  type="text"
+                  name="codigo"
+                  value={filtros.codigo}
+                  onChange={handleFiltroChange}
+                  placeholder="Código / Placa (ex: AB-0001 ou ABC1234)"
+                />
+                <select
+                  name="status"
+                  value={filtros.status}
+                  onChange={handleFiltroChange}
+                >
+                  <option value="">Todos os Status</option>
+                  <option value="Autorizada">Autorizada</option>
+                  <option value="Aguardando pagamento">Aguardando pagamento</option>
+                  <option value="Paga">Paga</option>
+                </select>
+                <select
+                  name="tipoCombustivel"
+                  value={filtros.tipoCombustivel}
+                  onChange={handleFiltroChange}
+                >
+                  <option value="">Todos os Combustíveis</option>
+                  {Object.entries(TIPOS_COMBUSTIVEL).map(([key, label]) => (
+                    <option key={key} value={key}>{label}</option>
+                  ))}
+                </select>
+                <input
+                  type="date"
+                  name="dataInicio"
+                  value={filtros.dataInicio}
+                  onChange={handleFiltroChange}
+                  title="Data Início"
+                />
+                <input
+                  type="date"
+                  name="dataFim"
+                  value={filtros.dataFim}
+                  onChange={handleFiltroChange}
+                  title="Data Fim"
+                />
               </div>
               <div className="filtros-actions">
                 <button className="btn-secondary" onClick={handleLimpar}>

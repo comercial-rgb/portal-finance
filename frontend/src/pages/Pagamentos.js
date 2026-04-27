@@ -552,15 +552,15 @@ function Pagamentos() {
       : o.dataGeracao;
     const dataReferencia = dataReferenciaRaw ? new Date(dataReferenciaRaw) : null;
     const dataValida = dataReferencia && !Number.isNaN(dataReferencia.getTime());
+    // Comparar no UTC para coincidir com a exibição (formatarData usa timeZone: 'UTC')
+    const dataStr = dataValida ? dataReferencia.toISOString().slice(0, 10) : null;
 
     let matchPeriodo = true;
     if (filtrosOrdens.periodoInicio) {
-      const inicio = new Date(`${filtrosOrdens.periodoInicio}T00:00:00`);
-      matchPeriodo = matchPeriodo && dataValida && dataReferencia >= inicio;
+      matchPeriodo = matchPeriodo && dataStr !== null && dataStr >= filtrosOrdens.periodoInicio;
     }
     if (filtrosOrdens.periodoFim) {
-      const fim = new Date(`${filtrosOrdens.periodoFim}T23:59:59`);
-      matchPeriodo = matchPeriodo && dataValida && dataReferencia <= fim;
+      matchPeriodo = matchPeriodo && dataStr !== null && dataStr <= filtrosOrdens.periodoFim;
     }
 
     const matchStatus = !filtrosOrdens.statusOrdem || o.status === filtrosOrdens.statusOrdem;

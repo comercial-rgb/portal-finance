@@ -186,37 +186,39 @@ function Faturados() {
             </div>
 
             {/* Filtros */}
-            <div className="filtros-card">
+            <div className="filtros-section">
               <div className="filtros-grid">
-                <div className="filtro-group">
-                  <label>Buscar</label>
-                  <input
-                    type="text"
-                    name="busca"
-                    value={filtros.busca}
-                    onChange={handleFiltroChange}
-                    placeholder={`Buscar por nº fatura ou ${abaAtiva === 'fornecedores' ? 'fornecedor' : 'cliente'}...`}
-                  />
-                </div>
-                <div className="filtro-group">
-                  <label>Status</label>
-                  <select
-                    name="status"
-                    value={filtros.status}
-                    onChange={handleFiltroChange}
-                  >
-                    <option value="">Todos</option>
-                    <option value="Aguardando pagamento">
-                      {abaAtiva === 'clientes' ? 'Aguardando recebimento' : 'Aguardando pagamento'}
-                    </option>
-                    <option value="Parcialmente paga">
-                      {abaAtiva === 'clientes' ? 'Parcialmente recebida' : 'Parcialmente paga'}
-                    </option>
-                    <option value="Paga">
-                      {abaAtiva === 'clientes' ? 'Recebida' : 'Paga'}
-                    </option>
-                  </select>
-                </div>
+                <input
+                  type="text"
+                  name="busca"
+                  value={filtros.busca}
+                  onChange={handleFiltroChange}
+                  placeholder={`Buscar por nº fatura ou ${abaAtiva === 'fornecedores' ? 'fornecedor' : 'cliente'}...`}
+                />
+                <select
+                  name="status"
+                  value={filtros.status}
+                  onChange={handleFiltroChange}
+                >
+                  <option value="">Todos os Status</option>
+                  <option value="Aguardando pagamento">
+                    {abaAtiva === 'clientes' ? 'Aguardando recebimento' : 'Aguardando pagamento'}
+                  </option>
+                  <option value="Parcialmente paga">
+                    {abaAtiva === 'clientes' ? 'Parcialmente recebida' : 'Parcialmente paga'}
+                  </option>
+                  <option value="Paga">
+                    {abaAtiva === 'clientes' ? 'Recebida' : 'Paga'}
+                  </option>
+                </select>
+              </div>
+              <div className="filtros-actions">
+                <button
+                  className="btn-secondary"
+                  onClick={() => setFiltros({ busca: '', status: '' })}
+                >
+                  🗑️ Limpar
+                </button>
               </div>
             </div>
 

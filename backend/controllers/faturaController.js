@@ -97,7 +97,7 @@ exports.buscarPorId = async (req, res) => {
 // Criar fatura a partir de ordens de serviço selecionadas
 exports.criar = async (req, res) => {
   try {
-    const { tipo, fornecedor, cliente, ordensServicoIds, periodoInicio, periodoFim, impostosId, tipoPagamento } = req.body;
+    const { tipo, fornecedor, cliente, ordensServicoIds, periodoInicio, periodoFim, impostosId, tipoPagamento, referenciaFatura } = req.body;
     
     // Validar dados obrigatórios
     if (!tipo || !ordensServicoIds || ordensServicoIds.length === 0) {
@@ -300,6 +300,7 @@ exports.criar = async (req, res) => {
       ordensServico: ordensComValores,
       periodoInicio,
       periodoFim,
+      referenciaFatura: referenciaFatura || undefined,
       valorTotal,
       valorDesconto,
       valorComDesconto,
@@ -480,49 +481,56 @@ exports.removerOrdemServico = async (req, res) => {
   }
 };
 
-// Marcar ordem de serviço como paga
+// Marcar ordem de serviço (ou abastecimento) como paga
 exports.marcarOSComoPaga = async (req, res) => {
   try {
     const { id, ordemServicoId } = req.params;
     const { dataPagamento } = req.body;
-    
+    const dataEfetiva = dataPagamento || new Date();
+
     const fatura = await Fatura.findById(id);
     if (!fatura || !fatura.ativo) {
       return res.status(404).json({ message: 'Fatura não encontrada' });
     }
-    
-    // Encontrar a ordem de serviço na fatura
+
+    // Tentar encontrar na lista de OS
     const os = fatura.ordensServico.find(
       os => os.ordemServico.toString() === ordemServicoId
     );
-    
-    if (!os) {
-      return res.status(404).json({ message: 'Ordem de serviço não encontrada na fatura' });
+
+    if (os) {
+      os.statusPagamento = 'Paga';
+      os.dataPagamento = dataEfetiva;
+      await fatura.save();
+      await OrdemServico.findByIdAndUpdate(ordemServicoId, { status: 'Paga' });
+    } else {
+      // Tentar encontrar na lista de abastecimentos vinculados
+      const ab = fatura.abastecimentosVinculados.find(
+        ab => ab.abastecimento.toString() === ordemServicoId
+      );
+      if (!ab) {
+        return res.status(404).json({ message: 'Item não encontrado na fatura' });
+      }
+      ab.statusPagamento = 'Paga';
+      ab.dataPagamento = dataEfetiva;
+      await fatura.save();
+      await Abastecimento.findByIdAndUpdate(ordemServicoId, { status: 'Paga' });
     }
-    
-    // Marcar como paga
-    os.statusPagamento = 'Paga';
-    os.dataPagamento = dataPagamento || new Date();
-    
-    await fatura.save();
-    
-    // Atualizar status da OS no modelo OrdemServico
-    await OrdemServico.findByIdAndUpdate(ordemServicoId, { status: 'Paga' });
-    
+
     const faturaAtualizada = await Fatura.findById(id)
       .populate('fornecedor')
       .populate('cliente')
       .populate('ordensServico.ordemServico')
       .populate('impostos');
-    
+
     res.json(faturaAtualizada);
   } catch (error) {
-    console.error('Erro ao marcar OS como paga:', error);
-    res.status(500).json({ message: 'Erro ao marcar OS como paga', error: error.message });
+    console.error('Erro ao marcar item como pago:', error);
+    res.status(500).json({ message: 'Erro ao marcar item como pago', error: error.message });
   }
 };
 
-// Pagar fatura inteira (todas as OS pendentes de uma vez)
+// Pagar fatura inteira (todas as OS/abastecimentos pendentes de uma vez)
 exports.pagarFaturaInteira = async (req, res) => {
   try {
     const { id } = req.params;
@@ -535,8 +543,8 @@ exports.pagarFaturaInteira = async (req, res) => {
 
     const dataEfetiva = dataPagamento || new Date();
     const osIds = [];
+    const abastecimentoIds = [];
 
-    // Marcar TODAS as OS pendentes como pagas em uma única operação
     fatura.ordensServico.forEach(os => {
       if (os.statusPagamento !== 'Paga') {
         os.statusPagamento = 'Paga';
@@ -545,17 +553,33 @@ exports.pagarFaturaInteira = async (req, res) => {
       }
     });
 
-    if (osIds.length === 0) {
-      return res.status(400).json({ message: 'Todas as ordens de serviço já estão pagas' });
+    (fatura.abastecimentosVinculados || []).forEach(ab => {
+      if (ab.statusPagamento !== 'Paga') {
+        ab.statusPagamento = 'Paga';
+        ab.dataPagamento = dataEfetiva;
+        abastecimentoIds.push(ab.abastecimento);
+      }
+    });
+
+    if (osIds.length === 0 && abastecimentoIds.length === 0) {
+      return res.status(400).json({ message: 'Todos os itens já estão pagos' });
     }
 
     await fatura.save();
 
-    // Atualizar status de todas as OS no modelo OrdemServico
-    await OrdemServico.updateMany(
-      { _id: { $in: osIds } },
-      { $set: { status: 'Paga' } }
-    );
+    if (osIds.length > 0) {
+      await OrdemServico.updateMany(
+        { _id: { $in: osIds } },
+        { $set: { status: 'Paga' } }
+      );
+    }
+
+    if (abastecimentoIds.length > 0) {
+      await Abastecimento.updateMany(
+        { _id: { $in: abastecimentoIds } },
+        { $set: { status: 'Paga' } }
+      );
+    }
 
     const faturaAtualizada = await Fatura.findById(id)
       .populate('fornecedor')

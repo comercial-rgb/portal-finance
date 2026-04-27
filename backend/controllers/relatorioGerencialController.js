@@ -97,7 +97,10 @@ exports.getRelatorioGerencial = async (req, res) => {
 
     // Process abastecimentos
     const totalAbastecimentos = abastecimentos.length;
-    const valorTotalAbastecimentos = abastecimentos.reduce((sum, ab) => sum + (ab.valorTotal || 0), 0);
+    const valorTotalAbastecimentos = abastecimentos.reduce(
+      (sum, ab) => sum + (ab.valorFinal || ab.valorComDesconto || ab.valor || ab.valorTotal || 0),
+      0
+    );
 
     // Faturas por tipo
     const faturasFornecedor = faturas.filter(f => f.tipo === 'Fornecedor').length;

@@ -139,6 +139,11 @@ const faturaSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  // Referência do mês/período (ex: "1ª Quinzena - Abril/2026")
+  referenciaFatura: {
+    type: String,
+    trim: true
+  },
   // Previsão de recebimento (para faturas de fornecedor)
   previsaoRecebimento: {
     type: Date

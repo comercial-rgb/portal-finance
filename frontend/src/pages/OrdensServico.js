@@ -186,86 +186,67 @@ function OrdensServico() {
               )}
             </div>
 
-            <div className="filtros-card">
-              <h3>Filtros</h3>
+            <div className="filtros-section">
               <div className="filtros-grid">
-                <div className="form-group">
-                  <label>Código</label>
-                  <input
-                    type="text"
-                    name="codigo"
-                    value={filtros.codigo}
-                    onChange={handleFiltroChange}
-                    placeholder="Ex: OS-000001"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Cliente</label>
-                  <input
-                    type="text"
-                    placeholder="Buscar cliente por nome..."
-                    value={buscaCliente}
-                    onChange={(e) => setBuscaCliente(e.target.value)}
-                    className="filtro-busca-input"
-                  />
-                  <select name="cliente" value={filtros.cliente} onChange={handleFiltroChange}>
-                    <option value="">Todos</option>
-                    {clientes
-                      .filter(c => !buscaCliente || (c.razaoSocial || c.nomeFantasia || '').toLowerCase().includes(buscaCliente.toLowerCase()))
-                      .map(c => (
-                      <option key={c._id} value={c._id}>{c.razaoSocial || c.nomeFantasia}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Fornecedor</label>
-                  <input
-                    type="text"
-                    placeholder="Buscar fornecedor por nome..."
-                    value={buscaFornecedor}
-                    onChange={(e) => setBuscaFornecedor(e.target.value)}
-                    className="filtro-busca-input"
-                  />
-                  <select name="fornecedor" value={filtros.fornecedor} onChange={handleFiltroChange}>
-                    <option value="">Todos</option>
-                    {fornecedores
-                      .filter(f => !buscaFornecedor || (f.razaoSocial || f.nomeFantasia || '').toLowerCase().includes(buscaFornecedor.toLowerCase()))
-                      .map(f => (
-                      <option key={f._id} value={f._id}>{f.razaoSocial || f.nomeFantasia}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Status</label>
-                  <select
-                    name="status"
-                    value={filtros.status}
-                    onChange={handleFiltroChange}
-                  >
-                    <option value="">Todos</option>
-                    <option value="Autorizada">Autorizada</option>
-                    <option value="Aguardando pagamento">Aguardando pagamento</option>
-                    <option value="Paga">Paga</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Data Início</label>
-                  <input
-                    type="date"
-                    name="dataInicio"
-                    value={filtros.dataInicio}
-                    onChange={handleFiltroChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Data Fim</label>
-                  <input
-                    type="date"
-                    name="dataFim"
-                    value={filtros.dataFim}
-                    onChange={handleFiltroChange}
-                  />
-                </div>
+                <input
+                  type="text"
+                  name="codigo"
+                  value={filtros.codigo}
+                  onChange={handleFiltroChange}
+                  placeholder="Código (ex: OS-000001)"
+                />
+                <input
+                  type="text"
+                  placeholder="Buscar cliente por nome..."
+                  value={buscaCliente}
+                  onChange={(e) => setBuscaCliente(e.target.value)}
+                />
+                <select name="cliente" value={filtros.cliente} onChange={handleFiltroChange}>
+                  <option value="">Todos os Clientes</option>
+                  {clientes
+                    .filter(c => !buscaCliente || (c.razaoSocial || c.nomeFantasia || '').toLowerCase().includes(buscaCliente.toLowerCase()))
+                    .map(c => (
+                    <option key={c._id} value={c._id}>{c.razaoSocial || c.nomeFantasia}</option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  placeholder="Buscar fornecedor por nome..."
+                  value={buscaFornecedor}
+                  onChange={(e) => setBuscaFornecedor(e.target.value)}
+                />
+                <select name="fornecedor" value={filtros.fornecedor} onChange={handleFiltroChange}>
+                  <option value="">Todos os Fornecedores</option>
+                  {fornecedores
+                    .filter(f => !buscaFornecedor || (f.razaoSocial || f.nomeFantasia || '').toLowerCase().includes(buscaFornecedor.toLowerCase()))
+                    .map(f => (
+                    <option key={f._id} value={f._id}>{f.razaoSocial || f.nomeFantasia}</option>
+                  ))}
+                </select>
+                <select
+                  name="status"
+                  value={filtros.status}
+                  onChange={handleFiltroChange}
+                >
+                  <option value="">Todos os Status</option>
+                  <option value="Autorizada">Autorizada</option>
+                  <option value="Aguardando pagamento">Aguardando pagamento</option>
+                  <option value="Paga">Paga</option>
+                </select>
+                <input
+                  type="date"
+                  name="dataInicio"
+                  value={filtros.dataInicio}
+                  onChange={handleFiltroChange}
+                  title="Data Início"
+                />
+                <input
+                  type="date"
+                  name="dataFim"
+                  value={filtros.dataFim}
+                  onChange={handleFiltroChange}
+                  title="Data Fim"
+                />
               </div>
               <div className="filtros-actions">
                 <button className="btn-secondary" onClick={handleLimpar}>

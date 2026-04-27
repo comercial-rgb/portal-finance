@@ -683,8 +683,10 @@
     background: white;
   }
 
-  /* Esconde botões do rodapé na impressão */
-  .modal-footer {
+  /* Esconde botões do rodapé e painel de config na impressão */
+  .modal-footer,
+  .no-print,
+  .fatura-config-panel {
     display: none !important;
   }
 

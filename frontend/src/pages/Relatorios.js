@@ -7,6 +7,9 @@ import {
 } from 'recharts';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import * as XLSX from 'xlsx';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 import api from '../services/api';
 import authService from '../services/authService';
 import Header from '../components/Header';
@@ -262,12 +265,161 @@ function Relatorios() {
     }).format(value || 0);
   };
 
+  const getPeriodoLabel = () => {
+    const { inicio, fim } = calcularPeriodo();
+    const fmt = (d) => {
+      const [y, m, day] = d.split('-');
+      return `${day}/${m}/${y}`;
+    };
+    return `${fmt(inicio)} a ${fmt(fim)}`;
+  };
+
   const exportarExcel = () => {
-    toast.info('Exportação Excel em desenvolvimento');
+    const periodoLabel = getPeriodoLabel();
+    const geradoEm = format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR });
+
+    const wb = XLSX.utils.book_new();
+
+    // Aba Resumo
+    const wsResumo = XLSX.utils.aoa_to_sheet([
+      ['RELATÓRIOS E ANALYTICS'],
+      [`Período: ${periodoLabel}`],
+      [`Gerado em: ${geradoEm}`],
+      [],
+      ['Indicador', 'Valor'],
+      ['Faturamento Total', analytics.resumo.totalFaturamento],
+      ['Ordens de Serviço', analytics.resumo.totalOrdensServico],
+      ['Clientes Ativos', analytics.resumo.totalClientes],
+      ['Fornecedores', analytics.resumo.totalFornecedores],
+      ['Ticket Médio', analytics.resumo.ticketMedio]
+    ]);
+    wsResumo['!cols'] = [{ wch: 30 }, { wch: 20 }];
+    XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo');
+
+    // Aba Faturamento Mensal
+    if (analytics.faturamentoMensal.length > 0) {
+      const wsFat = XLSX.utils.aoa_to_sheet([
+        ['Mês', 'Valor (R$)'],
+        ...analytics.faturamentoMensal.map(r => [r.mes, r.valor])
+      ]);
+      wsFat['!cols'] = [{ wch: 15 }, { wch: 20 }];
+      XLSX.utils.book_append_sheet(wb, wsFat, 'Faturamento Mensal');
+    }
+
+    // Aba Top Clientes
+    if (analytics.topClientes.length > 0) {
+      const wsClientes = XLSX.utils.aoa_to_sheet([
+        ['Cliente', 'Faturamento (R$)'],
+        ...analytics.topClientes.map(r => [r.nome, r.valor])
+      ]);
+      wsClientes['!cols'] = [{ wch: 40 }, { wch: 20 }];
+      XLSX.utils.book_append_sheet(wb, wsClientes, 'Top Clientes');
+    }
+
+    // Aba Top Fornecedores
+    if (analytics.topFornecedores.length > 0) {
+      const wsForn = XLSX.utils.aoa_to_sheet([
+        ['Fornecedor', 'Valor (R$)'],
+        ...analytics.topFornecedores.map(r => [r.nome, r.valor])
+      ]);
+      wsForn['!cols'] = [{ wch: 40 }, { wch: 20 }];
+      XLSX.utils.book_append_sheet(wb, wsForn, 'Top Fornecedores');
+    }
+
+    // Aba Status Ordens
+    if (analytics.ordensStatus.length > 0) {
+      const wsStatus = XLSX.utils.aoa_to_sheet([
+        ['Status', 'Quantidade'],
+        ...analytics.ordensStatus.map(r => [r.status, r.quantidade])
+      ]);
+      wsStatus['!cols'] = [{ wch: 25 }, { wch: 15 }];
+      XLSX.utils.book_append_sheet(wb, wsStatus, 'Status Ordens');
+    }
+
+    XLSX.writeFile(wb, `relatorio_analytics_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    toast.success('Excel exportado com sucesso!');
   };
 
   const exportarPDF = () => {
-    toast.info('Exportação PDF em desenvolvimento');
+    const periodoLabel = getPeriodoLabel();
+    const doc = new jsPDF();
+
+    // Cabeçalho
+    doc.setFontSize(18);
+    doc.setTextColor(41, 65, 122);
+    doc.text('Relatórios e Analytics', 14, 22);
+
+    doc.setFontSize(11);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Período: ${periodoLabel}`, 14, 32);
+    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, 14, 39);
+
+    // Resumo
+    doc.autoTable({
+      startY: 48,
+      head: [['Indicador', 'Valor']],
+      body: [
+        ['Faturamento Total', formatCurrency(analytics.resumo.totalFaturamento)],
+        ['Ordens de Serviço', String(analytics.resumo.totalOrdensServico)],
+        ['Clientes Ativos', String(analytics.resumo.totalClientes)],
+        ['Fornecedores', String(analytics.resumo.totalFornecedores)],
+        ['Ticket Médio', formatCurrency(analytics.resumo.ticketMedio)]
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [102, 126, 234], textColor: 255, fontStyle: 'bold' },
+      styles: { fontSize: 10 }
+    });
+
+    // Faturamento Mensal
+    if (analytics.faturamentoMensal.length > 0) {
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 10,
+        head: [['Mês', 'Faturamento']],
+        body: analytics.faturamentoMensal.map(r => [r.mes, formatCurrency(r.valor)]),
+        theme: 'grid',
+        headStyles: { fillColor: [67, 233, 123], textColor: 255, fontStyle: 'bold' },
+        styles: { fontSize: 10 }
+      });
+    }
+
+    // Top Clientes
+    if (analytics.topClientes.length > 0) {
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 10,
+        head: [['Cliente', 'Faturamento']],
+        body: analytics.topClientes.map(r => [r.nome, formatCurrency(r.valor)]),
+        theme: 'grid',
+        headStyles: { fillColor: [240, 147, 251], textColor: 255, fontStyle: 'bold' },
+        styles: { fontSize: 9 }
+      });
+    }
+
+    // Top Fornecedores
+    if (analytics.topFornecedores.length > 0) {
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 10,
+        head: [['Fornecedor', 'Valor']],
+        body: analytics.topFornecedores.map(r => [r.nome, formatCurrency(r.valor)]),
+        theme: 'grid',
+        headStyles: { fillColor: [79, 172, 254], textColor: 255, fontStyle: 'bold' },
+        styles: { fontSize: 9 }
+      });
+    }
+
+    // Status Ordens
+    if (analytics.ordensStatus.length > 0) {
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 10,
+        head: [['Status da Ordem', 'Quantidade']],
+        body: analytics.ordensStatus.map(r => [r.status, String(r.quantidade)]),
+        theme: 'grid',
+        headStyles: { fillColor: [250, 112, 154], textColor: 255, fontStyle: 'bold' },
+        styles: { fontSize: 10 }
+      });
+    }
+
+    doc.save(`relatorio_analytics_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    toast.success('PDF exportado com sucesso!');
   };
 
   return (

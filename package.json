@@ -10,6 +10,7 @@
   "scripts": {
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js",
+    "test": "node --test backend/tests/*.test.js",
     "client": "cd frontend && npm start",
     "dev:full": "concurrently \"npm run dev\" \"npm run client\"",
     "monitorar-faturas": "node backend/scripts/monitorarFaturasVencidas.js"

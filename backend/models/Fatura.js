@@ -118,6 +118,12 @@ const faturaSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
+  // Valor pago por operações financeiras vinculadas, como OP e antecipação.
+  valorPagoRegistrado: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   valorRestante: {
     type: Number,
     default: 0,
@@ -166,54 +172,65 @@ faturaSchema.index({ tipo: 1, statusFatura: 1 });
 faturaSchema.index({ fornecedor: 1, createdAt: -1 });
 faturaSchema.index({ cliente: 1, createdAt: -1 });
 
-// Calcular valores antes de salvar
-faturaSchema.pre('save', function(next) {
-  // Não recalcular valorTotal - vem do controller já calculado corretamente
-  // valorTotal deve ser a soma de peças + serviço SEM desconto
-  
-  // Calcular valor pago - proporcional ao valor líquido (valorDevido)
-  // Cada OS representa uma proporção do valorComDesconto, aplicamos essa mesma proporção ao valorDevido
+const roundMoney = (value) => Math.round((Number(value) || 0) * 100) / 100;
+
+faturaSchema.methods.recalcularPagamento = function() {
+  // Não recalcular valorTotal: vem do controller como soma de peças + serviço sem desconto.
   const valorComDesconto = this.valorComDesconto || 0;
   const valorDevido = this.valorDevido || 0;
-  
+
+  let valorPagoItens = 0;
+
   if (valorComDesconto > 0) {
-    // Calcular o fator de proporção (líquido / bruto)
     const fatorLiquido = valorDevido / valorComDesconto;
-    
-    // Valor pago é a soma dos valores líquidos das OS pagas + abastecimentos pagos
-    let valorPagoOS = this.ordensServico
+
+    const valorPagoOS = this.ordensServico
       .filter(os => os.statusPagamento === 'Paga')
       .reduce((acc, os) => {
         const valorLiquidoOS = (os.valorOS || 0) * fatorLiquido;
         return acc + valorLiquidoOS;
       }, 0);
 
-    let valorPagoAb = (this.abastecimentosVinculados || [])
+    const valorPagoAb = (this.abastecimentosVinculados || [])
       .filter(ab => ab.statusPagamento === 'Paga')
       .reduce((acc, ab) => {
         const valorLiquidoAb = (ab.valorAbastecimento || 0) * fatorLiquido;
         return acc + valorLiquidoAb;
       }, 0);
-    
-    this.valorPago = valorPagoOS + valorPagoAb;
-    
-    // Arredondar para evitar problemas de precisão
-    this.valorPago = Math.round(this.valorPago * 100) / 100;
-  } else {
-    this.valorPago = 0;
+
+    valorPagoItens = roundMoney(valorPagoOS + valorPagoAb);
   }
-  
+
+  if (!this.isNew && this.isModified('valorPago') && !this.isModified('valorPagoRegistrado')) {
+    this.valorPagoRegistrado = Math.max(
+      roundMoney(this.valorPagoRegistrado),
+      roundMoney(this.valorPago)
+    );
+  }
+
+  this.valorPago = Math.min(
+    roundMoney(valorDevido),
+    Math.max(valorPagoItens, roundMoney(this.valorPagoRegistrado))
+  );
+
   // Calcular valor restante
-  this.valorRestante = Math.round((this.valorDevido - this.valorPago) * 100) / 100;
-  
+  this.valorRestante = Math.max(0, roundMoney(this.valorDevido - this.valorPago));
+
   // Atualizar status da fatura
-  if (this.valorPago === 0) {
+  if (this.valorPago <= 0) {
     this.statusFatura = 'Aguardando pagamento';
   } else if (this.valorPago < this.valorDevido) {
     this.statusFatura = 'Parcialmente paga';
   } else {
     this.statusFatura = 'Paga';
   }
+
+  return this;
+};
+
+// Calcular valores antes de salvar
+faturaSchema.pre('save', function(next) {
+  this.recalcularPagamento();
   
   next();
 });

@@ -6,6 +6,63 @@ const OrdemServico = require('../models/OrdemServico');
 const Abastecimento = require('../models/Abastecimento');
 const finsystemService = require('../services/finsystemService');
 
+const roundMoney = (value) => Math.round((Number(value) || 0) * 100) / 100;
+
+const sincronizarFaturaComOrdensPagas = async (faturaId, dataPagamento, comprovante) => {
+  const fatura = await Fatura.findById(faturaId);
+  if (!fatura || !fatura.ativo) return;
+
+  const ordensPagasFatura = await OrdemPagamento.find({
+    fatura: faturaId,
+    status: 'Paga',
+    ativo: true
+  }).lean();
+
+  const totalPagoOPs = roundMoney(ordensPagasFatura.reduce((sum, op) => sum + (op.valor || 0), 0));
+  const valorDevido = roundMoney(fatura.valorDevido);
+  const osIds = [];
+  const abastecimentoIds = [];
+
+  fatura.valorPagoRegistrado = totalPagoOPs;
+  fatura.valorPago = totalPagoOPs;
+
+  if (totalPagoOPs >= valorDevido && valorDevido > 0) {
+    fatura.ordensServico.forEach(os => {
+      if (os.statusPagamento !== 'Paga') {
+        os.statusPagamento = 'Paga';
+        os.dataPagamento = dataPagamento || new Date();
+        os.comprovante = comprovante || null;
+        osIds.push(os.ordemServico);
+      }
+    });
+
+    (fatura.abastecimentosVinculados || []).forEach(ab => {
+      if (ab.statusPagamento !== 'Paga') {
+        ab.statusPagamento = 'Paga';
+        ab.dataPagamento = dataPagamento || new Date();
+        ab.comprovante = comprovante || null;
+        abastecimentoIds.push(ab.abastecimento);
+      }
+    });
+  }
+
+  await fatura.save();
+
+  if (osIds.length > 0) {
+    await OrdemServico.updateMany(
+      { _id: { $in: osIds } },
+      { $set: { status: 'Paga' } }
+    );
+  }
+
+  if (abastecimentoIds.length > 0) {
+    await Abastecimento.updateMany(
+      { _id: { $in: abastecimentoIds } },
+      { $set: { status: 'Paga' } }
+    );
+  }
+};
+
 // @desc    Listar ordens de pagamento
 // @route   GET /api/ordens-pagamento
 exports.listar = async (req, res) => {
@@ -277,89 +334,7 @@ exports.pagar = async (req, res) => {
 
     // Sincronizar pagamento com a Fatura vinculada
     if (ordem.fatura) {
-      const fatura = await Fatura.findById(ordem.fatura);
-      if (fatura && fatura.ativo) {
-        // Somar valor total pago por todas as OPs desta fatura
-        const ordensPagasFatura = await OrdemPagamento.find({
-          fatura: ordem.fatura,
-          status: 'Paga',
-          ativo: true
-        }).lean();
-
-        const totalPagoOPs = ordensPagasFatura.reduce((sum, op) => sum + (op.valor || 0), 0);
-        const valorDevido = fatura.valorDevido || 0;
-
-        const osIds = [];
-        const abastecimentoIds = [];
-
-        if (totalPagoOPs >= valorDevido) {
-          // Pagamento cobre toda a fatura - marcar todas as OS como pagas
-          fatura.ordensServico.forEach(os => {
-            if (os.statusPagamento !== 'Paga') {
-              os.statusPagamento = 'Paga';
-              os.dataPagamento = ordem.dataPagamento;
-              os.comprovante = ordem.comprovante || null;
-              osIds.push(os.ordemServico);
-            }
-          });
-          // Marcar todos os abastecimentos vinculados como pagos
-          (fatura.abastecimentosVinculados || []).forEach(ab => {
-            if (ab.statusPagamento !== 'Paga') {
-              ab.statusPagamento = 'Paga';
-              ab.dataPagamento = ordem.dataPagamento;
-              ab.comprovante = ordem.comprovante || null;
-              abastecimentoIds.push(ab.abastecimento);
-            }
-          });
-        } else {
-          // Pagamento parcial - marcar OS/abastecimentos proporcionalmente
-          let restante = totalPagoOPs;
-          for (const os of fatura.ordensServico) {
-            if (os.statusPagamento !== 'Paga' && restante > 0) {
-              if (restante >= (os.valorOS || 0)) {
-                os.statusPagamento = 'Paga';
-                os.dataPagamento = ordem.dataPagamento;
-                os.comprovante = ordem.comprovante || null;
-                osIds.push(os.ordemServico);
-                restante -= (os.valorOS || 0);
-              } else {
-                break;
-              }
-            }
-          }
-          for (const ab of (fatura.abastecimentosVinculados || [])) {
-            if (ab.statusPagamento !== 'Paga' && restante > 0) {
-              if (restante >= (ab.valorAbastecimento || 0)) {
-                ab.statusPagamento = 'Paga';
-                ab.dataPagamento = ordem.dataPagamento;
-                ab.comprovante = ordem.comprovante || null;
-                abastecimentoIds.push(ab.abastecimento);
-                restante -= (ab.valorAbastecimento || 0);
-              } else {
-                break;
-              }
-            }
-          }
-        }
-
-        await fatura.save(); // pre-save recalcula statusFatura, valorPago, valorRestante
-
-        // Atualizar status das OS no modelo OrdemServico
-        if (osIds.length > 0) {
-          await OrdemServico.updateMany(
-            { _id: { $in: osIds } },
-            { $set: { status: 'Paga' } }
-          );
-        }
-
-        // Atualizar status dos Abastecimentos
-        if (abastecimentoIds.length > 0) {
-          await Abastecimento.updateMany(
-            { _id: { $in: abastecimentoIds } },
-            { $set: { status: 'Paga' } }
-          );
-        }
-      }
+      await sincronizarFaturaComOrdensPagas(ordem.fatura, ordem.dataPagamento, ordem.comprovante);
     }
 
     res.json({ success: true, message: 'Ordem marcada como paga', data: ordem });
@@ -379,7 +354,12 @@ exports.vincularFatura = async (req, res) => {
     const ordem = await OrdemPagamento.findOne({ _id: req.params.id, ativo: true });
     if (!ordem) return res.status(404).json({ message: 'Ordem não encontrada' });
 
-    const faturaDoc = await Fatura.findById(faturaId);
+    const faturaDoc = await Fatura.findOne({
+      _id: faturaId,
+      ativo: true,
+      fornecedor: ordem.fornecedor,
+      tipo: 'Fornecedor'
+    });
     if (!faturaDoc) return res.status(404).json({ message: 'Fatura não encontrada' });
 
     ordem.fatura = faturaId;
@@ -388,80 +368,7 @@ exports.vincularFatura = async (req, res) => {
 
     // Se a OP já está paga, sincronizar com a fatura vinculada
     if (ordem.status === 'Paga' && faturaDoc.ativo) {
-      const ordensPagasFatura = await OrdemPagamento.find({
-        fatura: faturaId,
-        status: 'Paga',
-        ativo: true
-      }).lean();
-
-      const totalPagoOPs = ordensPagasFatura.reduce((sum, op) => sum + (op.valor || 0), 0);
-      const valorDevido = faturaDoc.valorDevido || 0;
-
-      const osIds = [];
-      const abastecimentoIds = [];
-
-      if (totalPagoOPs >= valorDevido) {
-        faturaDoc.ordensServico.forEach(os => {
-          if (os.statusPagamento !== 'Paga') {
-            os.statusPagamento = 'Paga';
-            os.dataPagamento = ordem.dataPagamento || new Date();
-            os.comprovante = ordem.comprovante || null;
-            osIds.push(os.ordemServico);
-          }
-        });
-        (faturaDoc.abastecimentosVinculados || []).forEach(ab => {
-          if (ab.statusPagamento !== 'Paga') {
-            ab.statusPagamento = 'Paga';
-            ab.dataPagamento = ordem.dataPagamento || new Date();
-            ab.comprovante = ordem.comprovante || null;
-            abastecimentoIds.push(ab.abastecimento);
-          }
-        });
-      } else {
-        let restante = totalPagoOPs;
-        for (const os of faturaDoc.ordensServico) {
-          if (os.statusPagamento !== 'Paga' && restante > 0) {
-            if (restante >= (os.valorOS || 0)) {
-              os.statusPagamento = 'Paga';
-              os.dataPagamento = ordem.dataPagamento || new Date();
-              os.comprovante = ordem.comprovante || null;
-              osIds.push(os.ordemServico);
-              restante -= (os.valorOS || 0);
-            } else {
-              break;
-            }
-          }
-        }
-        for (const ab of (faturaDoc.abastecimentosVinculados || [])) {
-          if (ab.statusPagamento !== 'Paga' && restante > 0) {
-            if (restante >= (ab.valorAbastecimento || 0)) {
-              ab.statusPagamento = 'Paga';
-              ab.dataPagamento = ordem.dataPagamento || new Date();
-              ab.comprovante = ordem.comprovante || null;
-              abastecimentoIds.push(ab.abastecimento);
-              restante -= (ab.valorAbastecimento || 0);
-            } else {
-              break;
-            }
-          }
-        }
-      }
-
-      await faturaDoc.save();
-
-      if (osIds.length > 0) {
-        await OrdemServico.updateMany(
-          { _id: { $in: osIds } },
-          { $set: { status: 'Paga' } }
-        );
-      }
-
-      if (abastecimentoIds.length > 0) {
-        await Abastecimento.updateMany(
-          { _id: { $in: abastecimentoIds } },
-          { $set: { status: 'Paga' } }
-        );
-      }
+      await sincronizarFaturaComOrdensPagas(faturaId, ordem.dataPagamento, ordem.comprovante);
     }
 
     res.json({ success: true, message: 'Fatura vinculada com sucesso', data: ordem });

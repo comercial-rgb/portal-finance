@@ -30,6 +30,8 @@ function FaturadoDetalhes() {
 
   const percentualTaxaOperacao = useMemo(() => {
     if (!fatura) return null;
+    // Fatura de abastecimento usa taxa por litro (não percentual) — não recalcular
+    if (fatura.origem === 'abastecimento') return null;
     const valorTaxas = fatura.valorTaxasOperacao || 0;
     if (valorTaxas <= 0) return null;
 
@@ -414,6 +416,15 @@ function FaturadoDetalhes() {
   };
 
   const getTextoTaxaOperacao = () => {
+    if (isAbastecimento) {
+      const totalLitros = (fatura?.abastecimentosVinculados || []).reduce((acc, item) => {
+        const ab = item.abastecimento || item;
+        return acc + (ab.litrosAbastecidos || 0);
+      }, 0);
+      const valorTaxa = fatura?.valorTaxasOperacao || 0;
+      const taxaPorLitro = totalLitros > 0 ? Math.round((valorTaxa / totalLitros) * 100) / 100 : 0.08;
+      return `(-) Taxa da Plataforma (R$ ${taxaPorLitro.toFixed(2).replace('.', ',')}/L × ${totalLitros.toFixed(2).replace('.', ',')} L)`;
+    }
     if (percentualTaxaOperacao === null) {
       return '(-) Taxa de Operação';
     }

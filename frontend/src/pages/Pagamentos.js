@@ -76,8 +76,9 @@ function Pagamentos() {
   // Editar ordem
   const [showModalEditar, setShowModalEditar] = useState(false);
   const [ordemEditar, setOrdemEditar] = useState(null);
-  const [editFormData, setEditFormData] = useState({ valor: '', dataGeracao: '', observacoes: '', faturaNumeroManual: '', desvincularFatura: false });
+  const [editFormData, setEditFormData] = useState({ valor: '', dataGeracao: '', observacoes: '', faturaNumeroManual: '', fatura: '' });
   const [editLoading, setEditLoading] = useState(false);
+  const [editFaturasDisponiveis, setEditFaturasDisponiveis] = useState([]);
 
   // Bank info popup
   const [bankInfoId, setBankInfoId] = useState(null);
@@ -489,15 +490,22 @@ function Pagamentos() {
   };
 
   // Editar ordem de pagamento
-  const handleAbrirEditar = (ordem) => {
+  const handleAbrirEditar = async (ordem) => {
     setOrdemEditar(ordem);
     setEditFormData({
       valor: ordem.valor || '',
       dataGeracao: ordem.dataGeracao ? new Date(ordem.dataGeracao).toISOString().split('T')[0] : '',
       observacoes: ordem.observacoes || '',
       faturaNumeroManual: ordem.faturaNumeroManual || '',
-      desvincularFatura: false
+      fatura: ordem.fatura?._id || ''
     });
+    // Carregar faturas abertas do fornecedor para permitir trocar o vínculo
+    try {
+      const res = await api.get(`/ordens-pagamento/faturas-fornecedor/${ordem.fornecedor._id}`);
+      setEditFaturasDisponiveis(res.data?.data || []);
+    } catch {
+      setEditFaturasDisponiveis([]);
+    }
     setShowModalEditar(true);
   };
 
@@ -510,7 +518,7 @@ function Pagamentos() {
         dataGeracao: editFormData.dataGeracao,
         observacoes: editFormData.observacoes,
         faturaNumeroManual: editFormData.faturaNumeroManual || null,
-        ...(editFormData.desvincularFatura && { fatura: null })
+        fatura: editFormData.fatura || null
       });
       toast.success('Ordem atualizada com sucesso!');
       setShowModalEditar(false);
@@ -1403,21 +1411,25 @@ function Pagamentos() {
                   <label htmlFor="edit-data">Data Gerada *</label>
                   <input type="date" id="edit-data" value={editFormData.dataGeracao} onChange={e => setEditFormData(prev => ({ ...prev, dataGeracao: e.target.value }))} required className="form-input" />
                 </div>
-                {ordemEditar.fatura && (
-                  <div className="form-group form-group-full">
-                    <label>Fatura Vinculada</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span className="fatura-vinculada">{ordemEditar.fatura.numeroFatura}</span>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#e53935', cursor: 'pointer' }}>
-                        <input type="checkbox" checked={editFormData.desvincularFatura} onChange={e => setEditFormData(prev => ({ ...prev, desvincularFatura: e.target.checked }))} />
-                        Desvincular (fatura errada)
-                      </label>
-                    </div>
-                  </div>
-                )}
-                <div className="form-group">
-                  <label htmlFor="edit-fatura-manual">Fatura Manual</label>
-                  <input type="text" id="edit-fatura-manual" value={editFormData.faturaNumeroManual} onChange={e => setEditFormData(prev => ({ ...prev, faturaNumeroManual: e.target.value }))} placeholder="Número da fatura manual..." className="form-input" />
+                <div className="form-group form-group-full">
+                  <label htmlFor="edit-fatura">Fatura Vinculada</label>
+                  <select
+                    id="edit-fatura"
+                    className="form-input"
+                    value={editFormData.fatura}
+                    onChange={e => setEditFormData(prev => ({ ...prev, fatura: e.target.value, faturaNumeroManual: '' }))}
+                  >
+                    <option value="">— Nenhuma —</option>
+                    {/* Fatura atualmente vinculada (mesmo que não esteja aberta) */}
+                    {ordemEditar.fatura && !editFaturasDisponiveis.find(f => f._id === ordemEditar.fatura._id) && (
+                      <option value={ordemEditar.fatura._id}>{ordemEditar.fatura.numeroFatura} (atual)</option>
+                    )}
+                    {editFaturasDisponiveis.map(f => (
+                      <option key={f._id} value={f._id}>
+                        {f.numeroFatura} — R$ {(f.valorRestante ?? f.valorDevido ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="form-group form-group-full">
                   <label htmlFor="edit-obs">Observações</label>

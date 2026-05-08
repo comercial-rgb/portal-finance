@@ -629,7 +629,25 @@ exports.desativar = async (req, res) => {
       { _id: { $in: osIds } },
       { $set: updateFields }
     );
-    
+
+    // Restaurar abastecimentos vinculados (que ainda não foram pagos)
+    const abastecimentosIds = fatura.abastecimentosVinculados
+      .filter(ab => ab.statusPagamento === 'Aguardando pagamento')
+      .map(ab => ab.abastecimento);
+
+    if (abastecimentosIds.length > 0) {
+      const abUpdateFields = { status: 'Autorizada', tipoFatura: null };
+      if (tipoFatura === 'Fornecedor') {
+        abUpdateFields.faturadoFornecedor = false;
+      } else if (tipoFatura === 'Cliente') {
+        abUpdateFields.faturadoCliente = false;
+      }
+      await Abastecimento.updateMany(
+        { _id: { $in: abastecimentosIds } },
+        { $set: abUpdateFields }
+      );
+    }
+
     // Desativar a fatura
     await Fatura.findByIdAndUpdate(
       id,

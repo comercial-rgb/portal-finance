@@ -425,12 +425,13 @@ exports.resincronizar = async (req, res) => {
 // @route   PUT /api/ordens-pagamento/:id
 exports.editar = async (req, res) => {
   try {
-    const { valor, dataGeracao, observacoes, faturaNumeroManual } = req.body;
+    const { valor, dataGeracao, observacoes, faturaNumeroManual, fatura } = req.body;
     const updateData = {};
     if (valor !== undefined) updateData.valor = parseFloat(valor);
     if (dataGeracao !== undefined) updateData.dataGeracao = dataGeracao;
     if (observacoes !== undefined) updateData.observacoes = observacoes;
     if (faturaNumeroManual !== undefined) updateData.faturaNumeroManual = faturaNumeroManual;
+    if (fatura !== undefined) updateData.fatura = fatura || null;
 
     const ordem = await OrdemPagamento.findOneAndUpdate(
       { _id: req.params.id, ativo: true },

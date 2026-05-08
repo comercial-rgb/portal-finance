@@ -76,7 +76,7 @@ function Pagamentos() {
   // Editar ordem
   const [showModalEditar, setShowModalEditar] = useState(false);
   const [ordemEditar, setOrdemEditar] = useState(null);
-  const [editFormData, setEditFormData] = useState({ valor: '', dataGeracao: '', observacoes: '', faturaNumeroManual: '' });
+  const [editFormData, setEditFormData] = useState({ valor: '', dataGeracao: '', observacoes: '', faturaNumeroManual: '', desvincularFatura: false });
   const [editLoading, setEditLoading] = useState(false);
 
   // Bank info popup
@@ -495,7 +495,8 @@ function Pagamentos() {
       valor: ordem.valor || '',
       dataGeracao: ordem.dataGeracao ? new Date(ordem.dataGeracao).toISOString().split('T')[0] : '',
       observacoes: ordem.observacoes || '',
-      faturaNumeroManual: ordem.faturaNumeroManual || ''
+      faturaNumeroManual: ordem.faturaNumeroManual || '',
+      desvincularFatura: false
     });
     setShowModalEditar(true);
   };
@@ -508,7 +509,8 @@ function Pagamentos() {
         valor: parseFloat(editFormData.valor),
         dataGeracao: editFormData.dataGeracao,
         observacoes: editFormData.observacoes,
-        faturaNumeroManual: editFormData.faturaNumeroManual || null
+        faturaNumeroManual: editFormData.faturaNumeroManual || null,
+        ...(editFormData.desvincularFatura && { fatura: null })
       });
       toast.success('Ordem atualizada com sucesso!');
       setShowModalEditar(false);
@@ -1401,6 +1403,18 @@ function Pagamentos() {
                   <label htmlFor="edit-data">Data Gerada *</label>
                   <input type="date" id="edit-data" value={editFormData.dataGeracao} onChange={e => setEditFormData(prev => ({ ...prev, dataGeracao: e.target.value }))} required className="form-input" />
                 </div>
+                {ordemEditar.fatura && (
+                  <div className="form-group form-group-full">
+                    <label>Fatura Vinculada</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span className="fatura-vinculada">{ordemEditar.fatura.numeroFatura}</span>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#e53935', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={editFormData.desvincularFatura} onChange={e => setEditFormData(prev => ({ ...prev, desvincularFatura: e.target.checked }))} />
+                        Desvincular (fatura errada)
+                      </label>
+                    </div>
+                  </div>
+                )}
                 <div className="form-group">
                   <label htmlFor="edit-fatura-manual">Fatura Manual</label>
                   <input type="text" id="edit-fatura-manual" value={editFormData.faturaNumeroManual} onChange={e => setEditFormData(prev => ({ ...prev, faturaNumeroManual: e.target.value }))} placeholder="Número da fatura manual..." className="form-input" />

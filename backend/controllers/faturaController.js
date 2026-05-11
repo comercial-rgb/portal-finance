@@ -36,9 +36,10 @@ exports.listar = async (req, res) => {
     const faturas = await Fatura.find(query)
       .populate('fornecedor', 'razaoSocial nomeFantasia cnpjCpf')
       .populate('cliente', 'razaoSocial nomeFantasia cnpjCpf')
-      .populate('ordensServico.ordemServico')
-      .populate('impostos')
-      .sort({ createdAt: -1 });
+      .populate('ordensServico.ordemServico', 'numeroOS status valorServico valorPecas cliente fornecedor tipo')
+      .populate('impostos', 'aliquotaISS aliquotaPIS aliquotaCOFINS aliquotaCSLL aliquotaIRRF aliquotaINSS')
+      .sort({ createdAt: -1 })
+      .lean();
     
     res.json(faturas);
   } catch (error) {

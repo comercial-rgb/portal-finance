@@ -49,27 +49,34 @@ function Faturados() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [abaAtiva, user]);
 
-  const loadFaturas = async () => {
+  const loadFaturas = async (tentativa = 1) => {
+    if (tentativa === 1) setLoading(true);
     try {
-      setLoading(true);
       const tipo = abaAtiva === 'fornecedores' ? 'Fornecedor' : 'Cliente';
-      console.log('Carregando faturas tipo:', tipo);
       const response = await api.get(`/faturas?tipo=${tipo}`);
-      console.log('Faturas recebidas:', response.data?.length || 0);
       const data = Array.isArray(response.data) ? response.data : [];
       setFaturas(data);
+      setLoading(false);
     } catch (error) {
-      console.error('Erro ao carregar faturas:', error);
-      if (error.response?.status === 401) {
+      const status = error.response?.status;
+      if (status === 401) {
         toast.error('Sessão expirada. Faça login novamente.');
-      } else if (error.response?.status >= 500) {
-        toast.error('Servidor indisponível. Tente novamente em alguns instantes.');
+        setFaturas([]);
+        setLoading(false);
+      } else if (status >= 500 || !status) {
+        if (tentativa < 3) {
+          // Retry automático para erros de servidor (ex: cold start do Render)
+          setTimeout(() => loadFaturas(tentativa + 1), 3000 * tentativa);
+        } else {
+          toast.error('Servidor indisponível. Tente novamente em alguns instantes.');
+          setFaturas([]);
+          setLoading(false);
+        }
       } else {
         toast.error('Erro ao carregar faturas');
+        setFaturas([]);
+        setLoading(false);
       }
-      setFaturas([]);
-    } finally {
-      setLoading(false);
     }
   };
 

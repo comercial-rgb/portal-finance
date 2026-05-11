@@ -41,6 +41,9 @@ const abastecimentoRoutes = require('./routes/abastecimentoRoutes');
 
 const app = express();
 
+// Necessário para req.ip retornar o IP real do cliente quando atrás de proxy (Render, Vercel, etc.)
+app.set('trust proxy', 1);
+
 // Configurar otimizações do Mongoose
 setupMongooseOptimizations(mongoose);
 
@@ -95,7 +98,7 @@ app.use('/api', rateLimit(1000, 60 * 1000)); // 1000 req/min geral
 
 // Rotas com rate limiting específico e cache
 // Auth com limite mais alto para evitar bloqueios durante testes
-app.use('/api/auth', rateLimit(30, 5 * 60 * 1000), authRoutes); // 30 req / 5 min
+app.use('/api/auth', rateLimit(60, 5 * 60 * 1000), authRoutes); // 60 req / 5 min por IP real
 app.use('/api', invalidateCache('fornecedores'), fornecedorRoutes);
 // Clientes SEM cache para garantir dados sempre atualizados
 app.use('/api/clientes', clienteRoutes);
@@ -167,11 +170,9 @@ app.post('/api/dev/reset-rate-limit', (req, res) => {
   // Resetar rate limiter e cache
   const statsRateLimit = rateLimiter.getStats();
   const statsCache = { size: cacheManager.size() };
-  
+
   // Limpar tudo
-  rateLimiter.reset = function() {
-    this.requests.clear();
-  };
+  rateLimiter.requests.clear();
   cacheManager.clearAll();
   
   res.json({ 
@@ -223,8 +224,4 @@ mongoose.connect(MONGODB_URI, {
     process.exit(1);
   });
 
-// Tratamento de erros não capturados
-process.on('unhandledRejection', (err) => {
-  console.error('❌ Unhandled Rejection:', err.message);
-  process.exit(1);
-});
+// Erros não capturados são tratados pelo setupGracefulShutdown em config/performance.js

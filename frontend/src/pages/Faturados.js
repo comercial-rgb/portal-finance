@@ -59,16 +59,17 @@ function Faturados() {
       setLoading(false);
     } catch (error) {
       const status = error.response?.status;
+      const backendMsg = error.response?.data?.error || error.response?.data?.message || error.message;
+      console.error('[Faturados] Erro:', status, backendMsg, error);
       if (status === 401) {
         toast.error('Sessão expirada. Faça login novamente.');
         setFaturas([]);
         setLoading(false);
       } else if (status >= 500 || !status) {
         if (tentativa < 3) {
-          // Retry automático para erros de servidor (ex: cold start do Render)
           setTimeout(() => loadFaturas(tentativa + 1), 3000 * tentativa);
         } else {
-          toast.error('Servidor indisponível. Tente novamente em alguns instantes.');
+          toast.error(`Erro ${status || 'rede'}: ${backendMsg}`);
           setFaturas([]);
           setLoading(false);
         }

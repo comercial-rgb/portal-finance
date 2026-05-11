@@ -43,8 +43,9 @@ exports.listar = async (req, res) => {
     
     res.json(faturas);
   } catch (error) {
-    console.error('Erro ao listar faturas:', error);
-    res.status(500).json({ message: 'Erro ao listar faturas', error: error.message });
+    console.error('Erro ao listar faturas:', error.name, error.message);
+    console.error('Stack:', error.stack);
+    res.status(500).json({ message: 'Erro ao listar faturas', error: error.message, type: error.name });
   }
 };
 

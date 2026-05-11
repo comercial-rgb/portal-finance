@@ -1,3 +1,91 @@
+/* Sub-abas Pendentes / Pagas */
+.subtabs-container {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.subtab-btn {
+  padding: 0.5rem 1.25rem;
+  border: 2px solid var(--cinza-medio);
+  border-radius: 20px;
+  background: transparent;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--cinza-escuro);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.subtab-btn:hover {
+  border-color: var(--azul-tech);
+  color: var(--azul-tech);
+}
+
+.subtab-btn.active {
+  background: var(--azul-tech);
+  border-color: var(--azul-tech);
+  color: #fff;
+}
+
+/* Paginação */
+.paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 1.25rem 1rem;
+  border-top: 1px solid var(--cinza-medio);
+  flex-wrap: wrap;
+}
+
+.pag-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 0.5rem;
+  border: 1px solid var(--cinza-medio);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--cinza-escuro);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pag-btn:hover:not(:disabled) {
+  border-color: var(--azul-tech);
+  color: var(--azul-tech);
+}
+
+.pag-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.pag-btn.pag-ativa {
+  background: var(--azul-tech);
+  border-color: var(--azul-tech);
+  color: #fff;
+  font-weight: 700;
+}
+
+.pag-nav {
+  font-size: 1rem;
+}
+
+.pag-ellipsis {
+  color: var(--cinza-escuro);
+  padding: 0 0.25rem;
+  font-size: 0.9rem;
+}
+
+.pag-info {
+  font-size: 0.82rem;
+  color: var(--cinza-escuro);
+  margin-left: 0.5rem;
+}
+
 /* Container principal */
 .faturados-container {
   padding: 2rem;

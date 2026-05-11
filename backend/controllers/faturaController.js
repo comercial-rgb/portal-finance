@@ -7,47 +7,58 @@ const Cliente = require('../models/Cliente');
 // Listar todas as faturas
 exports.listar = async (req, res) => {
   try {
-    const { tipo, status, clienteId, fornecedorId } = req.query;
-    
+    const { tipo, status, statusGroup, clienteId, fornecedorId, page, limit = 15 } = req.query;
+
     const query = { ativo: true };
     if (tipo) query.tipo = tipo;
-    if (status) query.statusFatura = status;
-    if (clienteId) {
-      query.cliente = clienteId;
-      query.tipo = 'Cliente';
+
+    // statusGroup: 'pendente' = aguardando+parcial, 'paga' = paga
+    if (statusGroup === 'pendente') {
+      query.statusFatura = { $in: ['Aguardando pagamento', 'Parcialmente paga'] };
+    } else if (statusGroup === 'paga') {
+      query.statusFatura = 'Paga';
+    } else if (status) {
+      query.statusFatura = status;
     }
-    if (fornecedorId) {
-      query.fornecedor = fornecedorId;
-      query.tipo = 'Fornecedor';
-    }
-    
-    // Se usuário é fornecedor, filtrar apenas suas faturas
-    if (req.fornecedorFilter) {
-      query.fornecedor = req.user.fornecedorId;
-      console.log('🔒 Usuário fornecedor - filtrando apenas suas faturas:', req.user.fornecedorId);
-    }
-    
-    // Se usuário é cliente, filtrar apenas suas faturas
-    if (req.clienteFilter) {
-      query.cliente = req.user.clienteId;
-      console.log('🔒 Usuário cliente - filtrando apenas suas faturas:', req.user.clienteId);
-    }
-    
-    const faturas = await Fatura.find(query)
+
+    if (clienteId) { query.cliente = clienteId; query.tipo = 'Cliente'; }
+    if (fornecedorId) { query.fornecedor = fornecedorId; query.tipo = 'Fornecedor'; }
+    if (req.fornecedorFilter) query.fornecedor = req.user.fornecedorId;
+    if (req.clienteFilter) query.cliente = req.user.clienteId;
+
+    const populateFields = (q) => q
       .populate('fornecedor', 'razaoSocial nomeFantasia cnpjCpf')
       .populate('cliente', 'razaoSocial nomeFantasia cnpjCpf')
       .populate('ordensServico.ordemServico', 'numeroOrdemServico status valorServico valorPecas cliente fornecedor tipo')
-      .populate('impostos')
-      .lean();
+      .populate('impostos');
 
-    // Ordenar por data de criação decrescente no Node (evita sort em memória no Atlas M0)
+    // Modo paginado: retorna { faturas, total, totalPages, currentPage }
+    if (page !== undefined) {
+      const pageNum = Math.max(1, parseInt(page) || 1);
+      const limitNum = Math.min(50, Math.max(1, parseInt(limit) || 15));
+      const skip = (pageNum - 1) * limitNum;
+
+      const [faturas, total] = await Promise.all([
+        populateFields(Fatura.find(query)).sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),
+        Fatura.countDocuments(query)
+      ]);
+
+      return res.json({
+        faturas,
+        total,
+        totalPages: Math.ceil(total / limitNum) || 1,
+        currentPage: pageNum,
+        limit: limitNum
+      });
+    }
+
+    // Modo compatível (Dashboard, Relatórios etc.): retorna array
+    const faturas = await populateFields(Fatura.find(query)).lean();
     faturas.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
     res.json(faturas);
   } catch (error) {
     console.error('Erro ao listar faturas:', error.name, error.message);
-    console.error('Stack:', error.stack);
-    res.status(500).json({ message: 'Erro ao listar faturas', error: error.message, type: error.name });
+    res.status(500).json({ message: 'Erro ao listar faturas', error: error.message });
   }
 };
 

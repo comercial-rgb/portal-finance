@@ -206,6 +206,13 @@ mongoose.connect(MONGODB_URI, {
       } catch (e) {
         console.warn('⚠️ Não foi possível sincronizar índices de OrdemPagamento:', e.message);
       }
+      try {
+        const Fatura = require('./models/Fatura');
+        await Fatura.syncIndexes();
+        console.log('🔧 Índices de Fatura sincronizados');
+      } catch (e) {
+        console.warn('⚠️ Não foi possível sincronizar índices de Fatura:', e.message);
+      }
     })();
 
     const server = app.listen(PORT, () => {

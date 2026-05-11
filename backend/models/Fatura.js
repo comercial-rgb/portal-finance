@@ -171,6 +171,8 @@ const faturaSchema = new mongoose.Schema({
 faturaSchema.index({ tipo: 1, statusFatura: 1 });
 faturaSchema.index({ fornecedor: 1, createdAt: -1 });
 faturaSchema.index({ cliente: 1, createdAt: -1 });
+// Índice para a listagem principal: evita sort em memória (erro no Atlas M0)
+faturaSchema.index({ tipo: 1, ativo: 1, createdAt: -1 });
 
 const roundMoney = (value) => Math.round((Number(value) || 0) * 100) / 100;
 

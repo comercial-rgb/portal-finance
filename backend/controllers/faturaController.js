@@ -36,11 +36,13 @@ exports.listar = async (req, res) => {
     const faturas = await Fatura.find(query)
       .populate('fornecedor', 'razaoSocial nomeFantasia cnpjCpf')
       .populate('cliente', 'razaoSocial nomeFantasia cnpjCpf')
-      .populate('ordensServico.ordemServico', 'numeroOS status valorServico valorPecas cliente fornecedor tipo')
-      .populate('impostos', 'aliquotaISS aliquotaPIS aliquotaCOFINS aliquotaCSLL aliquotaIRRF aliquotaINSS')
-      .sort({ createdAt: -1 })
+      .populate('ordensServico.ordemServico', 'numeroOrdemServico status valorServico valorPecas cliente fornecedor tipo')
+      .populate('impostos')
       .lean();
-    
+
+    // Ordenar por data de criação decrescente no Node (evita sort em memória no Atlas M0)
+    faturas.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
     res.json(faturas);
   } catch (error) {
     console.error('Erro ao listar faturas:', error.name, error.message);

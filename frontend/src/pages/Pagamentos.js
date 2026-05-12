@@ -73,6 +73,11 @@ function Pagamentos() {
   const [ordemNotaComissao, setOrdemNotaComissao] = useState(null);
   const [uploadingNotaComissao, setUploadingNotaComissao] = useState(false);
 
+  // Modal trocar comprovante (OP paga)
+  const [showModalTrocarComprovante, setShowModalTrocarComprovante] = useState(false);
+  const [ordemTrocarComprovante, setOrdemTrocarComprovante] = useState(null);
+  const [uploadingTrocarComprovante, setUploadingTrocarComprovante] = useState(false);
+
   // Editar ordem
   const [showModalEditar, setShowModalEditar] = useState(false);
   const [ordemEditar, setOrdemEditar] = useState(null);
@@ -484,6 +489,34 @@ function Pagamentos() {
         toast.error(error.response?.data?.message || 'Erro ao anexar nota de comissão');
       } finally {
         setUploadingNotaComissao(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Trocar comprovante de OP paga
+  const handleAbrirTrocarComprovante = (ordem) => { setOrdemTrocarComprovante(ordem); setShowModalTrocarComprovante(true); };
+
+  const handleUploadTrocarComprovante = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error('Arquivo muito grande. Máximo 5MB.'); return; }
+    const tiposPermitidos = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+    if (!tiposPermitidos.includes(file.type)) { toast.error('Tipo de arquivo não permitido. Use PDF, JPG ou PNG.'); return; }
+    setUploadingTrocarComprovante(true);
+    const reader = new FileReader();
+    reader.onerror = () => { toast.error('Erro ao ler o arquivo'); setUploadingTrocarComprovante(false); };
+    reader.onload = async () => {
+      try {
+        await api.put(`/ordens-pagamento/${ordemTrocarComprovante._id}/comprovante`, { comprovante: reader.result });
+        toast.success('Comprovante atualizado com sucesso!');
+        setShowModalTrocarComprovante(false);
+        setOrdemTrocarComprovante(null);
+        loadOrdens();
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Erro ao atualizar comprovante');
+      } finally {
+        setUploadingTrocarComprovante(false);
       }
     };
     reader.readAsDataURL(file);
@@ -1029,6 +1062,11 @@ function Pagamentos() {
                                       <button className="btn-link" title="Ver Comprovante" onClick={() => handleVerOrdemComprovante(ordem)}>📎 Comprovante</button>
                                     )}
                                     {isAdminGerente && ordem.status === 'Paga' && (
+                                      <button className="btn-nota-comissao" title="Trocar comprovante de pagamento" onClick={() => handleAbrirTrocarComprovante(ordem)}>
+                                        🔄 Comprovante
+                                      </button>
+                                    )}
+                                    {isAdminGerente && ordem.status === 'Paga' && (
                                       <button className="btn-nota-comissao" title={ordem.notaComissao ? 'Ver Nota de Comissão' : 'Anexar Nota de Comissão'} onClick={() => handleAbrirNotaComissao(ordem)}>
                                         {ordem.notaComissao ? '📄 Nota' : '📄 + Nota'}
                                       </button>
@@ -1380,6 +1418,50 @@ function Pagamentos() {
             </div>
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setShowModalNotaComissao(false)} disabled={uploadingNotaComissao}>Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Trocar Comprovante */}
+      {showModalTrocarComprovante && ordemTrocarComprovante && (
+        <div className="modal-overlay" onClick={() => !uploadingTrocarComprovante && setShowModalTrocarComprovante(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>🔄 Trocar Comprovante</h2>
+              <button className="btn-close" onClick={() => !uploadingTrocarComprovante && setShowModalTrocarComprovante(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="comprovante-info">
+                <p><strong>Ordem:</strong> {ordemTrocarComprovante.codigo}</p>
+                <p><strong>Fornecedor:</strong> {ordemTrocarComprovante.fornecedor?.razaoSocial}</p>
+                <p><strong>Valor:</strong> {formatarValor(ordemTrocarComprovante.valor)}</p>
+              </div>
+              <div className="upload-area" style={{ marginTop: '1rem' }}>
+                <input
+                  type="file"
+                  id="comprovante-trocar"
+                  accept="application/pdf,image/*"
+                  onChange={handleUploadTrocarComprovante}
+                  disabled={uploadingTrocarComprovante}
+                />
+                <label htmlFor="comprovante-trocar" className="upload-label">
+                  {uploadingTrocarComprovante ? 'Enviando...' : (
+                    <>
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                      </svg>
+                      <span>Clique para selecionar o novo comprovante</span>
+                      <small>PDF, JPG ou PNG até 5MB</small>
+                    </>
+                  )}
+                </label>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setShowModalTrocarComprovante(false)} disabled={uploadingTrocarComprovante}>Fechar</button>
             </div>
           </div>
         </div>

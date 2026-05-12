@@ -450,6 +450,32 @@ exports.editar = async (req, res) => {
   }
 };
 
+// @desc    Atualizar comprovante de pagamento de uma OP (inclusive já paga)
+// @route   PUT /api/ordens-pagamento/:id/comprovante
+exports.atualizarComprovante = async (req, res) => {
+  try {
+    const { comprovante } = req.body;
+    if (!comprovante) return res.status(400).json({ message: 'Comprovante é obrigatório' });
+
+    const ordem = await OrdemPagamento.findOneAndUpdate(
+      { _id: req.params.id, ativo: true },
+      { comprovante },
+      { new: true }
+    );
+    if (!ordem) return res.status(404).json({ message: 'Ordem não encontrada' });
+
+    // Propagar comprovante para a fatura vinculada
+    if (ordem.status === 'Paga' && ordem.fatura) {
+      await sincronizarFaturaComOrdensPagas(ordem.fatura, ordem.dataPagamento, comprovante);
+    }
+
+    res.json({ success: true, message: 'Comprovante atualizado com sucesso' });
+  } catch (error) {
+    console.error('Erro ao atualizar comprovante:', error);
+    res.status(500).json({ message: 'Erro ao atualizar comprovante', error: error.message });
+  }
+};
+
 // @desc    Anexar/atualizar nota de comissão
 // @route   PUT /api/ordens-pagamento/:id/nota-comissao
 exports.notaComissao = async (req, res) => {

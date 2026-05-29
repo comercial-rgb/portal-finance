@@ -12,7 +12,7 @@ const normalizarNomeEmpresa = (nome) => {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/\b(ltda|s\/a|s\.a\.|me|epp|eireli)\b/gi, '')
-    .replace(/[-.]|/g, ' ')
+    .replace(/[-.]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 };
@@ -27,6 +27,31 @@ const extrairPalavrasChave = (nome) => {
     .filter(p => p.length >= 2 && !palavrasIgnoradas.includes(p));
 };
 
+// Distância de Levenshtein para fuzzy matching entre palavras
+const levenshtein = (a, b) => {
+  const m = a.length, n = b.length;
+  const dp = Array.from({ length: m + 1 }, (_, i) => [i]);
+  for (let j = 1; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + (a[i - 1] !== b[j - 1] ? 1 : 0)
+      );
+  return dp[m][n];
+};
+
+// Verifica se duas palavras são similares (até 2 edições de distância para palavras longas)
+const palavrasSimilares = (p1, p2) => {
+  if (p1 === p2) return true;
+  if (p1.includes(p2) || p2.includes(p1)) return true;
+  const maxLen = Math.max(p1.length, p2.length);
+  if (maxLen < 4) return false; // palavras curtas: só match exato
+  const tolerancia = maxLen >= 8 ? 2 : 1;
+  return levenshtein(p1, p2) <= tolerancia;
+};
+
 // Função para calcular similaridade entre dois nomes
 const calcularSimilaridade = (nome1, nome2) => {
   const palavras1 = extrairPalavrasChave(nome1);
@@ -35,7 +60,7 @@ const calcularSimilaridade = (nome1, nome2) => {
   let matches = 0;
   for (const p1 of palavras1) {
     for (const p2 of palavras2) {
-      if (p1 === p2 || p1.includes(p2) || p2.includes(p1)) {
+      if (palavrasSimilares(p1, p2)) {
         matches++;
         break;
       }

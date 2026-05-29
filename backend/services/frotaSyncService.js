@@ -1,8 +1,20 @@
 const axios = require('axios');
 
 const FROTA_API_URL = process.env.FROTA_API_URL || 'https://app.frotainstasolutions.com.br';
-const WEBHOOK_TOKEN = process.env.WEBHOOK_FROTA_TOKEN || '30bfff7ce392036b19d87dd6336c6e326d5312b943e01e3e8926c7aa22136b14';
+// Token compartilhado nos dois sentidos da integração com o frotas
+const WEBHOOK_TOKEN = process.env.WEBHOOK_FROTA_TOKEN || 'instasolutions_webhook_frota_2025';
 const TIMEOUT = 10000; // 10 segundos
+
+/**
+ * Normaliza a data de pagamento para o formato YYYY-MM-DD esperado pelo frotas.
+ * Aceita Date, string ISO completa ou string já no formato de data.
+ */
+function formatarData(data) {
+  if (!data) return new Date().toISOString().split('T')[0];
+  if (data instanceof Date) return data.toISOString().split('T')[0];
+  // string: pega só a parte da data (antes do 'T', se houver)
+  return String(data).split('T')[0];
+}
 
 /**
  * Notifica o sistema de frotas que uma OS foi marcada como paga.
@@ -14,7 +26,7 @@ async function notifyOSPaid(numeroOrdemServico, dataPagamento) {
       `${FROTA_API_URL}/api/v2/webhook/portal_finance/mark_paid`,
       {
         numero_ordem_servico: numeroOrdemServico,
-        data_pagamento: dataPagamento || new Date().toISOString().split('T')[0]
+        data_pagamento: formatarData(dataPagamento)
       },
       {
         headers: {

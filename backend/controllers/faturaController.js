@@ -3,6 +3,7 @@ const OrdemServico = require('../models/OrdemServico');
 const Abastecimento = require('../models/Abastecimento');
 const ImpostosRetencoes = require('../models/ImpostosRetencoes');
 const Cliente = require('../models/Cliente');
+const { notifyOSPaid } = require('../services/frotaSyncService');
 
 // Listar todas as faturas
 exports.listar = async (req, res) => {
@@ -388,9 +389,14 @@ exports.criar = async (req, res) => {
         }
         
         await ordem.save();
+
+        // Sincronizar com sistema de frotas se OS foi marcada como paga (à vista)
+        if (ordem.status === 'Paga' && ordem.numeroOrdemServico) {
+          notifyOSPaid(ordem.numeroOrdemServico).catch(() => {});
+        }
       }
     }
-    
+
     // Retornar fatura com dados populados
     const faturaCompleta = await Fatura.findById(novaFatura._id)
       .populate('fornecedor')
@@ -518,6 +524,12 @@ exports.marcarOSComoPaga = async (req, res) => {
       os.dataPagamento = dataEfetiva;
       await fatura.save();
       await OrdemServico.findByIdAndUpdate(ordemServicoId, { status: 'Paga' });
+
+      // Sincronizar com sistema de frotas
+      const osDoc = await OrdemServico.findById(ordemServicoId).lean();
+      if (osDoc && osDoc.numeroOrdemServico) {
+        notifyOSPaid(osDoc.numeroOrdemServico, dataEfetiva).catch(() => {});
+      }
     } else {
       // Tentar encontrar na lista de abastecimentos vinculados
       const ab = fatura.abastecimentosVinculados.find(
@@ -587,6 +599,14 @@ exports.pagarFaturaInteira = async (req, res) => {
         { _id: { $in: osIds } },
         { $set: { status: 'Paga' } }
       );
+
+      // Sincronizar cada OS com sistema de frotas
+      const osDocs = await OrdemServico.find({ _id: { $in: osIds } }).select('numeroOrdemServico').lean();
+      for (const osDoc of osDocs) {
+        if (osDoc.numeroOrdemServico) {
+          notifyOSPaid(osDoc.numeroOrdemServico, dataEfetiva).catch(() => {});
+        }
+      }
     }
 
     if (abastecimentoIds.length > 0) {

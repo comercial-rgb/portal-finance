@@ -5,6 +5,7 @@ const Fatura = require('../models/Fatura');
 const OrdemServico = require('../models/OrdemServico');
 const Abastecimento = require('../models/Abastecimento');
 const finsystemService = require('../services/finsystemService');
+const { notifyOSPaid } = require('../services/frotaSyncService');
 
 const roundMoney = (value) => Math.round((Number(value) || 0) * 100) / 100;
 
@@ -53,6 +54,14 @@ const sincronizarFaturaComOrdensPagas = async (faturaId, dataPagamento, comprova
       { _id: { $in: osIds } },
       { $set: { status: 'Paga' } }
     );
+
+    // Sincronizar com sistema de frotas
+    const osDocs = await OrdemServico.find({ _id: { $in: osIds } }).select('numeroOrdemServico').lean();
+    for (const osDoc of osDocs) {
+      if (osDoc.numeroOrdemServico) {
+        notifyOSPaid(osDoc.numeroOrdemServico).catch(() => {});
+      }
+    }
   }
 
   if (abastecimentoIds.length > 0) {

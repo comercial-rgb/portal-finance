@@ -8,3 +8,4 @@ yarn-error.log*
 frontend/build/
 frontend/.env
 .vercel
+.claude/

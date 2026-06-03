@@ -1,5 +1,18 @@
 const OrdemServico = require('../models/OrdemServico');
 const Cliente = require('../models/Cliente');
+const Fatura = require('../models/Fatura');
+
+/**
+ * Retorna as faturas ATIVAS que referenciam a OS informada.
+ * Usado para impedir hard-delete de OS que ainda está vinculada a uma fatura
+ * (evita referências pendentes que quebram o detalhe da fatura).
+ */
+const faturasAtivasComOS = async (osId) => {
+  return Fatura.find({
+    ativo: true,
+    'ordensServico.ordemServico': osId
+  }).select('numeroFatura').lean();
+};
 
 // Função auxiliar para deduzir valor do empenho (usado em ordens de serviço)
 const deduzirValorEmpenho = async (clienteId, contratoId, empenhoId, valorDeduzir) => {
@@ -321,9 +334,20 @@ exports.updateOrdemServico = async (req, res) => {
 exports.deleteOrdemServico = async (req, res) => {
   try {
     const ordemServico = await OrdemServico.findById(req.params.id);
-    
+
     if (!ordemServico) {
       return res.status(404).json({ message: 'Ordem de serviço não encontrada' });
+    }
+
+    // Impedir exclusão se a OS estiver vinculada a alguma fatura ativa
+    // (evita referência pendente que faz a OS "sumir" / quebrar o detalhe da fatura)
+    const faturasVinculadas = await faturasAtivasComOS(ordemServico._id);
+    if (faturasVinculadas.length > 0) {
+      const nums = faturasVinculadas.map(f => f.numeroFatura).join(', ');
+      return res.status(400).json({
+        message: `Não é possível excluir: a OS está vinculada à(s) fatura(s) ${nums}. Remova a OS da fatura antes de excluir.`,
+        faturas: faturasVinculadas.map(f => f.numeroFatura)
+      });
     }
 
     // Estornar valores dos empenhos antes de deletar
@@ -360,6 +384,29 @@ exports.deleteMultiple = async (req, res) => {
     const { ids } = req.body;
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ message: 'IDs não fornecidos' });
+    }
+
+    // Impedir exclusão se qualquer OS estiver vinculada a fatura ativa
+    // (evita referências pendentes que quebram o detalhe da fatura)
+    const faturasBloqueio = await Fatura.find({
+      ativo: true,
+      'ordensServico.ordemServico': { $in: ids }
+    }).select('numeroFatura ordensServico.ordemServico').lean();
+
+    if (faturasBloqueio.length > 0) {
+      const idsBloqueados = new Set();
+      faturasBloqueio.forEach(f =>
+        (f.ordensServico || []).forEach(item => {
+          const ref = String(item.ordemServico);
+          if (ids.map(String).includes(ref)) idsBloqueados.add(ref);
+        })
+      );
+      const nums = faturasBloqueio.map(f => f.numeroFatura).join(', ');
+      return res.status(400).json({
+        message: `Não é possível excluir: ${idsBloqueados.size} ordem(ns) de serviço está(ão) vinculada(s) à(s) fatura(s) ${nums}. Remova-as da fatura antes de excluir.`,
+        faturas: faturasBloqueio.map(f => f.numeroFatura),
+        ordensBloqueadas: [...idsBloqueados]
+      });
     }
 
     // Estornar valores dos empenhos antes de deletar
